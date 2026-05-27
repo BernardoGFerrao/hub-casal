@@ -353,8 +353,9 @@ def _raw_items(user_id: str, date_str: str) -> dict:
 def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
     """Calcula pontuação normalizada.
 
-    max_items: total de tarefas+hábitos do usuário com mais itens no dia.
-    Garante que 100% de conclusão vale sempre 40 pts independente da quantidade.
+    A parte de tarefas+hábitos vale sempre até 40 pts para ambos.
+    Quem conclui 100% dos próprios itens faz 40 pts — independente de quantos são.
+    max_items é passado apenas para ser registrado no payload (não afeta o cálculo).
     """
     score = 0
     breakdown = {}
@@ -363,13 +364,10 @@ def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
     own_total = raw["total_tasks"] + raw["total_habits"]
     own_done  = raw["done_tasks"]  + raw["done_habits"]
 
-    # Tarefas+hábitos: normalizado pelo maior total entre os dois jogadores.
-    # Quem tem menos itens precisa concluir proporcionalmente menos para pontuar igual.
+    # 100% de conclusão = 40 pts para qualquer quantidade de itens
     TASK_HABIT_POOL = 40
-    if max_items > 0 and own_total > 0:
-        # peso de cada item = POOL × (own_total / max_items) / own_total
-        #                   = POOL / max_items
-        pts_th = round(own_done * TASK_HABIT_POOL / max_items)
+    if own_total > 0:
+        pts_th = round(own_done / own_total * TASK_HABIT_POOL)
         score += pts_th
         breakdown["tarefas+hábitos"] = pts_th
 
