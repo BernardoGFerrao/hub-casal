@@ -1046,6 +1046,62 @@ select option { background: var(--surface); }
 .gcal-event-title { color: var(--text); flex: 1; }
 .gcal-event.b { border-color: var(--b-color); }
 .gcal-event.a { border-color: var(--a-color); }
+
+/* ─── Job Card ────────────────────────────────────────────────────────────── */
+.job-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .85rem 1rem;
+  margin-bottom: .5rem;
+  transition: border-color .15s;
+  position: relative;
+  border-left: 3px solid var(--border2);
+}
+.job-card:hover { border-left-color: var(--rose); }
+.job-card.status-applied   { border-left-color: var(--b-color); }
+.job-card.status-interview { border-left-color: var(--yellow); }
+.job-card.status-offer     { border-left-color: var(--green); }
+.job-card.status-rejected  { border-left-color: var(--red); opacity: .7; }
+.job-company { font-size: .95rem; font-weight: 700; color: var(--text); }
+.job-role    { font-size: .8rem; color: var(--text2); margin-top: .08rem; }
+.job-foot    { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; flex-wrap: wrap; }
+.job-status-badge {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  padding: .12rem .5rem; border-radius: 99px;
+}
+.job-status-badge.applied   { background: var(--b-dim);   color: var(--b-color); }
+.job-status-badge.interview { background: #fdf3d4;        color: #a07a10; }
+.job-status-badge.offer     { background: #d8f0e2;        color: #2e7d52; }
+.job-status-badge.rejected  { background: #fce8e8;        color: var(--red); }
+.job-date  { font-size: .65rem; color: var(--text3); }
+.job-link  { font-size: .65rem; color: var(--rose); text-decoration: underline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.job-actions { margin-left: auto; display: flex; gap: .3rem; }
+.stat-chip {
+  display: flex; flex-direction: column; align-items: center;
+  padding: .6rem .9rem; border-radius: var(--r-sm);
+  background: var(--bg2); border: 1px solid var(--border);
+  min-width: 70px;
+}
+.stat-chip-val { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.stat-chip-lbl { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); margin-top: .1rem; }
+
+/* ─── Mini Calendar ───────────────────────────────────────────────────────── */
+.mini-gcal-event {
+  display: flex; align-items: flex-start; gap: .4rem;
+  padding: .32rem .5rem; background: var(--bg2);
+  border-radius: var(--r-xs); border-left: 2px solid var(--rose);
+  font-size: .72rem; line-height: 1.3; margin-bottom: .25rem;
+}
+.mini-gcal-event.b { border-color: var(--b-color); }
+.mini-gcal-event.a { border-color: var(--a-color); }
+.mini-gcal-event-time { font-size: .6rem; color: var(--text3); white-space: nowrap; font-weight: 600; }
+
+/* ─── Profile accent: quando vendo perfil do parceiro, accent muda para a cor dele ── */
+/* Bernardo (tema azul) vendo Amanda → accent vira verde */
+html.theme-bernardo.profile-a-view { --rose: var(--a-color); --rose-dim: var(--a-dim); --rose-mid: #6ab888; }
+/* Amanda (tema verde) vendo Bernardo → accent vira azul */
+html.theme-amanda.profile-b-view   { --rose: var(--b-color); --rose-dim: var(--b-dim); --rose-mid: #8aaad8; }
 </style>
 </head>
 <body>
@@ -1133,7 +1189,8 @@ select option { background: var(--surface); }
     <button class="ntab"        data-s="compare"  onclick="go('compare')"><span class="ni">🏆</span>Placar</button>
     <button class="ntab"        data-s="agenda"   onclick="go('agenda')"><span class="ni">📅</span>Agenda</button>
     <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ni">📰</span>Notícias</button>
-    <button class="ntab"        data-s="briefing" onclick="go('briefing')"><span class="ni">✨</span>Briefing</button>
+    <button class="ntab"        data-s="vagas"    onclick="go('vagas')"><span class="ni">💼</span>Vagas</button>
+    <button class="ntab"        data-s="config"   onclick="go('config')"><span class="ni">⚙️</span>Config</button>
   </nav>
 
   <!-- Content -->
@@ -1172,6 +1229,23 @@ select option { background: var(--surface); }
           <div class="qstat-icon">😊</div>
           <div class="qstat-val" id="qs-mood" style="font-size:1.6rem;line-height:1">—</div>
           <div class="qstat-lbl">Humor</div>
+        </div>
+      </div>
+
+      <!-- Mini calendário -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">📅 Calendário</span>
+          <span class="see-more" style="margin:0" onclick="go('agenda')">Ver agenda →</span>
+        </div>
+        <div class="card-body" style="padding:.6rem .85rem">
+          <div class="gcal-nav" style="margin-bottom:.4rem">
+            <button class="gcal-nav-btn" onclick="miniCalNav(-1)">‹</button>
+            <span class="gcal-month-lbl" id="mini-cal-lbl"></span>
+            <button class="gcal-nav-btn" onclick="miniCalNav(1)">›</button>
+          </div>
+          <div class="gcal-grid" id="mini-cal-grid" style="gap:1px"></div>
+          <div id="mini-cal-events" style="margin-top:.5rem"></div>
         </div>
       </div>
 
@@ -1541,14 +1615,141 @@ select option { background: var(--surface); }
       </div>
     </div>
 
-    <!-- BRIEFING -->
-    <div class="section" id="sec-briefing">
+    <!-- BRIEFING (hidden, mantido para funcionalidade do painel IA) -->
+    <div class="section" id="sec-briefing" style="display:none!important">
       <div class="card">
         <div class="card-head">
           <span class="card-label">Resumo do dia · <span id="brief-for"></span></span>
           <button class="btn btn-outline btn-xs" onclick="regenBriefing()">↺ Gerar novo</button>
         </div>
         <div class="card-body"><div id="brief-body">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- VAGAS -->
+    <div class="section" id="sec-vagas">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">💼 Vagas de emprego</span>
+          <button class="btn btn-rose btn-xs" onclick="openJobForm()">+ Nova vaga</button>
+        </div>
+        <div class="card-body" style="padding-top:.5rem">
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <button class="filter-chip active" id="job-filter-all"    onclick="filterJobs('all')">Todas</button>
+            <button class="filter-chip"        id="job-filter-applied" onclick="filterJobs('applied')">Aplicadas</button>
+            <button class="filter-chip"        id="job-filter-interview" onclick="filterJobs('interview')">Entrevista</button>
+            <button class="filter-chip"        id="job-filter-offer"   onclick="filterJobs('offer')">Oferta</button>
+            <button class="filter-chip"        id="job-filter-rejected" onclick="filterJobs('rejected')">Recusada</button>
+          </div>
+          <div id="jobs-list"><div class="empty">Nenhuma vaga cadastrada</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-label">📊 Resumo</span></div>
+        <div class="card-body" style="display:flex;gap:.5rem;flex-wrap:wrap" id="jobs-stats"></div>
+      </div>
+    </div>
+
+    <!-- MODAL VAGA -->
+    <div class="modal-overlay" id="job-modal" onclick="if(event.target===this)closeJobModal()">
+      <div class="modal-box">
+        <div class="modal-hdr">
+          <span class="modal-title" id="job-modal-title">💼 Nova vaga</span>
+          <button class="modal-close" onclick="closeJobModal()">×</button>
+        </div>
+        <input type="hidden" id="job-edit-id">
+        <div class="modal-field">
+          <label>Empresa</label>
+          <input id="job-company" placeholder="Ex: Google" maxlength="80">
+        </div>
+        <div class="modal-field">
+          <label>Cargo</label>
+          <input id="job-role" placeholder="Ex: Engenheira de Software" maxlength="80">
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <div class="modal-field" style="flex:1">
+            <label>Status</label>
+            <select id="job-status">
+              <option value="applied">Aplicada</option>
+              <option value="interview">Entrevista</option>
+              <option value="offer">Oferta</option>
+              <option value="rejected">Recusada</option>
+            </select>
+          </div>
+          <div class="modal-field" style="flex:1">
+            <label>Data</label>
+            <input id="job-date" type="date">
+          </div>
+        </div>
+        <div class="modal-field">
+          <label>Link / Observações</label>
+          <input id="job-link" placeholder="URL da vaga ou anotações" maxlength="200">
+        </div>
+        <button class="modal-save" onclick="saveJob()">💾 Salvar vaga</button>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div class="section" id="sec-config">
+      <div class="card">
+        <div class="card-head"><span class="card-label">⚙️ Configurações</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de passos</label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="number" id="cfg-steps" placeholder="10000" min="1000" max="50000" step="500" style="flex:1">
+              <button class="btn btn-rose" onclick="saveCfg('steps_goal',document.getElementById('cfg-steps').value)">Salvar</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de água (ml)</label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="number" id="cfg-water" placeholder="2500" min="500" max="5000" step="100" style="flex:1">
+              <button class="btn btn-rose" onclick="saveCfg('water_goal',document.getElementById('cfg-water').value)">Salvar</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de sono (horas)</label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="number" id="cfg-sleep" placeholder="8" min="4" max="12" step=".5" style="flex:1">
+              <button class="btn btn-rose" onclick="saveCfg('sleep_goal_h',document.getElementById('cfg-sleep').value)">Salvar</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">✨ Briefing diário (IA)</label>
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-outline" style="flex:1" onclick="regenBriefing()">↺ Gerar briefing</button>
+              <button class="btn btn-outline" style="flex:1" onclick="openAIPanel()">✨ Abrir assistente</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Conta</label>
+            <div style="font-size:.8rem;color:var(--text3);margin-bottom:.3rem">Sessão: <strong id="cfg-viewer-name" style="color:var(--text2)"></strong></div>
+            <button class="btn btn-outline" onclick="logout()" style="border-color:var(--red);color:var(--red)">→ Sair da conta</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-label">Sobre o Hub</span></div>
+        <div class="card-body" style="font-size:.8rem;color:var(--text3);line-height:1.7">
+          <div><strong style="color:var(--text2)">Our Little Hub</strong> · versão casal</div>
+          <div>Acompanhe saúde, hábitos, tarefas e conquistas juntos.</div>
+          <div style="margin-top:.5rem">
+            <span style="color:var(--b-color)">👨‍💻 Bernardo</span> — Eng. de Computação &nbsp;·&nbsp;
+            <span style="color:var(--a-color)">👩‍⚕️ Amanda</span> — Nutricionista
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1588,9 +1789,13 @@ async function boot() {
   renderViewer();
   renderScore();
   renderGreeting();
+  applyProfileAccent();
   await loadUD(PROFILE);
   renderAll();
   initCal();
+  initMiniCal();
+  loadJobs();
+  loadCfg();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
 
@@ -1625,22 +1830,40 @@ function renderScore() {
 async function switchProfile(p) {
   PROFILE = p;
   document.querySelectorAll('.ptab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
+  applyProfileAccent();
   await loadUD(p);
   renderAll();
 }
 
+function applyProfileAccent() {
+  // Swap the nav active color and content accent to match the profile being viewed
+  const html = document.documentElement;
+  html.classList.remove('profile-b-view', 'profile-a-view');
+  if (PROFILE === 'bernardo') html.classList.add('profile-b-view');
+  else                         html.classList.add('profile-a-view');
+}
+
 function go(s) {
   document.querySelectorAll('.ntab').forEach(t => t.classList.toggle('active', t.dataset.s === s));
-  document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'sec-' + s));
+  document.querySelectorAll('.section').forEach(el => {
+    if (el.id === 'sec-briefing') return; // briefing always hidden
+    el.classList.toggle('active', el.id === 'sec-' + s);
+  });
   if (s === 'compare') renderCompare();
   if (s === 'agenda')  { buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
   if (s === 'inicio')  renderHome();
   if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
   if (s === 'tarefas') renderKanban();
+  if (s === 'vagas')   renderJobs();
+  if (s === 'config')  loadCfg();
 }
 
 async function loadUD(p) {
-  try { const r = await fetch('/api/load?u=' + p); ud = await r.json(); } catch(e) {}
+  try {
+    const r = await fetch('/api/load?u=' + p);
+    ud = await r.json();
+    _jobs = ud.jobs || [];
+  } catch(e) {}
 }
 
 function renderAll() {
@@ -2161,6 +2384,7 @@ async function loadCalEvents() {
       const data = await r.json();
       _calEvents = data.events || [];
       buildCalGrid();
+      buildMiniCalGrid();
       renderCalEvents(_calSelDate);
       renderUpcoming();
       renderUpcomingInHome();
@@ -2309,6 +2533,189 @@ function kanbanAddColumn() { _kanban.columns.push({id:'col_'+Date.now(),name:'No
 function kanbanDeleteColumn(colId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col) return; if(col.cards.length>0&&!confirm(`Excluir "${col.name}" com ${col.cards.length} card(s)?`))return; _kanban.columns=_kanban.columns.filter(c=>c.id!==colId); saveKanban(); renderKanban(); }
 function kanbanAddCard(colId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col)return; const card={id:'card_'+Date.now(),text:'Novo card',desc:''}; col.cards.push(card); saveKanban(); renderKanban(); setTimeout(()=>{const el=document.getElementById('kcard-'+card.id); if(el){const txt=el.querySelector('.kanban-card-text'); if(txt){txt.focus();document.execCommand('selectAll',false,null);}}},50); }
 function kanbanDeleteCard(colId,cardId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col)return; col.cards=col.cards.filter(c=>c.id!==cardId); saveKanban(); renderKanban(); }
+
+// ─── Mini Calendário (Início) ──────────────────────────────────────────────
+let _miniCalYear, _miniCalMonth;
+
+function initMiniCal() {
+  const now = new Date();
+  _miniCalYear  = now.getFullYear();
+  _miniCalMonth = now.getMonth();
+  buildMiniCalGrid();
+}
+
+function miniCalNav(delta) {
+  _miniCalMonth += delta;
+  if (_miniCalMonth > 11) { _miniCalMonth = 0; _miniCalYear++; }
+  if (_miniCalMonth < 0)  { _miniCalMonth = 11; _miniCalYear--; }
+  buildMiniCalGrid();
+}
+
+function buildMiniCalGrid() {
+  const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const lbl = document.getElementById('mini-cal-lbl');
+  if (lbl) lbl.textContent = `${MONTHS[_miniCalMonth]} ${_miniCalYear}`;
+  const first = new Date(_miniCalYear, _miniCalMonth, 1).getDay();
+  const days  = new Date(_miniCalYear, _miniCalMonth + 1, 0).getDate();
+  const eventDates = new Set(_calEvents.map(e => e.start.slice(0,10)));
+  let html = ['D','S','T','Q','Q','S','S'].map(d => `<div class="gcal-hdr" style="font-size:.55rem">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) {
+    const pd = new Date(_miniCalYear, _miniCalMonth, -first + i + 1);
+    html += `<div class="gcal-day other-month" style="font-size:.65rem">${pd.getDate()}</div>`;
+  }
+  for (let d = 1; d <= days; d++) {
+    const ds = `${_miniCalYear}-${String(_miniCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = ['gcal-day', ds===TODAY?'today':'', eventDates.has(ds)?'has-event':'', ds===_calSelDate&&ds!==TODAY?'gcal-sel':''].filter(Boolean).join(' ');
+    html += `<div class="${cls}" style="font-size:.65rem" onclick="miniCalSelectDay('${ds}')">${d}</div>`;
+  }
+  const grid = document.getElementById('mini-cal-grid');
+  if (grid) grid.innerHTML = html;
+  renderMiniCalEvents(_calSelDate);
+}
+
+function miniCalSelectDay(ds) {
+  _calSelDate = ds;
+  buildMiniCalGrid();
+  renderMiniCalEvents(ds);
+}
+
+function renderMiniCalEvents(dateStr) {
+  const el = document.getElementById('mini-cal-events');
+  if (!el) return;
+  const evs = _calEvents.filter(e => e.start.slice(0,10) === dateStr).slice(0,3);
+  if (!evs.length) { el.innerHTML = `<div style="font-size:.7rem;color:var(--text3);text-align:center;padding:.25rem 0">Sem eventos</div>`; return; }
+  el.innerHTML = evs.map(e => {
+    const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
+    const time = e.allDay ? 'dia todo' : e.start.slice(11,16);
+    return `<div class="mini-gcal-event ${who}">
+      <span class="mini-gcal-event-time">${time}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.title)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── Vagas ─────────────────────────────────────────────────────────────────
+let _jobs = [];
+let _jobFilter = 'all';
+const JOB_STATUS_LABELS = { applied: 'Aplicada', interview: 'Entrevista', offer: 'Oferta', rejected: 'Recusada' };
+
+function loadJobs() {
+  _jobs = ud.jobs || (JSON.parse(localStorage.getItem('hub_jobs_' + VIEWER) || '[]'));
+}
+
+function saveJobs() {
+  ud.jobs = _jobs;
+  localStorage.setItem('hub_jobs_' + VIEWER, JSON.stringify(_jobs));
+  api('/api/save/jobs', { jobs: _jobs });
+}
+
+function filterJobs(f) {
+  _jobFilter = f;
+  ['all','applied','interview','offer','rejected'].forEach(k => {
+    const b = document.getElementById('job-filter-' + k);
+    if (b) b.classList.toggle('active', k === f);
+  });
+  renderJobs();
+}
+
+function renderJobs() {
+  loadJobs();
+  const el = document.getElementById('jobs-list');
+  if (!el) return;
+  const list = _jobFilter === 'all' ? _jobs : _jobs.filter(j => j.status === _jobFilter);
+  if (!list.length) { el.innerHTML = '<div class="empty">Nenhuma vaga</div>'; renderJobStats(); return; }
+  el.innerHTML = list.map(j => `
+    <div class="job-card status-${j.status}">
+      <div class="job-company">${esc(j.company)}</div>
+      <div class="job-role">${esc(j.role)}</div>
+      <div class="job-foot">
+        <span class="job-status-badge ${j.status}">${JOB_STATUS_LABELS[j.status]||j.status}</span>
+        ${j.date ? `<span class="job-date">📅 ${j.date.split('-').reverse().join('/')}</span>` : ''}
+        ${j.link ? `<a class="job-link" href="${esc(j.link)}" target="_blank" rel="noopener">${esc(j.link.length>40?j.link.slice(0,37)+'...':j.link)}</a>` : ''}
+        <div class="job-actions">
+          <button class="meal-btn" onclick="openJobForm('${j.id}')">✏️</button>
+          <button class="meal-btn danger" onclick="deleteJob('${j.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+  renderJobStats();
+}
+
+function renderJobStats() {
+  const el = document.getElementById('jobs-stats');
+  if (!el) return;
+  const counts = { applied:0, interview:0, offer:0, rejected:0 };
+  _jobs.forEach(j => { if (counts[j.status] !== undefined) counts[j.status]++; });
+  const colors = { applied: 'var(--b-color)', interview: '#a07a10', offer: '#2e7d52', rejected: 'var(--red)' };
+  el.innerHTML = Object.entries(counts).map(([k,v]) => `
+    <div class="stat-chip">
+      <span class="stat-chip-val" style="color:${colors[k]}">${v}</span>
+      <span class="stat-chip-lbl">${JOB_STATUS_LABELS[k]}</span>
+    </div>`).join('');
+}
+
+function openJobForm(editId=null) {
+  document.getElementById('job-edit-id').value = editId||'';
+  document.getElementById('job-modal-title').textContent = editId ? '✏️ Editar vaga' : '💼 Nova vaga';
+  document.getElementById('job-company').value='';
+  document.getElementById('job-role').value='';
+  document.getElementById('job-status').value='applied';
+  document.getElementById('job-date').value=TODAY;
+  document.getElementById('job-link').value='';
+  if (editId) {
+    const j = _jobs.find(x => x.id === editId);
+    if (j) {
+      document.getElementById('job-company').value = j.company||'';
+      document.getElementById('job-role').value    = j.role||'';
+      document.getElementById('job-status').value  = j.status||'applied';
+      document.getElementById('job-date').value    = j.date||TODAY;
+      document.getElementById('job-link').value    = j.link||'';
+    }
+  }
+  document.getElementById('job-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('job-company').focus(),80);
+}
+
+function closeJobModal() { document.getElementById('job-modal').classList.remove('open'); }
+
+function saveJob() {
+  const company = document.getElementById('job-company').value.trim();
+  const role    = document.getElementById('job-role').value.trim();
+  if (!company) { toast('Digite o nome da empresa','⚠️'); return; }
+  const editId = document.getElementById('job-edit-id').value;
+  const job = {
+    id:      editId || String(Date.now()),
+    company, role,
+    status:  document.getElementById('job-status').value,
+    date:    document.getElementById('job-date').value,
+    link:    document.getElementById('job-link').value.trim(),
+  };
+  if (editId) { const idx=_jobs.findIndex(j=>j.id===editId); if(idx>=0)_jobs[idx]=job; else _jobs.push(job); }
+  else _jobs.push(job);
+  saveJobs(); closeJobModal(); renderJobs(); toast('Vaga salva ♡');
+}
+
+function deleteJob(id) {
+  _jobs = _jobs.filter(j => j.id !== id);
+  saveJobs(); renderJobs(); toast('Vaga removida');
+}
+
+// ─── Configurações ─────────────────────────────────────────────────────────
+function loadCfg() {
+  const s = ud.settings || {};
+  const stepEl = document.getElementById('cfg-steps'); if (stepEl) stepEl.value = s.steps_goal || '';
+  const waterEl = document.getElementById('cfg-water'); if (waterEl) waterEl.value = s.water_goal || '';
+  const sleepEl = document.getElementById('cfg-sleep'); if (sleepEl) sleepEl.value = s.sleep_goal_h || '';
+  const nm = document.getElementById('cfg-viewer-name');
+  if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
+}
+
+async function saveCfg(key, val) {
+  if (!val) return;
+  ud.settings = { ...(ud.settings||{}), [key]: Number(val) };
+  await api('/api/save/settings', { settings: ud.settings });
+  toast('Configuração salva ♡');
+}
 
 // ─── Dieta ─────────────────────────────────────────────────────────────────
 const DOW_NAMES  = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];

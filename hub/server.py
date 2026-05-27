@@ -534,6 +534,7 @@ class HubHandler(SimpleHTTPRequestHandler):
                 "moods":              db_get_all_moods(view_user),
                 "grocery":            db_get(view_user, "user_grocery") or [],
                 "kanban":             db_get(view_user, "user_kanban") or {},
+                "jobs":               db_get(view_user, "user_jobs") or [],
                 "profile":            view_user,
                 "profile_name":       USERS[view_user]["name"],
                 "profile_color":      USERS[view_user]["color"],
@@ -742,6 +743,10 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         elif path == "/api/save/kanban":
             db_set(uid, "user_kanban", body.get("kanban", {}))
+            self._json({"ok": True})
+
+        elif path == "/api/save/jobs":
+            db_set(uid, "user_jobs", body.get("jobs", []))
             self._json({"ok": True})
 
         elif path == "/api/ai":
