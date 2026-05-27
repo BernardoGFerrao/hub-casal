@@ -147,25 +147,26 @@ select option { background: var(--surface); }
 #scoreboard {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: .85rem 1.25rem .75rem;
+  padding: 1rem 1.25rem .85rem;
 }
 .score-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  gap: .5rem;
-  margin-bottom: .6rem;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: .75rem;
 }
 .score-side {
   display: flex;
   flex-direction: column;
-  gap: .05rem;
+  align-items: center;
+  gap: .15rem;
+  min-width: 90px;
 }
-.score-side.right { align-items: flex-end; }
 .score-avatar {
-  font-size: 2rem;
+  font-size: 2.4rem;
   line-height: 1;
-  margin-bottom: .2rem;
+  margin-bottom: .1rem;
 }
 .score-who {
   font-size: .7rem;
@@ -176,7 +177,7 @@ select option { background: var(--surface); }
 }
 .score-num {
   font-family: var(--font-serif);
-  font-size: 2.6rem;
+  font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -.03em;
@@ -184,7 +185,7 @@ select option { background: var(--surface); }
 .score-num.b { color: var(--b-color); }
 .score-num.a { color: var(--a-color); }
 .score-pts-lbl {
-  font-size: .62rem;
+  font-size: .6rem;
   color: var(--text3);
   text-transform: uppercase;
   letter-spacing: .07em;
@@ -194,18 +195,21 @@ select option { background: var(--surface); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .1rem;
+  gap: .15rem;
+  padding: 0 .25rem;
 }
 .score-mid-vs {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   color: var(--rose);
   font-weight: 400;
+  line-height: 1;
 }
 .score-mid-heart {
-  font-size: .95rem;
+  font-size: 1rem;
   color: var(--rose-mid);
+  line-height: 1;
 }
 .score-track {
   height: 6px;
@@ -219,9 +223,9 @@ select option { background: var(--surface); }
 .score-fill.a { background: var(--a-color); }
 .score-caption {
   text-align: center;
-  font-size: .71rem;
+  font-size: .73rem;
   color: var(--text3);
-  margin-top: .4rem;
+  margin-top: .45rem;
   font-style: italic;
 }
 .score-caption strong { color: var(--text2); font-style: normal; font-weight: 600; }
