@@ -1097,11 +1097,7 @@ select option { background: var(--surface); }
 .mini-gcal-event.a { border-color: var(--a-color); }
 .mini-gcal-event-time { font-size: .6rem; color: var(--text3); white-space: nowrap; font-weight: 600; }
 
-/* ─── Profile accent: quando vendo perfil do parceiro, accent muda para a cor dele ── */
-/* Bernardo (tema azul) vendo Amanda → accent vira verde */
-html.theme-bernardo.profile-a-view { --rose: var(--a-color); --rose-dim: var(--a-dim); --rose-mid: #6ab888; }
-/* Amanda (tema verde) vendo Bernardo → accent vira azul */
-html.theme-amanda.profile-b-view   { --rose: var(--b-color); --rose-dim: var(--b-dim); --rose-mid: #8aaad8; }
+/* Profile accent rules removed — full theme swap is handled by JS in applyProfileAccent() */
 </style>
 </head>
 <body>
@@ -1836,9 +1832,10 @@ async function switchProfile(p) {
 }
 
 function applyProfileAccent() {
-  // Swap the nav active color and content accent to match the profile being viewed
+  // When viewing the partner's profile, swap the full theme so the whole UI reflects their color
   const html = document.documentElement;
-  html.classList.remove('profile-b-view', 'profile-a-view');
+  html.classList.remove('theme-bernardo', 'theme-amanda', 'profile-b-view', 'profile-a-view');
+  html.classList.add('theme-' + PROFILE);
   if (PROFILE === 'bernardo') html.classList.add('profile-b-view');
   else                         html.classList.add('profile-a-view');
 }
@@ -2862,19 +2859,33 @@ function stopAIVoice(){if(_aiVoiceRecog){try{_aiVoiceRecog.stop();}catch(e){}_ai
 function _updateMic(){const btn=document.getElementById('ai-mic-btn');if(!btn)return;btn.classList.toggle('recording',_aiVoiceActive);}
 
 function localScore() {
-  const tasks = (ud.tasks || {})[TODAY] || [];
-  const done  = tasks.filter(t => t.done).length;
+  const tasks  = (ud.tasks || {})[TODAY] || [];
+  const total  = tasks.length;
+  const done   = tasks.filter(t => t.done).length;
   const habits = ud.habits || [], comps = ud.habit_completions || {};
+  const totalH = habits.length;
   const doneH  = habits.filter(h => `${h.id}:${TODAY}` in comps).length;
   const hasMood = !!(ud.moods || {})[TODAY];
   const h = (D[PROFILE] || {}).health || {};
-  let pts = done * 2 + doneH * 3 + (hasMood ? 1 : 0);
+
+  // Tarefas: até 20 pts, normalizado por % concluída (evita vantagem por ter mais tarefas)
+  const taskPct  = total  > 0 ? done  / total  : 0;
+  const habitPct = totalH > 0 ? doneH / totalH : 0;
+  let pts = Math.round(taskPct * 20) + Math.round(habitPct * 20) + (hasMood ? 2 : 0);
   pts += Math.min(10, Math.floor((h.steps || 0) / 1000));
   if ((h.water_ml || 0) >= 2000) pts += 2;
   if ((h.sleep_minutes || 0) >= 420) pts += 3;
+
+  const breakdown = {
+    ...(total  > 0 ? { tarefas: Math.round(taskPct * 20)  } : {}),
+    ...(totalH > 0 ? { hábitos: Math.round(habitPct * 20) } : {}),
+    ...(hasMood     ? { humor: 2 }                          : {}),
+    ...(h.steps     ? { passos: Math.min(10, Math.floor((h.steps||0)/1000)) } : {}),
+  };
+
   if (!D.competition) D.competition = { scores: {}, leader: 'empate', diff: 0 };
   if (!D.competition.scores) D.competition.scores = {};
-  D.competition.scores[PROFILE] = { total: pts, breakdown: {} };
+  D.competition.scores[PROFILE] = { total: pts, breakdown };
   renderScore();
 }
 
