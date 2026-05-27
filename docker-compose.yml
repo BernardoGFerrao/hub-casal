@@ -1,0 +1,12 @@
+services:
+  hub:
+    build: .
+    restart: always
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    volumes:
+      - ./hub/data:/app/hub/data
+    environment:
+      - TZ=America/Sao_Paulo
