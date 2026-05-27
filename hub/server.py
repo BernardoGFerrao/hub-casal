@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 server.py — Hub Casal
-Roda em http://localhost:5000
+Roda em http://localhost:5001
 
 Dois perfis: Bernardo e Amanda.
 Cada perfil tem seu próprio banco SQLite (bernardo.db / amanda.db)
@@ -24,7 +24,7 @@ from http.cookies import SimpleCookie
 from urllib.parse import urlparse, parse_qs
 
 HUB_DIR = Path(__file__).parent
-PORT    = 5000
+PORT    = 5001
 
 # ---------------------------------------------------------------------------
 # Usuários
