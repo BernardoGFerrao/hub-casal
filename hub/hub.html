@@ -4,195 +4,191 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hub Casal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ─── Tokens ──────────────────────────────────────────────────────────────── */
+/* ─── Tokens ──────────────────────────────────────────────────────────── */
 :root {
-  --bg:        #0a0a0f;
-  --bg2:       #111118;
-  --surface:   #16161f;
-  --surface2:  #1e1e2a;
-  --border:    #2a2a3a;
-  --border2:   #333348;
-  --text:      #f0f0f8;
-  --text2:     #a0a0c0;
-  --text3:     #606080;
+  --bg:       #fdf6f0;
+  --bg2:      #f9ede4;
+  --surface:  #ffffff;
+  --surface2: #fdf0e8;
+  --border:   #e8d5c8;
+  --border2:  #d4b8a8;
 
-  --b:         #4f8ef7;
-  --b-dim:     color-mix(in srgb,#4f8ef7 18%,transparent);
-  --b-mid:     color-mix(in srgb,#4f8ef7 35%,transparent);
-  --a:         #f06292;
-  --a-dim:     color-mix(in srgb,#f06292 18%,transparent);
-  --a-mid:     color-mix(in srgb,#f06292 35%,transparent);
+  --text:     #2a1f1a;
+  --text2:    #7a5c50;
+  --text3:    #b89080;
 
-  --green:     #4ade80;
-  --yellow:    #fbbf24;
-  --red:       #f87171;
-  --purple:    #a78bfa;
+  --rose:     #c4758a;
+  --rose-dim: #f5dde4;
+  --rose-mid: #e8b4c0;
 
-  --r:         14px;
-  --r-sm:      9px;
-  --r-xs:      6px;
+  --sand:     #b89878;
+  --sand-dim: #f0e4d8;
 
-  --shadow:    0 4px 24px rgba(0,0,0,.45);
-  --shadow-sm: 0 2px 8px  rgba(0,0,0,.3);
+  --b-color:  #7a9bc4;
+  --b-dim:    #dce8f5;
+  --a-color:  #c4758a;
+  --a-dim:    #f5dde4;
+
+  --green:    #7ab898;
+  --yellow:   #c4a45a;
+  --red:      #c47878;
+
+  --r:        16px;
+  --r-sm:     10px;
+  --r-xs:     6px;
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans:  'Inter', system-ui, sans-serif;
 }
 
-/* ─── Reset ───────────────────────────────────────────────────────────────── */
+/* ─── Reset ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
   min-height: 100%;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
 input, select, textarea {
-  font: inherit; color: var(--text); background: var(--bg);
-  border: 1.5px solid var(--border); border-radius: var(--r-sm);
-  padding: .55rem .85rem; outline: none; width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .55rem .85rem;
+  outline: none;
+  width: 100%;
   transition: border-color .15s;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--b); }
+input:focus, select:focus { border-color: var(--rose); }
 select option { background: var(--surface); }
 .hide { display: none !important; }
-
-/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
 
-/* ─── Layout ──────────────────────────────────────────────────────────────── */
-#shell {
-  display: grid;
-  grid-template-rows: auto auto auto auto 1fr;
-  min-height: 100vh;
-}
+/* ─── Shell ───────────────────────────────────────────────────────────── */
+#shell { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* ─── Header ──────────────────────────────────────────────────────────────── */
+/* ─── Header ──────────────────────────────────────────────────────────── */
 #header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: .9rem 1.25rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  padding: .85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
   position: sticky;
   top: 0;
   z-index: 50;
 }
 #header h1 {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -.01em;
   flex: 1;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--rose);
+  letter-spacing: .01em;
 }
-.viewer-chip {
+.viewer-pill {
   display: flex;
   align-items: center;
-  gap: .45rem;
-  padding: .3rem .7rem;
+  gap: .4rem;
+  padding: .28rem .7rem;
   border-radius: 99px;
-  font-size: .78rem;
-  font-weight: 600;
+  border: 1px solid var(--border);
   background: var(--surface2);
-  border: 1px solid var(--border2);
-}
-.viewer-chip .dot {
-  width: 7px; height: 7px; border-radius: 50%;
-}
-#refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: .35rem;
-  padding: .38rem .8rem;
-  border-radius: var(--r-sm);
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  font-size: .78rem;
+  font-size: .73rem;
   font-weight: 500;
   color: var(--text2);
+}
+.viewer-dot { width: 6px; height: 6px; border-radius: 50%; }
+#refresh-btn {
+  padding: .32rem .7rem;
+  border-radius: var(--r-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-size: .73rem;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: .3rem;
   transition: all .15s;
 }
-#refresh-btn:hover { background: var(--border); color: var(--text); }
-#refresh-btn svg { transition: transform .5s; }
+#refresh-btn:hover { border-color: var(--rose); color: var(--rose); }
 #refresh-btn.spinning svg { animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Scoreboard ──────────────────────────────────────────────────────────── */
+/* ─── Scoreboard ──────────────────────────────────────────────────────── */
 #scoreboard {
-  padding: 1rem 1.25rem .85rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  padding: 1rem 1.25rem .9rem;
 }
-.score-players {
+.score-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: end;
   gap: .75rem;
   margin-bottom: .75rem;
 }
-.score-player {
-  display: flex;
-  flex-direction: column;
-  gap: .1rem;
-}
-.score-player.right { align-items: flex-end; text-align: right; }
-.score-name {
-  font-size: .72rem;
+.score-side { display: flex; flex-direction: column; gap: .05rem; }
+.score-side.right { align-items: flex-end; }
+.score-who {
+  font-size: .65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--text2);
-}
-.score-pts {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -.03em;
-  line-height: 1;
-}
-.score-pts.b { color: var(--b); }
-.score-pts.a { color: var(--a); }
-.score-vs {
-  font-size: .7rem;
-  font-weight: 700;
+  letter-spacing: .08em;
   color: var(--text3);
-  letter-spacing: .05em;
-  padding: .3rem .5rem;
-  background: var(--surface2);
-  border-radius: var(--r-xs);
+}
+.score-num {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.score-num.b { color: var(--b-color); }
+.score-num.a { color: var(--a-color); }
+.score-mid {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: .85rem;
+  color: var(--text3);
+  align-self: center;
+  padding-bottom: .4rem;
 }
 .score-track {
-  height: 6px;
-  background: var(--surface2);
+  height: 5px;
+  background: var(--bg2);
   border-radius: 99px;
   overflow: hidden;
   display: flex;
 }
-.score-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width .6s cubic-bezier(.4,0,.2,1);
-}
-.score-fill.b { background: var(--b); }
-.score-fill.a { background: var(--a); }
-.score-label {
-  margin-top: .5rem;
+.score-fill { height: 100%; border-radius: 99px; transition: width .7s cubic-bezier(.4,0,.2,1); }
+.score-fill.b { background: var(--b-color); }
+.score-fill.a { background: var(--a-color); }
+.score-caption {
   text-align: center;
-  font-size: .75rem;
+  font-size: .72rem;
   color: var(--text3);
+  margin-top: .45rem;
+  font-style: italic;
 }
-.score-label strong { color: var(--text2); font-weight: 600; }
+.score-caption strong { color: var(--text2); font-style: normal; font-weight: 600; }
 
-/* ─── Profile Tabs ────────────────────────────────────────────────────────── */
-#profile-tabs {
+/* ─── Profile Tabs ────────────────────────────────────────────────────── */
+#ptabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: var(--surface);
@@ -202,69 +198,67 @@ select option { background: var(--surface); }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: .6rem;
-  padding: .75rem 1rem;
-  font-size: .85rem;
-  font-weight: 600;
-  color: var(--text3);
-  border-bottom: 2px solid transparent;
-  transition: all .15s;
-  cursor: pointer;
-  user-select: none;
-}
-.ptab:hover { color: var(--text2); background: var(--surface2); }
-.ptab.active.b { color: var(--b); border-color: var(--b); background: var(--b-dim); }
-.ptab.active.a { color: var(--a); border-color: var(--a); background: var(--a-dim); }
-.ptab-avatar { font-size: 1.1rem; }
-.ptab-pts {
-  font-size: .68rem;
+  gap: .5rem;
+  padding: .7rem 1rem;
+  font-size: .82rem;
   font-weight: 500;
   color: var(--text3);
-  padding: .1rem .45rem;
-  background: var(--surface2);
-  border-radius: 99px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
 }
-.ptab.active .ptab-pts { background: var(--b-dim); }
-.ptab.active.a .ptab-pts { background: var(--a-dim); }
+.ptab:hover { color: var(--text2); background: var(--bg2); }
+.ptab.active.b { color: var(--b-color); border-color: var(--b-color); background: var(--b-dim); }
+.ptab.active.a { color: var(--a-color); border-color: var(--a-color); background: var(--a-dim); }
+.ptab-name { font-family: var(--font-serif); font-style: italic; font-size: .95rem; }
+.ptab-pts {
+  font-size: .65rem;
+  padding: .1rem .4rem;
+  border-radius: 99px;
+  background: var(--surface2);
+  color: var(--text3);
+}
+.ptab.active .ptab-pts { background: var(--b-dim); color: var(--b-color); }
+.ptab.active.a .ptab-pts { background: var(--a-dim); color: var(--a-color); }
 
-/* ─── Nav Tabs ────────────────────────────────────────────────────────────── */
+/* ─── Nav ─────────────────────────────────────────────────────────────── */
 #nav {
   display: flex;
   overflow-x: auto;
   scrollbar-width: none;
-  background: var(--bg2);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 .5rem;
+  padding: 0 .75rem;
+  gap: .1rem;
 }
 #nav::-webkit-scrollbar { display: none; }
 .ntab {
-  display: flex;
-  align-items: center;
-  gap: .35rem;
-  padding: .65rem .85rem;
-  font-size: .8rem;
+  padding: .6rem .75rem;
+  font-size: .75rem;
   font-weight: 500;
   color: var(--text3);
-  white-space: nowrap;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
   transition: all .15s;
   flex-shrink: 0;
+  letter-spacing: .02em;
 }
 .ntab:hover { color: var(--text2); }
-.ntab.active { color: var(--text); border-color: var(--b); }
-.ntab-icon { font-size: .95rem; }
+.ntab.active { color: var(--rose); border-color: var(--rose); }
 
-/* ─── Content ─────────────────────────────────────────────────────────────── */
+/* ─── Content ─────────────────────────────────────────────────────────── */
 #content {
-  padding: 1.25rem;
-  max-width: 720px;
+  flex: 1;
+  padding: 1.1rem;
+  max-width: 680px;
   margin: 0 auto;
   width: 100%;
 }
 .section { display: none; }
-.section.active { display: flex; flex-direction: column; gap: .75rem; }
+.section.active { display: flex; flex-direction: column; gap: .7rem; }
 
-/* ─── Card ────────────────────────────────────────────────────────────────── */
+/* ─── Card ────────────────────────────────────────────────────────────── */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -275,458 +269,343 @@ select option { background: var(--surface); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: .85rem 1rem .6rem;
+  padding: .75rem 1rem .6rem;
   border-bottom: 1px solid var(--border);
 }
-.card-title {
-  font-size: .72rem;
-  font-weight: 700;
+.card-label {
+  font-size: .63rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .07em;
+  letter-spacing: .1em;
   color: var(--text3);
 }
-.card-body { padding: 1rem; }
-.card-body + .card-body { padding-top: 0; }
+.card-body { padding: .9rem 1rem; }
 
-/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: .35rem;
-  padding: .5rem 1rem;
+  gap: .3rem;
+  padding: .48rem .9rem;
   border-radius: var(--r-sm);
-  font-size: .83rem;
-  font-weight: 600;
+  font-size: .8rem;
+  font-weight: 500;
   transition: all .15s;
   white-space: nowrap;
 }
-.btn-primary {
-  background: var(--b);
+.btn-rose {
+  background: var(--rose);
   color: #fff;
 }
-.btn-primary:hover { background: #6ba3ff; }
-.btn-ghost {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
+.btn-rose:hover { background: #b5677c; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
   color: var(--text2);
 }
-.btn-ghost:hover { background: var(--border); color: var(--text); }
-.btn-danger { color: var(--red); }
-.btn-danger:hover { background: color-mix(in srgb,var(--red) 15%,transparent); }
-.btn-xs { padding: .25rem .55rem; font-size: .73rem; border-radius: var(--r-xs); }
+.btn-outline:hover { border-color: var(--rose); color: var(--rose); }
+.btn-ghost { color: var(--text3); }
+.btn-ghost:hover { color: var(--red); }
+.btn-xs { padding: .22rem .5rem; font-size: .7rem; border-radius: var(--r-xs); }
 
-/* ─── Readonly notice ─────────────────────────────────────────────────────── */
-.ro-notice {
+/* ─── Readonly ────────────────────────────────────────────────────────── */
+.ro-bar {
   display: none;
   align-items: center;
-  gap: .5rem;
-  padding: .55rem .85rem;
-  background: color-mix(in srgb,var(--yellow) 10%,transparent);
-  border: 1px solid color-mix(in srgb,var(--yellow) 25%,transparent);
+  gap: .45rem;
+  padding: .5rem .85rem;
+  background: #fff8ec;
+  border: 1px solid #e8d4a0;
   border-radius: var(--r-sm);
-  font-size: .78rem;
-  color: var(--yellow);
+  font-size: .75rem;
+  color: #9a7a30;
 }
-.ro-notice.show { display: flex; }
+.ro-bar.show { display: flex; }
 
-/* ─── Metrics grid ────────────────────────────────────────────────────────── */
+/* ─── Metrics ─────────────────────────────────────────────────────────── */
 .metrics {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: .6rem;
+  grid-template-columns: 1fr 1fr;
+  gap: .55rem;
 }
-@media(min-width:480px) { .metrics { grid-template-columns: repeat(4,1fr); } }
+@media(min-width:440px) { .metrics { grid-template-columns: repeat(4,1fr); } }
 .metric {
-  background: var(--surface2);
+  background: var(--bg2);
   border-radius: var(--r-sm);
-  padding: .85rem .75rem;
+  padding: .8rem .65rem;
   text-align: center;
 }
 .metric-val {
-  font-size: 1.45rem;
-  font-weight: 800;
-  letter-spacing: -.02em;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
   line-height: 1.1;
+  letter-spacing: -.01em;
 }
-.metric-label {
-  font-size: .68rem;
+.metric-lbl {
+  font-size: .63rem;
   color: var(--text3);
-  margin-top: .2rem;
+  margin-top: .15rem;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
 }
-.pbar {
-  height: 4px;
-  background: var(--border);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-top: .5rem;
-}
-.pbar-fill {
-  height: 100%;
-  border-radius: 99px;
-  background: var(--b);
-  transition: width .5s cubic-bezier(.4,0,.2,1);
-}
-.pbar-fill.green { background: var(--green); }
-.pbar-fill.purple { background: var(--purple); }
+.pbar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: .45rem; }
+.pbar-fill { height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.4,0,.2,1); }
 
-/* ─── Mini chart ──────────────────────────────────────────────────────────── */
-.chart {
-  height: 72px;
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding-top: .5rem;
-}
+/* ─── Chart ───────────────────────────────────────────────────────────── */
+.chart { height: 64px; display: flex; align-items: flex-end; gap: 2px; }
 .bar {
   flex: 1;
   border-radius: 3px 3px 0 0;
-  min-height: 3px;
+  min-height: 2px;
   cursor: pointer;
   position: relative;
   transition: opacity .15s;
-  opacity: .65;
+  opacity: .6;
 }
 .bar:hover { opacity: 1; }
 .bar::after {
   content: attr(data-tip);
   position: absolute;
-  bottom: calc(100% + 5px);
+  bottom: calc(100% + 4px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  padding: .2rem .5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: .18rem .45rem;
   border-radius: var(--r-xs);
-  font-size: .68rem;
+  font-size: .65rem;
   white-space: nowrap;
-  pointer-events: none;
   z-index: 10;
+  pointer-events: none;
   display: none;
+  color: var(--text);
 }
 .bar:hover::after { display: block; }
 
-/* ─── Task list ───────────────────────────────────────────────────────────── */
-.add-row {
-  display: flex;
-  gap: .5rem;
-  margin-bottom: .75rem;
-}
+/* ─── Task ────────────────────────────────────────────────────────────── */
+.add-row { display: flex; gap: .45rem; margin-bottom: .7rem; }
 .add-row input { flex: 1; }
-.task-list { display: flex; flex-direction: column; gap: .35rem; }
+.task-list { display: flex; flex-direction: column; gap: .3rem; }
 .task-item {
   display: flex;
   align-items: center;
-  gap: .6rem;
-  padding: .6rem .75rem;
-  background: var(--surface2);
+  gap: .55rem;
+  padding: .55rem .75rem;
+  background: var(--bg2);
   border-radius: var(--r-sm);
   border: 1px solid transparent;
   transition: border-color .15s;
 }
-.task-item:hover { border-color: var(--border2); }
-.task-item.done { opacity: .55; }
-.check {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 2px solid var(--border2);
+.task-item:hover { border-color: var(--border); }
+.task-item.done { opacity: .5; }
+.chk {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border2);
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
+  font-size: .7rem;
   transition: all .15s;
-  font-size: .75rem;
 }
-.check.done { background: var(--green); border-color: var(--green); color: #000; }
-.task-text {
-  flex: 1;
-  font-size: .88rem;
-}
-.task-item.done .task-text { text-decoration: line-through; }
+.chk.done { background: var(--green); border-color: var(--green); color: #fff; }
+.task-txt { flex: 1; font-size: .85rem; }
+.task-item.done .task-txt { text-decoration: line-through; }
 .pbadge {
-  font-size: .62rem;
-  font-weight: 700;
-  padding: .1rem .4rem;
+  font-size: .6rem; font-weight: 600;
+  padding: .08rem .38rem;
   border-radius: 99px;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.pbadge-high { background: color-mix(in srgb,var(--red) 18%,transparent); color: var(--red); }
-.pbadge-low  { background: color-mix(in srgb,var(--text3) 18%,transparent); color: var(--text3); }
+.ph { background: #fce8e8; color: var(--red); }
+.pl { background: var(--sand-dim); color: var(--sand); }
 
-/* ─── Habit list ──────────────────────────────────────────────────────────── */
+/* ─── Habit ───────────────────────────────────────────────────────────── */
 .habit-item {
-  display: flex;
-  align-items: center;
-  gap: .7rem;
-  padding: .65rem .75rem;
-  background: var(--surface2);
+  display: flex; align-items: center; gap: .65rem;
+  padding: .6rem .75rem;
+  background: var(--bg2);
   border-radius: var(--r-sm);
   border: 1px solid transparent;
-  transition: all .15s;
+  transition: border-color .15s;
 }
-.habit-item:hover { border-color: var(--border2); }
-.hcheck {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--border2);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: .85rem;
-  transition: all .2s;
+.habit-item:hover { border-color: var(--border); }
+.hchk {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: .8rem;
+  transition: all .2s; flex-shrink: 0;
 }
-.hcheck.done { background: var(--green); border-color: var(--green); color: #000; }
-.habit-name { flex: 1; font-size: .88rem; }
-.streak {
-  font-size: .72rem;
-  color: var(--yellow);
-  font-weight: 600;
-}
+.hchk.done { background: var(--green); border-color: var(--green); color: #fff; }
+.habit-name { flex: 1; font-size: .85rem; }
+.streak { font-size: .7rem; color: var(--yellow); font-weight: 600; }
 
-/* ─── News ────────────────────────────────────────────────────────────────── */
+/* ─── News ────────────────────────────────────────────────────────────── */
+.news-list { display: flex; flex-direction: column; gap: .4rem; }
 .news-item {
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-  padding: .85rem;
+  display: flex; flex-direction: column; gap: .3rem;
+  padding: .75rem;
+  background: var(--bg2);
   border-radius: var(--r-sm);
-  background: var(--surface2);
   cursor: pointer;
   transition: background .15s;
   text-decoration: none;
 }
 .news-item:hover { background: var(--border); }
-.news-title { font-size: .88rem; font-weight: 600; line-height: 1.35; }
-.news-foot {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  font-size: .7rem;
-  color: var(--text3);
+.news-title { font-size: .85rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+.news-foot { display: flex; align-items: center; gap: .45rem; font-size: .67rem; color: var(--text3); }
+.ntag {
+  padding: .08rem .4rem; border-radius: 99px;
+  font-size: .62rem; font-weight: 600;
 }
-.tag {
-  padding: .1rem .45rem;
-  border-radius: 99px;
-  font-size: .65rem;
-  font-weight: 700;
-}
-.tag-br    { background: color-mix(in srgb,var(--green) 18%,transparent); color: var(--green); }
-.tag-world { background: color-mix(in srgb,var(--purple) 18%,transparent); color: var(--purple); }
+.ntag-br    { background: #e0f0e8; color: #4a9068; }
+.ntag-world { background: var(--b-dim); color: var(--b-color); }
 
-/* ─── Mood ────────────────────────────────────────────────────────────────── */
-.mood-row {
-  display: flex;
-  gap: .4rem;
-  flex-wrap: wrap;
-}
+/* ─── Mood ────────────────────────────────────────────────────────────── */
+.mood-row { display: flex; gap: .35rem; flex-wrap: wrap; }
 .mbtn {
-  font-size: 1.6rem;
-  padding: .45rem .55rem;
+  font-size: 1.55rem; padding: .38rem .48rem;
   border-radius: var(--r-sm);
-  border: 2px solid transparent;
-  transition: all .15s;
-  line-height: 1;
+  border: 1.5px solid transparent;
+  transition: all .15s; line-height: 1;
 }
-.mbtn:hover { background: var(--surface2); }
-.mbtn.sel { border-color: var(--b); background: var(--b-dim); }
-.mood-note {
-  font-size: .78rem;
-  color: var(--text3);
-  margin-top: .5rem;
-}
-.mood-history-row {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .45rem 0;
+.mbtn:hover { background: var(--bg2); }
+.mbtn.sel { border-color: var(--rose); background: var(--rose-dim); }
+.mood-note { font-size: .75rem; color: var(--text3); margin-top: .5rem; font-style: italic; }
+.mh-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: .83rem;
+  font-size: .8rem;
 }
-.mood-history-row:last-child { border: none; }
-.mood-d { color: var(--text3); font-size: .75rem; flex: 1; }
-.mood-em { font-size: 1.2rem; }
+.mh-row:last-child { border: none; }
+.mh-d { color: var(--text3); font-size: .72rem; flex: 1; }
 
-/* ─── Grocery ─────────────────────────────────────────────────────────────── */
-.grocery-item {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-  padding: .55rem .75rem;
-  background: var(--surface2);
+/* ─── Grocery ─────────────────────────────────────────────────────────── */
+.gr-item {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .5rem .75rem;
+  background: var(--bg2);
   border-radius: var(--r-sm);
-  margin-bottom: .35rem;
-  transition: opacity .15s;
+  margin-bottom: .3rem;
 }
-.grocery-item.checked { opacity: .45; }
-.grocery-item.checked span { text-decoration: line-through; }
-.grocery-item input[type=checkbox] {
-  width: 16px; height: 16px; flex-shrink: 0;
-  accent-color: var(--green);
-}
+.gr-item.checked { opacity: .45; }
+.gr-item.checked span { text-decoration: line-through; }
+.gr-item input[type=checkbox] { width: 15px; height: 15px; flex-shrink: 0; accent-color: var(--green); }
 
-/* ─── Compare ─────────────────────────────────────────────────────────────── */
-.vs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .6rem;
-}
+/* ─── Compare ─────────────────────────────────────────────────────────── */
+.vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 .vs-card {
   border-radius: var(--r-sm);
-  padding: 1rem;
+  padding: .9rem .75rem;
   text-align: center;
 }
-.vs-card.b { background: var(--b-dim); border: 1px solid var(--b-mid); }
-.vs-card.a { background: var(--a-dim); border: 1px solid var(--a-mid); }
-.vs-big { font-size: 2.2rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; margin: .3rem 0; }
-.vs-big.b { color: var(--b); }
-.vs-big.a { color: var(--a); }
-.vs-lbl { font-size: .7rem; color: var(--text3); }
-.vs-detail { font-size: .72rem; color: var(--text2); margin-top: .4rem; line-height: 1.5; }
-.winner-banner {
+.vs-card.b { background: var(--b-dim); border: 1px solid #c0d4ec; }
+.vs-card.a { background: var(--a-dim); border: 1px solid var(--rose-mid); }
+.vs-avatar { font-size: 1.3rem; }
+.vs-name {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: .9rem;
+  margin: .2rem 0;
+}
+.vs-pts {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.vs-pts.b { color: var(--b-color); }
+.vs-pts.a { color: var(--a-color); }
+.vs-lbl { font-size: .63rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+.vs-det { font-size: .7rem; color: var(--text2); margin-top: .35rem; line-height: 1.55; }
+.winner-box {
   text-align: center;
-  padding: .85rem;
+  padding: .8rem;
   border-radius: var(--r-sm);
-  font-weight: 700;
-  font-size: .95rem;
-  margin-top: .25rem;
-}
-.winner-banner.b { background: var(--b-dim); color: var(--b); border: 1px solid var(--b-mid); }
-.winner-banner.a { background: var(--a-dim); color: var(--a); border: 1px solid var(--a-mid); }
-.winner-banner.tie { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
-.points-list {
-  display: flex;
-  flex-direction: column;
-  gap: .4rem;
-}
-.point-row {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  padding: .5rem .75rem;
-  background: var(--surface2);
-  border-radius: var(--r-sm);
-  font-size: .83rem;
-}
-.point-row span:last-child {
-  margin-left: auto;
-  font-weight: 700;
-  color: var(--text2);
-}
-
-/* ─── Briefing ────────────────────────────────────────────────────────────── */
-#briefing-body {
   font-size: .88rem;
-  line-height: 1.75;
+  font-weight: 500;
+}
+.winner-box.b { background: var(--b-dim); color: var(--b-color); border: 1px solid #c0d4ec; }
+.winner-box.a { background: var(--a-dim); color: var(--a-color); border: 1px solid var(--rose-mid); }
+.winner-box.tie { background: var(--sand-dim); color: var(--sand); border: 1px solid #d4c0a8; }
+.pts-row {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .45rem .7rem;
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  font-size: .8rem;
+}
+.pts-row span:last-child { margin-left: auto; font-weight: 600; color: var(--text2); }
+
+/* ─── Briefing ────────────────────────────────────────────────────────── */
+#brief-body {
+  font-size: .85rem;
+  line-height: 1.8;
   color: var(--text2);
   white-space: pre-wrap;
 }
-#briefing-body strong { color: var(--text); }
+#brief-body strong { color: var(--text); font-weight: 600; }
 
-/* ─── Chat ────────────────────────────────────────────────────────────────── */
+/* ─── Chat ────────────────────────────────────────────────────────────── */
 #chat-msgs {
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
-  max-height: 320px;
-  overflow-y: auto;
-  padding: .25rem 0;
+  display: flex; flex-direction: column; gap: .5rem;
+  max-height: 300px; overflow-y: auto;
 }
 .msg {
-  max-width: 82%;
-  padding: .6rem .85rem;
+  max-width: 80%;
+  padding: .55rem .8rem;
   border-radius: 14px;
-  font-size: .85rem;
+  font-size: .83rem;
   line-height: 1.45;
 }
-.msg-user {
-  background: var(--b);
-  color: #fff;
-  align-self: flex-end;
-  border-radius: 14px 14px 3px 14px;
-}
-.msg-bot {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  align-self: flex-start;
-  border-radius: 3px 14px 14px 14px;
-}
-.chat-row {
-  display: flex;
-  gap: .5rem;
-  margin-top: .75rem;
-}
+.msg-user { background: var(--rose); color: #fff; align-self: flex-end; border-radius: 14px 14px 3px 14px; }
+.msg-bot  { background: var(--bg2); border: 1px solid var(--border); align-self: flex-start; border-radius: 3px 14px 14px 14px; color: var(--text); }
+.chat-row { display: flex; gap: .45rem; margin-top: .7rem; }
 .chat-row input { flex: 1; }
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .4rem;
-}
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
 .chip {
-  padding: .3rem .7rem;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
+  padding: .28rem .65rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
   border-radius: 99px;
-  font-size: .75rem;
+  font-size: .72rem;
   color: var(--text2);
   cursor: pointer;
   transition: all .15s;
 }
-.chip:hover { background: var(--border); color: var(--text); }
+.chip:hover { border-color: var(--rose); color: var(--rose); }
 
-/* ─── Toast ───────────────────────────────────────────────────────────────── */
+/* ─── Toast ───────────────────────────────────────────────────────────── */
 #toast {
   position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%) translateY(5rem);
+  bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%) translateY(4rem);
   opacity: 0;
   transition: all .25s cubic-bezier(.4,0,.2,1);
-  z-index: 999;
-  pointer-events: none;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
+  z-index: 999; pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text);
-  padding: .6rem 1.1rem;
+  padding: .55rem 1rem;
   border-radius: 99px;
-  font-size: .82rem;
+  font-size: .78rem;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: .5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.12);
+  display: flex; align-items: center; gap: .45rem;
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-#toast.ok  .ti { color: var(--green); }
-#toast.err .ti { color: var(--red); }
-#toast.wrn .ti { color: var(--yellow); }
+#toast .ti { font-size: .9rem; }
 
-/* ─── Empty ───────────────────────────────────────────────────────────────── */
-.empty {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: var(--text3);
-  font-size: .85rem;
-}
-
-/* ─── Divider ─────────────────────────────────────────────────────────────── */
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: .5rem 0;
-}
-
-/* ─── Responsive ──────────────────────────────────────────────────────────── */
-@media(max-width:400px) {
-  .score-pts { font-size: 1.6rem; }
-  #content { padding: .85rem; }
-}
+/* ─── Empty ───────────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 1.75rem 1rem; color: var(--text3); font-size: .82rem; font-style: italic; }
+.divider { height: 1px; background: var(--border); margin: .4rem 0; }
 </style>
 </head>
 <body>
@@ -734,17 +613,15 @@ select option { background: var(--surface); }
 
   <!-- Header -->
   <header id="header">
-    <h1>
-      <span>💑</span>
-      Hub Casal
-    </h1>
-    <div class="viewer-chip" id="viewer-chip">
-      <div class="dot" id="viewer-dot"></div>
-      <span id="viewer-name"></span>
+    <h1>Our Little Hub ♡</h1>
+    <div class="viewer-pill">
+      <div class="viewer-dot" id="vdot"></div>
+      <span id="vname"></span>
     </div>
     <button id="refresh-btn" onclick="refreshData()">
-      <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+      <svg id="ricon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
       </svg>
       Atualizar
     </button>
@@ -752,49 +629,47 @@ select option { background: var(--surface); }
 
   <!-- Scoreboard -->
   <div id="scoreboard">
-    <div class="score-players">
-      <div class="score-player">
-        <div class="score-name">👨 Bernardo</div>
-        <div class="score-pts b" id="pts-b">0</div>
+    <div class="score-row">
+      <div class="score-side">
+        <div class="score-who">Bernardo</div>
+        <div class="score-num b" id="pts-b">0</div>
       </div>
-      <div class="score-vs">VS</div>
-      <div class="score-player right">
-        <div class="score-name">Amanda 👩</div>
-        <div class="score-pts a" id="pts-a">0</div>
+      <div class="score-mid">vs</div>
+      <div class="score-side right">
+        <div class="score-who">Amanda</div>
+        <div class="score-num a" id="pts-a">0</div>
       </div>
     </div>
     <div class="score-track">
       <div class="score-fill b" id="fill-b" style="width:50%"></div>
       <div class="score-fill a" id="fill-a" style="width:50%"></div>
     </div>
-    <div class="score-label" id="score-label">Carregando...</div>
+    <div class="score-caption" id="score-caption">Carregando...</div>
   </div>
 
   <!-- Profile tabs -->
-  <div id="profile-tabs">
+  <div id="ptabs">
     <div class="ptab b active" data-p="bernardo" onclick="switchProfile('bernardo')">
-      <span class="ptab-avatar">👨</span>
-      Bernardo
+      <span class="ptab-name">Bernardo</span>
       <span class="ptab-pts" id="ptab-b">0 pts</span>
     </div>
     <div class="ptab a" data-p="amanda" onclick="switchProfile('amanda')">
-      <span class="ptab-avatar">👩</span>
-      Amanda
+      <span class="ptab-name">Amanda</span>
       <span class="ptab-pts" id="ptab-a">0 pts</span>
     </div>
   </div>
 
   <!-- Nav -->
   <nav id="nav">
-    <button class="ntab active" data-s="saude"    onclick="go('saude')">   <span class="ntab-icon">❤️</span> Saúde</button>
-    <button class="ntab"        data-s="tarefas"  onclick="go('tarefas')"> <span class="ntab-icon">✅</span> Tarefas</button>
-    <button class="ntab"        data-s="habitos"  onclick="go('habitos')"> <span class="ntab-icon">🔥</span> Hábitos</button>
-    <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ntab-icon">📰</span> Notícias</button>
-    <button class="ntab"        data-s="humor"    onclick="go('humor')">   <span class="ntab-icon">😊</span> Humor</button>
-    <button class="ntab"        data-s="mercado"  onclick="go('mercado')"> <span class="ntab-icon">🛒</span> Mercado</button>
-    <button class="ntab"        data-s="compare"  onclick="go('compare')"> <span class="ntab-icon">🏆</span> Comparar</button>
-    <button class="ntab"        data-s="briefing" onclick="go('briefing')"><span class="ntab-icon">🌅</span> Briefing</button>
-    <button class="ntab"        data-s="chat"     onclick="go('chat')">    <span class="ntab-icon">🤖</span> Chat IA</button>
+    <button class="ntab active" data-s="saude"    onclick="go('saude')">Saúde</button>
+    <button class="ntab"        data-s="tarefas"  onclick="go('tarefas')">Tarefas</button>
+    <button class="ntab"        data-s="habitos"  onclick="go('habitos')">Hábitos</button>
+    <button class="ntab"        data-s="noticias" onclick="go('noticias')">Notícias</button>
+    <button class="ntab"        data-s="humor"    onclick="go('humor')">Humor</button>
+    <button class="ntab"        data-s="mercado"  onclick="go('mercado')">Mercado</button>
+    <button class="ntab"        data-s="compare"  onclick="go('compare')">Comparar</button>
+    <button class="ntab"        data-s="briefing" onclick="go('briefing')">Briefing</button>
+    <button class="ntab"        data-s="chat"     onclick="go('chat')">Chat IA</button>
   </nav>
 
   <!-- Content -->
@@ -802,68 +677,60 @@ select option { background: var(--surface); }
 
     <!-- SAÚDE -->
     <div class="section active" id="sec-saude">
-      <div class="ro-notice" id="ro-saude">
-        <span>👁️</span> Visualizando saúde de <strong id="ro-saude-name"></strong>
-      </div>
+      <div class="ro-bar" id="ro-saude"><span>👁</span> Visualizando saúde de <strong id="ro-saude-n"></strong></div>
       <div class="card">
         <div class="card-head">
-          <span class="card-title">Hoje · <span id="health-date"></span></span>
-          <span style="font-size:.72rem;color:var(--text3)" id="health-sync"></span>
+          <span class="card-label">Hoje · <span id="health-date"></span></span>
+          <span style="font-size:.65rem;color:var(--text3)" id="health-sync"></span>
         </div>
         <div class="card-body">
           <div class="metrics">
             <div class="metric">
-              <div class="metric-val b" id="m-steps" style="color:var(--b)">—</div>
-              <div class="metric-label">Passos</div>
-              <div class="pbar"><div class="pbar-fill" id="p-steps" style="width:0"></div></div>
+              <div class="metric-val" id="m-steps" style="color:var(--b-color)">—</div>
+              <div class="metric-lbl">Passos</div>
+              <div class="pbar"><div class="pbar-fill" id="p-steps" style="width:0;background:var(--b-color)"></div></div>
             </div>
             <div class="metric">
-              <div class="metric-val" id="m-sleep" style="color:var(--purple)">—</div>
-              <div class="metric-label">Sono</div>
-              <div class="pbar"><div class="pbar-fill purple" id="p-sleep" style="width:0"></div></div>
+              <div class="metric-val" id="m-sleep" style="color:#9b78c4">—</div>
+              <div class="metric-lbl">Sono</div>
+              <div class="pbar"><div class="pbar-fill" id="p-sleep" style="width:0;background:#9b78c4"></div></div>
             </div>
             <div class="metric">
-              <div class="metric-val" id="m-water" style="color:#38bdf8">—</div>
-              <div class="metric-label">Água</div>
-              <div class="pbar"><div class="pbar-fill" id="p-water" style="width:0;background:#38bdf8"></div></div>
+              <div class="metric-val" id="m-water" style="color:#78a8c4">—</div>
+              <div class="metric-lbl">Água</div>
+              <div class="pbar"><div class="pbar-fill" id="p-water" style="width:0;background:#78a8c4"></div></div>
             </div>
             <div class="metric">
-              <div class="metric-val" id="m-hr" style="color:var(--red)">—</div>
-              <div class="metric-label">FC repouso</div>
+              <div class="metric-val" id="m-hr" style="color:var(--rose)">—</div>
+              <div class="metric-lbl">FC repouso</div>
             </div>
           </div>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Passos — 30 dias</span></div>
-        <div class="card-body">
-          <div class="chart" id="chart-steps"></div>
-        </div>
+        <div class="card-head"><span class="card-label">Passos — 30 dias</span></div>
+        <div class="card-body"><div class="chart" id="chart-steps"></div></div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Sono — 30 dias</span></div>
-        <div class="card-body">
-          <div class="chart" id="chart-sleep"></div>
-        </div>
+        <div class="card-head"><span class="card-label">Sono — 30 dias</span></div>
+        <div class="card-body"><div class="chart" id="chart-sleep"></div></div>
       </div>
     </div>
 
     <!-- TAREFAS -->
     <div class="section" id="sec-tarefas">
-      <div class="ro-notice" id="ro-tarefas">
-        <span>👁️</span> Visualizando tarefas de <strong id="ro-tarefas-name"></strong>
-      </div>
+      <div class="ro-bar" id="ro-tarefas"><span>👁</span> Visualizando tarefas de <strong id="ro-tarefas-n"></strong></div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Tarefas de hoje</span></div>
+        <div class="card-head"><span class="card-label">Tarefas de hoje</span></div>
         <div class="card-body">
           <div class="add-row" id="task-add-row">
             <input id="task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')addTask()">
             <select id="task-pri" style="width:auto;flex-shrink:0">
               <option value="normal">Normal</option>
-              <option value="high">Alta ↑</option>
-              <option value="low">Baixa ↓</option>
+              <option value="high">Alta</option>
+              <option value="low">Baixa</option>
             </select>
-            <button class="btn btn-primary" onclick="addTask()">Adicionar</button>
+            <button class="btn btn-rose" onclick="addTask()">+ Add</button>
           </div>
           <div class="task-list" id="task-list"></div>
         </div>
@@ -872,17 +739,15 @@ select option { background: var(--surface); }
 
     <!-- HÁBITOS -->
     <div class="section" id="sec-habitos">
-      <div class="ro-notice" id="ro-habitos">
-        <span>👁️</span> Visualizando hábitos de <strong id="ro-habitos-name"></strong>
-      </div>
+      <div class="ro-bar" id="ro-habitos"><span>👁</span> Visualizando hábitos de <strong id="ro-habitos-n"></strong></div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Hábitos de hoje</span></div>
+        <div class="card-head"><span class="card-label">Hábitos de hoje</span></div>
         <div class="card-body">
-          <div id="habit-list"></div>
+          <div id="habit-list" style="display:flex;flex-direction:column;gap:.3rem"></div>
           <div id="habit-add-row" style="margin-top:.75rem">
             <div class="add-row">
               <input id="habit-input" placeholder="Novo hábito..." onkeydown="if(event.key==='Enter')addHabit()">
-              <button class="btn btn-primary" onclick="addHabit()">Adicionar</button>
+              <button class="btn btn-rose" onclick="addHabit()">+ Add</button>
             </div>
           </div>
         </div>
@@ -892,24 +757,22 @@ select option { background: var(--surface); }
     <!-- NOTÍCIAS -->
     <div class="section" id="sec-noticias">
       <div class="card">
-        <div class="card-head"><span class="card-title">Brasil</span></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:.4rem" id="news-br"></div>
+        <div class="card-head"><span class="card-label">Brasil</span></div>
+        <div class="card-body"><div class="news-list" id="news-br"></div></div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Mundo</span></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:.4rem" id="news-world"></div>
+        <div class="card-head"><span class="card-label">Mundo</span></div>
+        <div class="card-body"><div class="news-list" id="news-world"></div></div>
       </div>
     </div>
 
     <!-- HUMOR -->
     <div class="section" id="sec-humor">
-      <div class="ro-notice" id="ro-humor">
-        <span>👁️</span> Visualizando humor de <strong id="ro-humor-name"></strong>
-      </div>
+      <div class="ro-bar" id="ro-humor"><span>👁</span> Visualizando humor de <strong id="ro-humor-n"></strong></div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Como está hoje?</span></div>
+        <div class="card-head"><span class="card-label">Como está hoje?</span></div>
         <div class="card-body">
-          <div class="mood-row" id="mood-row">
+          <div class="mood-row">
             <button class="mbtn" data-m="😄" onclick="setMood('😄')">😄</button>
             <button class="mbtn" data-m="🙂" onclick="setMood('🙂')">🙂</button>
             <button class="mbtn" data-m="😐" onclick="setMood('😐')">😐</button>
@@ -923,7 +786,7 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Histórico</span></div>
+        <div class="card-head"><span class="card-label">Histórico</span></div>
         <div class="card-body" id="mood-hist"></div>
       </div>
     </div>
@@ -932,13 +795,13 @@ select option { background: var(--surface); }
     <div class="section" id="sec-mercado">
       <div class="card">
         <div class="card-head">
-          <span class="card-title">Lista de compras</span>
-          <button class="btn btn-ghost btn-xs" onclick="clearChecked()">Limpar comprados</button>
+          <span class="card-label">Lista de compras</span>
+          <button class="btn btn-outline btn-xs" onclick="clearChecked()">Limpar comprados</button>
         </div>
         <div class="card-body">
           <div class="add-row">
             <input id="grocery-input" placeholder="Adicionar item..." onkeydown="if(event.key==='Enter')addGrocery()">
-            <button class="btn btn-primary" onclick="addGrocery()">Adicionar</button>
+            <button class="btn btn-rose" onclick="addGrocery()">+ Add</button>
           </div>
           <div id="grocery-list"></div>
         </div>
@@ -948,55 +811,55 @@ select option { background: var(--surface); }
     <!-- COMPARAR -->
     <div class="section" id="sec-compare">
       <div class="card">
-        <div class="card-head"><span class="card-title">Pontuação hoje</span></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:.75rem">
+        <div class="card-head"><span class="card-label">Placar de hoje</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.65rem">
           <div class="vs-grid">
             <div class="vs-card b">
-              <div style="font-size:1.4rem">👨</div>
-              <div class="vs-big b" id="vs-b">0</div>
+              <div class="vs-avatar">👨</div>
+              <div class="vs-name">Bernardo</div>
+              <div class="vs-pts b" id="vs-b">0</div>
               <div class="vs-lbl">pontos</div>
-              <div class="vs-detail" id="vs-b-det">—</div>
+              <div class="vs-det" id="vs-b-det">—</div>
             </div>
             <div class="vs-card a">
-              <div style="font-size:1.4rem">👩</div>
-              <div class="vs-big a" id="vs-a">0</div>
+              <div class="vs-avatar">👩</div>
+              <div class="vs-name">Amanda</div>
+              <div class="vs-pts a" id="vs-a">0</div>
               <div class="vs-lbl">pontos</div>
-              <div class="vs-detail" id="vs-a-det">—</div>
+              <div class="vs-det" id="vs-a-det">—</div>
             </div>
           </div>
-          <div class="winner-banner" id="winner-banner"></div>
+          <div class="winner-box" id="winner-box"></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Saúde comparada</span></div>
+        <div class="card-head"><span class="card-label">Saúde comparada</span></div>
         <div class="card-body">
           <div class="vs-grid">
-            <div style="display:flex;flex-direction:column;gap:.4rem">
-              <div style="font-size:.7rem;font-weight:700;color:var(--b);text-transform:uppercase;letter-spacing:.05em">👨 Bernardo</div>
-              <div class="metric"><div class="metric-val" id="vs-b-steps" style="color:var(--b)">—</div><div class="metric-label">Passos</div></div>
-              <div class="metric"><div class="metric-val" id="vs-b-sleep" style="color:var(--b)">—</div><div class="metric-label">Sono</div></div>
-              <div class="metric"><div class="metric-val" id="vs-b-water" style="color:var(--b)">—</div><div class="metric-label">Água</div></div>
+            <div style="display:flex;flex-direction:column;gap:.35rem">
+              <div style="font-size:.65rem;font-weight:600;color:var(--b-color);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.1rem">Bernardo</div>
+              <div class="metric"><div class="metric-val" id="vs-b-steps" style="color:var(--b-color)">—</div><div class="metric-lbl">Passos</div></div>
+              <div class="metric"><div class="metric-val" id="vs-b-sleep" style="color:var(--b-color)">—</div><div class="metric-lbl">Sono</div></div>
+              <div class="metric"><div class="metric-val" id="vs-b-water" style="color:var(--b-color)">—</div><div class="metric-lbl">Água</div></div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:.4rem">
-              <div style="font-size:.7rem;font-weight:700;color:var(--a);text-transform:uppercase;letter-spacing:.05em">Amanda 👩</div>
-              <div class="metric"><div class="metric-val" id="vs-a-steps" style="color:var(--a)">—</div><div class="metric-label">Passos</div></div>
-              <div class="metric"><div class="metric-val" id="vs-a-sleep" style="color:var(--a)">—</div><div class="metric-label">Sono</div></div>
-              <div class="metric"><div class="metric-val" id="vs-a-water" style="color:var(--a)">—</div><div class="metric-label">Água</div></div>
+            <div style="display:flex;flex-direction:column;gap:.35rem">
+              <div style="font-size:.65rem;font-weight:600;color:var(--a-color);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.1rem">Amanda</div>
+              <div class="metric"><div class="metric-val" id="vs-a-steps" style="color:var(--a-color)">—</div><div class="metric-lbl">Passos</div></div>
+              <div class="metric"><div class="metric-val" id="vs-a-sleep" style="color:var(--a-color)">—</div><div class="metric-lbl">Sono</div></div>
+              <div class="metric"><div class="metric-val" id="vs-a-water" style="color:var(--a-color)">—</div><div class="metric-lbl">Água</div></div>
             </div>
           </div>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Como ganhar pontos</span></div>
-        <div class="card-body">
-          <div class="points-list">
-            <div class="point-row">✅ Tarefa concluída <span>+2 pts cada</span></div>
-            <div class="point-row">🔥 Hábito do dia <span>+3 pts cada</span></div>
-            <div class="point-row">👟 1.000 passos <span>+1 pt (máx 10)</span></div>
-            <div class="point-row">💧 ≥ 2L de água <span>+2 pts</span></div>
-            <div class="point-row">😴 ≥ 7h de sono <span>+3 pts</span></div>
-            <div class="point-row">😊 Humor registrado <span>+1 pt</span></div>
-          </div>
+        <div class="card-head"><span class="card-label">Como ganhar pontos</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.3rem">
+          <div class="pts-row">Tarefa concluída <span>+2 pts cada</span></div>
+          <div class="pts-row">Hábito do dia <span>+3 pts cada</span></div>
+          <div class="pts-row">1.000 passos <span>+1 pt (máx 10)</span></div>
+          <div class="pts-row">≥ 2L de água <span>+2 pts</span></div>
+          <div class="pts-row">≥ 7h de sono <span>+3 pts</span></div>
+          <div class="pts-row">Humor registrado <span>+1 pt</span></div>
         </div>
       </div>
     </div>
@@ -1005,35 +868,33 @@ select option { background: var(--surface); }
     <div class="section" id="sec-briefing">
       <div class="card">
         <div class="card-head">
-          <span class="card-title">Resumo do dia · <span id="brief-for"></span></span>
-          <button class="btn btn-ghost btn-xs" onclick="regenBriefing()">↺ Gerar novo</button>
+          <span class="card-label">Resumo do dia · <span id="brief-for"></span></span>
+          <button class="btn btn-outline btn-xs" onclick="regenBriefing()">↺ Gerar novo</button>
         </div>
-        <div class="card-body">
-          <div id="briefing-body">Carregando...</div>
-        </div>
+        <div class="card-body"><div id="brief-body">Carregando...</div></div>
       </div>
     </div>
 
     <!-- CHAT -->
     <div class="section" id="sec-chat">
       <div class="card">
-        <div class="card-head"><span class="card-title">Chat IA · <span id="chat-for"></span></span></div>
+        <div class="card-head"><span class="card-label">Chat IA · <span id="chat-for"></span></span></div>
         <div class="card-body">
           <div id="chat-msgs"></div>
           <div class="chat-row">
             <input id="chat-input" placeholder="Digite algo..." onkeydown="if(event.key==='Enter')sendChat()">
-            <button class="btn btn-primary" onclick="sendChat()">Enviar</button>
+            <button class="btn btn-rose" onclick="sendChat()">Enviar</button>
           </div>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Sugestões</span></div>
+        <div class="card-head"><span class="card-label">Sugestões</span></div>
         <div class="card-body">
           <div class="chips">
-            <button class="chip" onclick="qChat('Adicionar leite na lista de mercado')">🛒 Leite na lista</button>
-            <button class="chip" onclick="qChat('Marcar academia como feita')">🏋️ Academia feita</button>
-            <button class="chip" onclick="qChat('Criar tarefa estudar para amanhã')">📚 Estudar amanhã</button>
-            <button class="chip" onclick="qChat('Como estou indo hoje?')">📊 Meu progresso</button>
+            <button class="chip" onclick="qChat('Adicionar leite na lista de mercado')">Leite na lista</button>
+            <button class="chip" onclick="qChat('Marcar academia como feita')">Academia feita</button>
+            <button class="chip" onclick="qChat('Criar tarefa estudar para amanhã')">Estudar amanhã</button>
+            <button class="chip" onclick="qChat('Como estou indo hoje?')">Meu progresso</button>
           </div>
         </div>
       </div>
@@ -1042,97 +903,72 @@ select option { background: var(--surface); }
   </main>
 </div>
 
-<div id="toast"><span class="ti">●</span><span id="toast-msg"></span></div>
+<div id="toast"><span class="ti" id="toast-icon">♡</span><span id="toast-msg"></span></div>
 
 <script>
-// ─── Estado ────────────────────────────────────────────────────────────────
-const D       = window.HUB_DATA || {};
-const VIEWER  = D.viewer || 'bernardo';
+const D      = window.HUB_DATA || {};
+const VIEWER = D.viewer || 'bernardo';
 let   PROFILE = VIEWER;
-let   SECTION = 'saude';
 const TODAY   = new Date().toISOString().split('T')[0];
+let ud = { tasks:{}, habits:[], habit_completions:{}, moods:{}, grocery:[] };
 
-let ud = { tasks:{}, habits:[], habit_completions:{}, moods:{}, grocery:[], settings:{} };
-
-// ─── Boot ──────────────────────────────────────────────────────────────────
 async function boot() {
-  renderViewerChip();
+  renderViewer();
   renderScore();
   await loadUD(PROFILE);
   renderAll();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
 
-// ─── Viewer chip ───────────────────────────────────────────────────────────
-function renderViewerChip() {
+function renderViewer() {
   const isB = VIEWER === 'bernardo';
-  document.getElementById('viewer-dot').style.background = isB ? 'var(--b)' : 'var(--a)';
-  document.getElementById('viewer-name').textContent = isB ? 'Bernardo' : 'Amanda';
+  document.getElementById('vdot').style.background = isB ? 'var(--b-color)' : 'var(--a-color)';
+  document.getElementById('vname').textContent = isB ? 'Bernardo' : 'Amanda';
 }
 
-// ─── Score ─────────────────────────────────────────────────────────────────
 function renderScore() {
-  const comp = D.competition || {};
-  const sc   = comp.scores || {};
+  const sc   = (D.competition || {}).scores || {};
   const bPts = (sc.bernardo || {}).total || 0;
   const aPts = (sc.amanda   || {}).total || 0;
   const tot  = bPts + aPts || 1;
-
   document.getElementById('pts-b').textContent  = bPts;
   document.getElementById('pts-a').textContent  = aPts;
   document.getElementById('ptab-b').textContent = bPts + ' pts';
   document.getElementById('ptab-a').textContent = aPts + ' pts';
   document.getElementById('fill-b').style.width = (bPts / tot * 100) + '%';
   document.getElementById('fill-a').style.width = (aPts / tot * 100) + '%';
-
-  const lbl = document.getElementById('score-label');
-  const { leader, diff } = comp;
-  if (leader === 'empate') {
-    lbl.innerHTML = '🤝 <strong>Empate!</strong> Estão iguais hoje';
-  } else {
-    const n = leader === 'bernardo' ? '👨 Bernardo' : '👩 Amanda';
-    lbl.innerHTML = `🏆 <strong>${n}</strong> está na frente por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}`;
+  const { leader, diff } = D.competition || {};
+  const cap = document.getElementById('score-caption');
+  if (leader === 'empate') cap.innerHTML = 'Estão empatados hoje ♡';
+  else {
+    const n = leader === 'bernardo' ? 'Bernardo' : 'Amanda';
+    cap.innerHTML = `<strong>${n}</strong> está na frente por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}`;
   }
 }
 
-// ─── Profile switch ────────────────────────────────────────────────────────
 async function switchProfile(p) {
   PROFILE = p;
-  document.querySelectorAll('.ptab').forEach(t => {
-    t.classList.toggle('active', t.dataset.p === p);
-  });
+  document.querySelectorAll('.ptab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
   await loadUD(p);
   renderAll();
 }
 
-// ─── Section switch ────────────────────────────────────────────────────────
 function go(s) {
-  SECTION = s;
   document.querySelectorAll('.ntab').forEach(t => t.classList.toggle('active', t.dataset.s === s));
   document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'sec-' + s));
   if (s === 'compare') renderCompare();
 }
 
-// ─── Load user data ────────────────────────────────────────────────────────
 async function loadUD(p) {
-  try {
-    const r = await fetch('/api/load?u=' + p);
-    ud = await r.json();
-  } catch (e) { console.error(e); }
+  try { const r = await fetch('/api/load?u=' + p); ud = await r.json(); } catch(e) {}
 }
 
-// ─── Render all ────────────────────────────────────────────────────────────
 function renderAll() {
-  renderRO();
-  renderHealth();
-  renderTasks();
-  renderHabits();
-  renderNews();
-  renderMood();
-  renderGrocery();
-  renderBriefing();
-  document.getElementById('brief-for').textContent = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
-  document.getElementById('chat-for').textContent  = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
+  renderRO(); renderHealth(); renderTasks(); renderHabits();
+  renderNews(); renderMood(); renderGrocery(); renderBriefing();
+  const pName = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
+  document.getElementById('brief-for').textContent = pName;
+  document.getElementById('chat-for').textContent  = pName;
 }
 
 function renderRO() {
@@ -1141,76 +977,66 @@ function renderRO() {
   ['saude','tarefas','habitos','humor'].forEach(id => {
     const el = document.getElementById('ro-' + id);
     if (el) el.classList.toggle('show', !own);
-    const nm = document.getElementById('ro-' + id + '-name');
+    const nm = document.getElementById('ro-' + id + '-n');
     if (nm) nm.textContent = name;
   });
   ['task-add-row','habit-add-row'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.style.opacity = own ? '1' : '.35'; el.style.pointerEvents = own ? '' : 'none'; }
+    if (el) { el.style.opacity = own ? '' : '.3'; el.style.pointerEvents = own ? '' : 'none'; }
   });
 }
 
-// ─── Saúde ─────────────────────────────────────────────────────────────────
 function renderHealth() {
   const h = (D[PROFILE] || {}).health || {};
-  document.getElementById('health-date').textContent  = h.date ? fmtD(h.date) : fmtD(TODAY);
-  document.getElementById('health-sync').textContent  = h.synced_at ? 'Sync ' + h.synced_at : '';
+  document.getElementById('health-date').textContent = h.date ? fmtD(h.date) : fmtD(TODAY);
+  document.getElementById('health-sync').textContent = h.synced_at ? 'sync ' + h.synced_at : '';
   document.getElementById('m-steps').textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
   document.getElementById('m-sleep').textContent = fmtSleep(h.sleep_minutes || 0);
   document.getElementById('m-water').textContent = h.water_ml ? h.water_ml + 'ml' : '—';
   document.getElementById('m-hr').textContent    = h.heart_rate ? h.heart_rate + ' bpm' : '—';
-
-  const stepPct  = Math.min(100, (h.steps || 0) / (h.steps_goal || 10000) * 100);
-  const sleepPct = Math.min(100, (h.sleep_minutes || 0) / 480 * 100);
-  const waterPct = Math.min(100, (h.water_ml || 0) / 2500 * 100);
-  document.getElementById('p-steps').style.width = stepPct + '%';
-  document.getElementById('p-sleep').style.width = sleepPct + '%';
-  document.getElementById('p-water').style.width = waterPct + '%';
-
-  const histKey = PROFILE === 'bernardo' ? 'b_history' : 'a_history';
-  const hist    = D[histKey] || {};
-  buildChart('chart-steps', hist, 'steps',         'var(--b)',      10000);
-  buildChart('chart-sleep', hist, 'sleep_minutes', 'var(--purple)', 480);
+  document.getElementById('p-steps').style.width = Math.min(100, (h.steps || 0) / (h.steps_goal || 10000) * 100) + '%';
+  document.getElementById('p-sleep').style.width = Math.min(100, (h.sleep_minutes || 0) / 480 * 100) + '%';
+  document.getElementById('p-water').style.width = Math.min(100, (h.water_ml || 0) / 2500 * 100) + '%';
+  const hist = D[PROFILE === 'bernardo' ? 'b_history' : 'a_history'] || {};
+  buildChart('chart-steps', hist, 'steps',         'var(--b-color)', 10000);
+  buildChart('chart-sleep', hist, 'sleep_minutes', '#9b78c4',        480);
 }
 
-function buildChart(elId, hist, key, color, ref) {
-  const el = document.getElementById(elId);
+function buildChart(id, hist, key, color, ref) {
+  const el = document.getElementById(id);
   if (!el) return;
   const dates = Object.keys(hist).sort().slice(-30);
   if (!dates.length) { el.innerHTML = '<div class="empty">Sem histórico</div>'; return; }
   const vals = dates.map(d => (hist[d] || {})[key] || 0);
-  const maxV = Math.max(...vals, ref * .2) || 1;
+  const maxV = Math.max(...vals, ref * .1) || 1;
   el.innerHTML = dates.map((d, i) => {
-    const v   = vals[i];
-    const pct = Math.max(3, v / maxV * 100);
+    const v = vals[i], pct = Math.max(2, v / maxV * 100);
+    const c = v >= ref ? 'var(--green)' : color;
     const tip = key === 'sleep_minutes' ? fmtSleep(v) : v.toLocaleString('pt-BR');
-    const clr = v >= ref ? 'var(--green)' : color;
-    return `<div class="bar" style="height:${pct}%;background:${clr}" data-tip="${fmtD(d)}: ${tip}"></div>`;
+    return `<div class="bar" style="height:${pct}%;background:${c}" data-tip="${fmtD(d)}: ${tip}"></div>`;
   }).join('');
 }
 
-// ─── Tarefas ───────────────────────────────────────────────────────────────
 function renderTasks() {
   const tasks = (ud.tasks || {})[TODAY] || [];
   const el    = document.getElementById('task-list');
   if (!tasks.length) { el.innerHTML = '<div class="empty">Nenhuma tarefa para hoje</div>'; return; }
   el.innerHTML = tasks.map((t, i) => `
     <div class="task-item ${t.done ? 'done' : ''}">
-      <div class="check ${t.done ? 'done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</div>
-      <span class="task-text">${esc(t.text)}</span>
-      ${t.priority === 'high' ? '<span class="pbadge pbadge-high">Alta</span>' : ''}
-      ${t.priority === 'low'  ? '<span class="pbadge pbadge-low">Baixa</span>' : ''}
-      <button class="btn btn-danger btn-xs" onclick="removeTask(${i})">✕</button>
+      <div class="chk ${t.done ? 'done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</div>
+      <span class="task-txt">${esc(t.text)}</span>
+      ${t.priority === 'high' ? '<span class="pbadge ph">Alta</span>' : ''}
+      ${t.priority === 'low'  ? '<span class="pbadge pl">Baixa</span>' : ''}
+      <button class="btn btn-ghost btn-xs" onclick="removeTask(${i})">✕</button>
     </div>`).join('');
 }
 
 async function addTask(text, date, priority) {
-  if (PROFILE !== VIEWER) { toast('Você só pode editar suas tarefas', 'wrn'); return; }
+  if (PROFILE !== VIEWER) { toast('Você só pode editar suas tarefas', '⚠️'); return; }
   const inp = document.getElementById('task-input');
   const t   = text || inp.value.trim();
   if (!t) return;
-  const d   = date || TODAY;
-  const p   = priority || document.getElementById('task-pri').value;
+  const d = date || TODAY, p = priority || document.getElementById('task-pri').value;
   const tasks = [...((ud.tasks || {})[d] || [])];
   tasks.push({ id: Date.now(), text: t, done: false, priority: p });
   ud.tasks = { ...(ud.tasks || {}), [d]: tasks };
@@ -1240,36 +1066,31 @@ async function removeTask(i) {
   localScore();
 }
 
-// ─── Hábitos ───────────────────────────────────────────────────────────────
 function renderHabits() {
-  const habits = ud.habits || [];
-  const comps  = ud.habit_completions || {};
-  const el     = document.getElementById('habit-list');
+  const habits = ud.habits || [], comps = ud.habit_completions || {};
+  const el = document.getElementById('habit-list');
   if (!habits.length) { el.innerHTML = '<div class="empty">Nenhum hábito cadastrado</div>'; return; }
   el.innerHTML = habits.map(h => {
-    const done  = `${h.id}:${TODAY}` in comps;
+    const done = `${h.id}:${TODAY}` in comps;
     const streak = calcStreak(h.id, comps);
     return `<div class="habit-item">
-      <div class="hcheck ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">${done ? '✓' : ''}</div>
+      <div class="hchk ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">${done ? '✓' : ''}</div>
       <span class="habit-name">${esc(h.name)}</span>
-      ${streak > 0 ? `<span class="streak">${streak}🔥</span>` : ''}
-      <button class="btn btn-danger btn-xs" onclick="removeHabit('${h.id}')">✕</button>
+      ${streak > 0 ? `<span class="streak">${streak} 🔥</span>` : ''}
+      <button class="btn btn-ghost btn-xs" onclick="removeHabit('${h.id}')">✕</button>
     </div>`;
   }).join('');
 }
 
 function calcStreak(id, comps) {
-  let s = 0, d = new Date(TODAY);
-  while (`${id}:${d.toISOString().split('T')[0]}` in comps) {
-    s++; d.setDate(d.getDate() - 1);
-  }
+  let s = 0; const d = new Date(TODAY);
+  while (`${id}:${d.toISOString().split('T')[0]}` in comps) { s++; d.setDate(d.getDate() - 1); }
   return s;
 }
 
 async function toggleHabit(id) {
-  if (PROFILE !== VIEWER) { toast('Você só pode editar seus hábitos', 'wrn'); return; }
-  const key   = `${id}:${TODAY}`;
-  const comps = { ...(ud.habit_completions || {}) };
+  if (PROFILE !== VIEWER) { toast('Você só pode editar seus hábitos', '⚠️'); return; }
+  const key = `${id}:${TODAY}`, comps = { ...(ud.habit_completions || {}) };
   if (key in comps) delete comps[key]; else comps[key] = true;
   ud.habit_completions = comps;
   renderHabits();
@@ -1279,14 +1100,12 @@ async function toggleHabit(id) {
 
 async function addHabit() {
   if (PROFILE !== VIEWER) return;
-  const inp  = document.getElementById('habit-input');
-  const name = inp.value.trim();
+  const inp = document.getElementById('habit-input'), name = inp.value.trim();
   if (!name) return;
-  const habits = [...(ud.habits || []), { id: 'h' + Date.now(), name, recurrenceType: 'daily' }];
-  ud.habits = habits;
+  ud.habits = [...(ud.habits || []), { id: 'h' + Date.now(), name, recurrenceType: 'daily' }];
   inp.value = '';
   renderHabits();
-  await api('/api/save/habits', { habits });
+  await api('/api/save/habits', { habits: ud.habits });
 }
 
 async function removeHabit(id) {
@@ -1296,12 +1115,8 @@ async function removeHabit(id) {
   await api('/api/save/habits', { habits: ud.habits });
 }
 
-// ─── Notícias ──────────────────────────────────────────────────────────────
 function renderNews() {
   const news  = (D[PROFILE] || {}).news || [];
-  const br    = news.filter(n => n.region === 'br');
-  const world = news.filter(n => n.region !== 'br');
-
   const render = (elId, items) => {
     const el = document.getElementById(elId);
     if (!items.length) { el.innerHTML = '<div class="empty">Sem notícias</div>'; return; }
@@ -1309,119 +1124,86 @@ function renderNews() {
       <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
         <div class="news-title">${esc(n.title)}</div>
         <div class="news-foot">
-          <span class="tag ${n.region === 'br' ? 'tag-br' : 'tag-world'}">${n.region === 'br' ? 'BR' : 'Mundo'}</span>
-          <span>${esc(n.source)}</span>
+          <span class="ntag ${n.region === 'br' ? 'ntag-br' : 'ntag-world'}">${n.region === 'br' ? 'BR' : 'Mundo'}</span>
+          ${esc(n.source)}
         </div>
       </a>`).join('');
   };
-  render('news-br',    br);
-  render('news-world', world);
+  render('news-br',    news.filter(n => n.region === 'br'));
+  render('news-world', news.filter(n => n.region !== 'br'));
 }
 
-// ─── Humor ─────────────────────────────────────────────────────────────────
 function renderMood() {
-  const moods = ud.moods || {};
-  const today = moods[TODAY];
-  document.querySelectorAll('.mbtn').forEach(b =>
-    b.classList.toggle('sel', today && b.dataset.m === today.mood)
-  );
+  const moods = ud.moods || {}, today = moods[TODAY];
+  document.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('sel', today && b.dataset.m === today.mood));
   document.getElementById('mood-note').textContent = today
-    ? `Registrado: ${today.mood} às ${today.time}`
-    : 'Nenhum humor registrado hoje';
-
-  const hist   = document.getElementById('mood-hist');
+    ? `Registrado: ${today.mood} às ${today.time}` : 'Nenhum humor registrado hoje';
   const entries = Object.entries(moods).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14);
-  hist.innerHTML = entries.length
-    ? entries.map(([d, m]) => `
-        <div class="mood-history-row">
-          <span class="mood-d">${fmtD(d)}</span>
-          <span class="mood-em">${m.mood}</span>
-        </div>`).join('')
+  document.getElementById('mood-hist').innerHTML = entries.length
+    ? entries.map(([d, m]) => `<div class="mh-row"><span class="mh-d">${fmtD(d)}</span><span style="font-size:1.1rem">${m.mood}</span></div>`).join('')
     : '<div class="empty">Sem histórico</div>';
 }
 
 async function setMood(emoji) {
-  if (PROFILE !== VIEWER) { toast('Você só pode registrar seu humor', 'wrn'); return; }
+  if (PROFILE !== VIEWER) { toast('Você só pode registrar seu humor', '⚠️'); return; }
   const m = { mood: emoji, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) };
   ud.moods = { ...(ud.moods || {}), [TODAY]: m };
   renderMood();
   await api('/api/save/mood', { date: TODAY, mood: m });
   localScore();
-  toast('Humor registrado!');
+  toast('Humor registrado ♡');
 }
 
-// ─── Mercado ───────────────────────────────────────────────────────────────
 function renderGrocery() {
-  const items = ud.grocery || [];
-  const el    = document.getElementById('grocery-list');
+  const items = ud.grocery || [], el = document.getElementById('grocery-list');
   if (!items.length) { el.innerHTML = '<div class="empty">Lista vazia</div>'; return; }
   el.innerHTML = items.map((item, i) => `
-    <div class="grocery-item ${item.checked ? 'checked' : ''}">
-      <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleGrocery(${i})" style="width:16px;flex-shrink:0">
-      <span style="flex:1;font-size:.88rem">${esc(item.text)}</span>
-      <button class="btn btn-danger btn-xs" onclick="rmGrocery(${i})">✕</button>
+    <div class="gr-item ${item.checked ? 'checked' : ''}">
+      <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleGrocery(${i})" style="width:15px;flex-shrink:0">
+      <span style="flex:1;font-size:.83rem">${esc(item.text)}</span>
+      <button class="btn btn-ghost btn-xs" onclick="rmGrocery(${i})">✕</button>
     </div>`).join('');
 }
 
 async function addGrocery() {
-  const inp  = document.getElementById('grocery-input');
-  const text = inp.value.trim();
+  const inp = document.getElementById('grocery-input'), text = inp.value.trim();
   if (!text) return;
   ud.grocery = [...(ud.grocery || []), { id: Date.now(), text, checked: false }];
-  inp.value = '';
-  renderGrocery();
+  inp.value = ''; renderGrocery();
   await api('/api/save/grocery', { grocery: ud.grocery });
-  toast('Item adicionado!');
+  toast('Adicionado à lista');
 }
-
 async function toggleGrocery(i) {
-  const g = [...(ud.grocery || [])];
-  g[i].checked = !g[i].checked;
-  ud.grocery = g;
-  renderGrocery();
+  const g = [...(ud.grocery || [])]; g[i].checked = !g[i].checked;
+  ud.grocery = g; renderGrocery();
   await api('/api/save/grocery', { grocery: g });
 }
-
 async function rmGrocery(i) {
-  ud.grocery = [...(ud.grocery || [])];
-  ud.grocery.splice(i, 1);
-  renderGrocery();
-  await api('/api/save/grocery', { grocery: ud.grocery });
+  ud.grocery = [...(ud.grocery || [])]; ud.grocery.splice(i, 1);
+  renderGrocery(); await api('/api/save/grocery', { grocery: ud.grocery });
 }
-
 async function clearChecked() {
   ud.grocery = (ud.grocery || []).filter(g => !g.checked);
-  renderGrocery();
-  await api('/api/save/grocery', { grocery: ud.grocery });
+  renderGrocery(); await api('/api/save/grocery', { grocery: ud.grocery });
 }
 
-// ─── Comparar ──────────────────────────────────────────────────────────────
 function renderCompare() {
-  const comp = D.competition || {};
-  const sc   = comp.scores || {};
-  const bS   = sc.bernardo || { total: 0, breakdown: {} };
-  const aS   = sc.amanda   || { total: 0, breakdown: {} };
-
+  const sc = (D.competition || {}).scores || {};
+  const bS = sc.bernardo || { total: 0, breakdown: {} };
+  const aS = sc.amanda   || { total: 0, breakdown: {} };
   document.getElementById('vs-b').textContent = bS.total;
   document.getElementById('vs-a').textContent = aS.total;
-  document.getElementById('vs-b-det').textContent =
-    Object.entries(bS.breakdown || {}).map(([k, v]) => `${k} +${v}`).join(' · ') || '—';
-  document.getElementById('vs-a-det').textContent =
-    Object.entries(aS.breakdown || {}).map(([k, v]) => `${k} +${v}`).join(' · ') || '—';
-
-  const wb = document.getElementById('winner-banner');
-  const { leader, diff } = comp;
-  if (leader === 'empate') {
-    wb.className = 'winner-banner tie';
-    wb.textContent = '🤝 Estão empatados hoje!';
-  } else {
+  document.getElementById('vs-b-det').textContent = Object.entries(bS.breakdown || {}).map(([k,v]) => `${k} +${v}`).join(' · ') || '—';
+  document.getElementById('vs-a-det').textContent = Object.entries(aS.breakdown || {}).map(([k,v]) => `${k} +${v}`).join(' · ') || '—';
+  const wb = document.getElementById('winner-box');
+  const { leader, diff } = D.competition || {};
+  if (leader === 'empate') { wb.className = 'winner-box tie'; wb.textContent = 'Estão empatados hoje ♡'; }
+  else {
     const isB = leader === 'bernardo';
-    wb.className = 'winner-banner ' + (isB ? 'b' : 'a');
-    wb.innerHTML = `🏆 ${isB ? '👨 Bernardo' : '👩 Amanda'} está vencendo por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}!`;
+    wb.className = 'winner-box ' + (isB ? 'b' : 'a');
+    wb.innerHTML = `${isB ? 'Bernardo' : 'Amanda'} está na frente por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}!`;
   }
-
-  const bH = (D.bernardo || {}).health || {};
-  const aH = (D.amanda   || {}).health || {};
+  const bH = (D.bernardo || {}).health || {}, aH = (D.amanda || {}).health || {};
   document.getElementById('vs-b-steps').textContent = (bH.steps || 0).toLocaleString('pt-BR');
   document.getElementById('vs-a-steps').textContent = (aH.steps || 0).toLocaleString('pt-BR');
   document.getElementById('vs-b-sleep').textContent = fmtSleep(bH.sleep_minutes || 0);
@@ -1430,105 +1212,73 @@ function renderCompare() {
   document.getElementById('vs-a-water').textContent = (aH.water_ml || 0) + 'ml';
 }
 
-// ─── Briefing ──────────────────────────────────────────────────────────────
 function renderBriefing() {
   const br = (D[PROFILE] || {}).briefing || {};
-  const el = document.getElementById('briefing-body');
+  const el = document.getElementById('brief-body');
   if (br.content) {
-    el.innerHTML = br.content
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br>');
+    el.style.color = '';
+    el.innerHTML = br.content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   } else {
-    el.textContent = 'Configure GEMINI_API_KEY no .env e clique em "Gerar novo".';
     el.style.color = 'var(--text3)';
+    el.textContent = 'Configure GEMINI_API_KEY no .env e clique em "Gerar novo".';
   }
 }
 
 async function regenBriefing() {
   toast('Gerando briefing...');
   const r = await api('/api/regenerate-briefing', {});
-  if (r?.ok) {
-    if (!D[PROFILE]) D[PROFILE] = {};
-    D[PROFILE].briefing = r.briefing;
-    renderBriefing();
-    toast('Briefing atualizado!');
-  } else {
-    toast(r?.error || 'Erro ao gerar', 'err');
-  }
+  if (r?.ok) { if (!D[PROFILE]) D[PROFILE] = {}; D[PROFILE].briefing = r.briefing; renderBriefing(); toast('Briefing atualizado ♡'); }
+  else toast(r?.error || 'Erro ao gerar', '✕');
 }
 
-// ─── Chat ──────────────────────────────────────────────────────────────────
 function qChat(text) { document.getElementById('chat-input').value = text; sendChat(); }
 
 async function sendChat() {
-  if (PROFILE !== VIEWER) { toast('O chat IA age no seu perfil', 'wrn'); return; }
-  const inp  = document.getElementById('chat-input');
-  const text = inp.value.trim();
+  if (PROFILE !== VIEWER) { toast('O chat IA age no seu perfil', '⚠️'); return; }
+  const inp = document.getElementById('chat-input'), text = inp.value.trim();
   if (!text) return;
-  inp.value = '';
-  pushMsg(text, 'user');
+  inp.value = ''; pushMsg(text, 'user');
   const r = await api('/api/ai', { text, context: { today: TODAY, habits: ud.habits || [], grocery: ud.grocery || [] } });
   if (!r) { pushMsg('Erro ao contatar a IA.', 'bot'); return; }
   if (r.message) pushMsg(r.message, 'bot');
-  for (const action of (r.actions || [])) await execAction(action);
+  for (const a of (r.actions || [])) await execAction(a);
 }
 
 function pushMsg(text, role) {
-  const el  = document.getElementById('chat-msgs');
-  const div = document.createElement('div');
-  div.className = 'msg msg-' + role;
-  div.textContent = text;
-  el.appendChild(div);
-  el.scrollTop = el.scrollHeight;
+  const el = document.getElementById('chat-msgs');
+  const d  = document.createElement('div');
+  d.className = 'msg msg-' + role; d.textContent = text;
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 
 async function execAction(a) {
   switch (a.type) {
     case 'addTask': await addTask(a.text, a.date, a.priority); break;
     case 'toggleHabitDone': {
-      const key   = `${a.habitId}:${a.date || TODAY}`;
+      const key = `${a.habitId}:${a.date || TODAY}`;
       const comps = { ...(ud.habit_completions || {}), [key]: true };
-      ud.habit_completions = comps;
-      renderHabits();
-      await api('/api/save/habit_completions', { completions: comps });
-      localScore();
-      break;
+      ud.habit_completions = comps; renderHabits();
+      await api('/api/save/habit_completions', { completions: comps }); localScore(); break;
     }
     case 'addGroceryItem':
       ud.grocery = [...(ud.grocery || []), { id: Date.now(), text: a.text, checked: false }];
-      renderGrocery();
-      await api('/api/save/grocery', { grocery: ud.grocery });
-      break;
-    case 'removeGroceryItem': {
-      const q = (a.text || '').toLowerCase();
-      ud.grocery = (ud.grocery || []).map(g => g.text.toLowerCase().includes(q) ? { ...g, checked: true } : g);
-      renderGrocery();
-      await api('/api/save/grocery', { grocery: ud.grocery });
-      break;
-    }
+      renderGrocery(); await api('/api/save/grocery', { grocery: ud.grocery }); break;
     case 'addHabit':
       ud.habits = [...(ud.habits || []), { id: 'h' + Date.now(), name: a.name, recurrenceType: a.recurrenceType || 'daily' }];
-      renderHabits();
-      await api('/api/save/habits', { habits: ud.habits });
-      break;
+      renderHabits(); await api('/api/save/habits', { habits: ud.habits }); break;
     case 'createCalendarEvent':
-      await api('/api/calendar/create-event', { title: a.title, date: a.date, time: a.time, duration: a.duration || 60 });
-      break;
-    case 'reply':
-      if (a.message) pushMsg(a.message, 'bot');
-      break;
+      await api('/api/calendar/create-event', { title: a.title, date: a.date, time: a.time, duration: a.duration || 60 }); break;
+    case 'reply': if (a.message) pushMsg(a.message, 'bot'); break;
   }
 }
 
-// ─── Score local ───────────────────────────────────────────────────────────
 function localScore() {
-  const tasks  = (ud.tasks || {})[TODAY] || [];
-  const done   = tasks.filter(t => t.done).length;
-  const habits = ud.habits || [];
-  const comps  = ud.habit_completions || {};
+  const tasks = (ud.tasks || {})[TODAY] || [];
+  const done  = tasks.filter(t => t.done).length;
+  const habits = ud.habits || [], comps = ud.habit_completions || {};
   const doneH  = habits.filter(h => `${h.id}:${TODAY}` in comps).length;
   const hasMood = !!(ud.moods || {})[TODAY];
-  const h      = (D[PROFILE] || {}).health || {};
+  const h = (D[PROFILE] || {}).health || {};
   let pts = done * 2 + doneH * 3 + (hasMood ? 1 : 0);
   pts += Math.min(10, Math.floor((h.steps || 0) / 1000));
   if ((h.water_ml || 0) >= 2000) pts += 2;
@@ -1539,59 +1289,39 @@ function localScore() {
   renderScore();
 }
 
-// ─── Refresh ───────────────────────────────────────────────────────────────
 async function refreshData() {
   const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  btn.disabled = true;
+  btn.classList.add('spinning'); btn.disabled = true;
   try {
     await fetch('/refresh');
     await new Promise(r => setTimeout(r, 2500));
-    const r    = await fetch('/api/hub-data');
-    const data = await r.json();
-    Object.assign(D, data);
-    await loadUD(PROFILE);
-    renderAll();
-    renderScore();
-    toast('Dados atualizados!');
-  } catch (e) {
-    toast('Erro ao atualizar', 'err');
-  }
-  btn.classList.remove('spinning');
-  btn.disabled = false;
+    const r = await fetch('/api/hub-data');
+    Object.assign(D, await r.json());
+    await loadUD(PROFILE); renderAll(); renderScore();
+    toast('Tudo atualizado ♡');
+  } catch(e) { toast('Erro ao atualizar', '✕'); }
+  btn.classList.remove('spinning'); btn.disabled = false;
 }
 
-// ─── Utils ─────────────────────────────────────────────────────────────────
 async function api(path, body) {
   try {
     const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     return await r.json();
-  } catch (e) { console.error(path, e); return null; }
+  } catch(e) { return null; }
 }
 
-let _toastTimer;
-function toast(msg, type = 'ok') {
+let _tt;
+function toast(msg, icon = '♡') {
+  document.getElementById('toast-msg').textContent  = msg;
+  document.getElementById('toast-icon').textContent = icon;
   const el = document.getElementById('toast');
-  document.getElementById('toast-msg').textContent = msg;
-  el.className = 'show ' + type;
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.className = '', 3000);
+  el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-function esc(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function fmtD(iso) {
-  if (!iso) return '';
-  const [, m, d] = iso.split('-');
-  return `${d}/${m}`;
-}
-
-function fmtSleep(mins) {
-  if (!mins) return '—';
-  return `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, '0')}`;
-}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtD(iso) { if (!iso) return ''; const [,m,d] = iso.split('-'); return `${d}/${m}`; }
+function fmtSleep(m) { return m ? `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}` : '—'; }
 
 boot();
 </script>
