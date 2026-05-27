@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub Casal 💑</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;
+  --b-color:#3b82f6;--a-color:#ec4899;
+  --success:#22c55e;--warn:#f59e0b;--danger:#ef4444;
+  --radius:12px;--radius-sm:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;
+     min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;background:transparent;color:inherit;font:inherit}
+input,textarea,select{font:inherit;color:inherit;background:var(--bg);
+                       border:1px solid var(--border);border-radius:var(--radius-sm);
+                       padding:.5rem .75rem;outline:none;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--b-color)}
+.hide{display:none!important}
+
+/* ─── Layout ──────────────────────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;min-height:100vh}
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);
+        padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+#topbar h1{font-size:1.1rem;font-weight:700;flex:1}
+.topbar-user{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--muted)}
+.topbar-user .badge{padding:.2rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600}
+#refresh-btn{padding:.4rem .8rem;background:var(--border);border-radius:var(--radius-sm);
+             font-size:.8rem;transition:background .2s}
+#refresh-btn:hover{background:#475569}
+
+/* ─── Profile Tabs ────────────────────────────────────────────────────── */
+#profile-tabs{display:flex;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);
+              background:var(--surface)}
+.profile-tab{flex:1;padding:.75rem;border-radius:var(--radius);border:2px solid var(--border);
+             text-align:center;transition:all .2s;font-weight:600;cursor:pointer}
+.profile-tab[data-profile="bernardo"]{--c:var(--b-color)}
+.profile-tab[data-profile="amanda"]{--c:var(--a-color)}
+.profile-tab:hover,.profile-tab.active{border-color:var(--c);
+  background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c)}
+.profile-tab .tab-name{display:block;font-size:1rem}
+.profile-tab .tab-score{display:block;font-size:.75rem;color:var(--muted);margin-top:.2rem}
+
+/* ─── Scoreboard ──────────────────────────────────────────────────────── */
+#scoreboard{background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1rem}
+.score-row{display:flex;align-items:center;gap:.75rem}
+.score-bar-wrap{flex:1;background:var(--border);border-radius:20px;height:8px;overflow:hidden}
+.score-bar{height:100%;border-radius:20px;transition:width .6s ease}
+.score-bar.bernardo{background:var(--b-color)}
+.score-bar.amanda{background:var(--a-color)}
+.score-val{font-size:.9rem;font-weight:700;min-width:30px;text-align:center}
+.score-val.b{color:var(--b-color)}
+.score-val.a{color:var(--a-color)}
+.score-leader{text-align:center;font-size:.8rem;color:var(--muted);margin-top:.4rem}
+.score-leader span{font-weight:700}
+.score-breakdown{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;justify-content:center}
+.score-pill{font-size:.7rem;padding:.15rem .5rem;border-radius:20px;
+            background:color-mix(in srgb,var(--border) 60%,transparent)}
+
+/* ─── Section Tabs ────────────────────────────────────────────────────── */
+#section-tabs{display:flex;gap:0;overflow-x:auto;background:var(--surface);
+              border-bottom:1px solid var(--border);scrollbar-width:none}
+#section-tabs::-webkit-scrollbar{display:none}
+.section-tab{padding:.65rem 1rem;font-size:.85rem;color:var(--muted);white-space:nowrap;
+             border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0}
+.section-tab:hover{color:var(--text)}
+.section-tab.active{color:var(--text);border-bottom-color:var(--b-color)}
+
+/* ─── Content ─────────────────────────────────────────────────────────── */
+#content{flex:1;padding:1rem;max-width:900px;margin:0 auto;width:100%}
+.section{display:none}
+.section.active{display:block}
+
+/* ─── Cards ───────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:1rem;margin-bottom:.75rem}
+.card-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+            color:var(--muted);margin-bottom:.75rem}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem}
+.metric{background:var(--bg);border-radius:var(--radius-sm);padding:.75rem;text-align:center}
+.metric-val{font-size:1.4rem;font-weight:700}
+.metric-label{font-size:.7rem;color:var(--muted);margin-top:.2rem}
+.progress-bar{height:6px;background:var(--border);border-radius:20px;overflow:hidden;margin-top:.5rem}
+.progress-fill{height:100%;border-radius:20px;background:var(--b-color);transition:width .4s}
+
+/* ─── Tasks ───────────────────────────────────────────────────────────── */
+.task-input-row{display:flex;gap:.5rem;margin-bottom:.75rem}
+.task-input-row input{flex:1}
+.btn{padding:.5rem 1rem;border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;
+     transition:background .2s;display:inline-flex;align-items:center;gap:.35rem}
+.btn-primary{background:var(--b-color);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-sm{padding:.3rem .6rem;font-size:.78rem}
+.btn-ghost{border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border)}
+.task-item{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
+           border-radius:var(--radius-sm);background:var(--bg);margin-bottom:.4rem}
+.task-item.done .task-text{text-decoration:line-through;color:var(--muted)}
+.task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);
+            cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.task-check.done{background:var(--success);border-color:var(--success)}
+.task-text{flex:1;font-size:.9rem}
+.priority-badge{font-size:.65rem;padding:.1rem .4rem;border-radius:20px;text-transform:uppercase;font-weight:700}
+.priority-high{background:color-mix(in srgb,var(--danger) 20%,transparent);color:var(--danger)}
+.priority-low{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--muted)}
+
+/* ─── Habits ──────────────────────────────────────────────────────────── */
+.habit-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;
+            border-radius:var(--radius-sm);background:var(--bg);margin-bottom:.4rem}
+.habit-check-btn{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+                 cursor:pointer;flex-shrink:0;transition:all .2s;font-size:.9rem;
+                 display:flex;align-items:center;justify-content:center}
+.habit-check-btn.done{background:var(--success);border-color:var(--success)}
+.habit-name{flex:1;font-size:.9rem}
+.habit-streak{font-size:.75rem;color:var(--warn)}
+
+/* ─── Health Chart ────────────────────────────────────────────────────── */
+.chart-wrap{position:relative;height:100px;margin-top:.5rem}
+.mini-bars{display:flex;align-items:flex-end;gap:2px;height:100%;width:100%}
+.mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;cursor:pointer;
+          position:relative}
+.mini-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);
+  left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid var(--border);
+  padding:.25rem .5rem;border-radius:4px;font-size:.7rem;white-space:nowrap;z-index:10;pointer-events:none}
+
+/* ─── News ────────────────────────────────────────────────────────────── */
+.news-item{padding:.75rem;border-radius:var(--radius-sm);background:var(--bg);
+           margin-bottom:.5rem;cursor:pointer;transition:background .15s}
+.news-item:hover{background:#334155}
+.news-title{font-size:.9rem;font-weight:600;margin-bottom:.25rem;line-height:1.3}
+.news-meta{font-size:.72rem;color:var(--muted)}
+.news-region{padding:.1rem .4rem;border-radius:20px;font-size:.65rem;font-weight:600}
+.news-br{background:color-mix(in srgb,#22c55e 20%,transparent);color:#22c55e}
+.news-world{background:color-mix(in srgb,#a78bfa 20%,transparent);color:#a78bfa}
+
+/* ─── Briefing ────────────────────────────────────────────────────────── */
+#briefing-text{font-size:.9rem;line-height:1.6;white-space:pre-wrap}
+#briefing-text strong,#briefing-text b{color:var(--text);font-weight:700}
+
+/* ─── AI Chat ─────────────────────────────────────────────────────────── */
+#chat-history{max-height:300px;overflow-y:auto;margin-bottom:.75rem;display:flex;flex-direction:column;gap:.5rem}
+.chat-msg{padding:.6rem .85rem;border-radius:12px;max-width:85%;font-size:.88rem;line-height:1.4}
+.chat-user{background:var(--b-color);color:#fff;align-self:flex-end;border-radius:12px 12px 2px 12px}
+.chat-bot{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-radius:2px 12px 12px 12px}
+.chat-input-row{display:flex;gap:.5rem}
+.chat-input-row input{flex:1}
+
+/* ─── Grocery ─────────────────────────────────────────────────────────── */
+.grocery-item{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
+              border-radius:var(--radius-sm);background:var(--bg);margin-bottom:.4rem}
+.grocery-item.checked span{text-decoration:line-through;color:var(--muted)}
+
+/* ─── Comparison ──────────────────────────────────────────────────────── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.compare-card{border-radius:var(--radius);padding:.85rem;text-align:center}
+.compare-card.b{background:color-mix(in srgb,var(--b-color) 10%,var(--surface));
+                border:1px solid color-mix(in srgb,var(--b-color) 30%,transparent)}
+.compare-card.a{background:color-mix(in srgb,var(--a-color) 10%,var(--surface));
+                border:1px solid color-mix(in srgb,var(--a-color) 30%,transparent)}
+.compare-big{font-size:2rem;font-weight:800;margin:.3rem 0}
+.compare-big.b{color:var(--b-color)}
+.compare-big.a{color:var(--a-color)}
+.compare-label{font-size:.75rem;color:var(--muted)}
+.compare-detail{font-size:.78rem;color:var(--muted);margin-top:.35rem}
+
+/* ─── Mood ────────────────────────────────────────────────────────────── */
+.mood-grid{display:flex;gap:.5rem;flex-wrap:wrap}
+.mood-btn{font-size:1.5rem;padding:.4rem .6rem;border-radius:var(--radius-sm);
+          border:2px solid transparent;transition:all .15s}
+.mood-btn.selected{border-color:var(--b-color);background:color-mix(in srgb,var(--b-color) 15%,transparent)}
+.mood-btn:hover{background:var(--border)}
+
+/* ─── Toast ───────────────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:1.5rem;right:1rem;background:#22c55e;color:#fff;
+       padding:.65rem 1rem;border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;
+       transform:translateY(4rem);opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.error{background:var(--danger)}
+#toast.warn{background:var(--warn);color:#000}
+
+/* ─── Empty state ─────────────────────────────────────────────────────── */
+.empty{text-align:center;color:var(--muted);padding:2rem 1rem;font-size:.9rem}
+
+/* ─── Readonly overlay ────────────────────────────────────────────────── */
+.readonly-notice{background:color-mix(in srgb,var(--warn) 15%,transparent);
+                 border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);
+                 border-radius:var(--radius-sm);padding:.5rem .75rem;font-size:.82rem;
+                 color:var(--warn);margin-bottom:.75rem;display:none}
+.readonly-notice.show{display:block}
+
+@media(max-width:500px){
+  .compare-grid{grid-template-columns:1fr}
+  .card-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <h1>💑 Hub Casal</h1>
+    <div class="topbar-user">
+      <span id="viewer-badge" class="badge"></span>
+      <span id="viewer-name" style="font-weight:600"></span>
+    </div>
+    <button id="refresh-btn" onclick="refreshData()">⟳ Atualizar</button>
+  </div>
+
+  <!-- Placar de pontos -->
+  <div id="scoreboard">
+    <div class="score-row">
+      <span class="score-val b" id="score-b">0</span>
+      <div style="flex:1">
+        <div class="score-bar-wrap">
+          <div class="score-bar bernardo" id="bar-b" style="width:50%"></div>
+        </div>
+        <div class="score-bar-wrap" style="margin-top:3px">
+          <div class="score-bar amanda" id="bar-a" style="width:50%"></div>
+        </div>
+      </div>
+      <span class="score-val a" id="score-a">0</span>
+    </div>
+    <div class="score-leader" id="score-leader">Carregando pontuação...</div>
+    <div class="score-breakdown" id="score-breakdown-b"></div>
+  </div>
+
+  <!-- Abas de perfil -->
+  <div id="profile-tabs">
+    <div class="profile-tab active" data-profile="bernardo" onclick="switchProfile('bernardo')">
+      <span class="tab-name">👨 Bernardo</span>
+      <span class="tab-score" id="ptab-b">0 pts</span>
+    </div>
+    <div class="profile-tab" data-profile="amanda" onclick="switchProfile('amanda')">
+      <span class="tab-name">👩 Amanda</span>
+      <span class="tab-score" id="ptab-a">0 pts</span>
+    </div>
+  </div>
+
+  <!-- Seções -->
+  <div id="section-tabs">
+    <button class="section-tab active" data-section="saude" onclick="switchSection('saude')">❤️ Saúde</button>
+    <button class="section-tab" data-section="tarefas" onclick="switchSection('tarefas')">✅ Tarefas</button>
+    <button class="section-tab" data-section="habitos" onclick="switchSection('habitos')">🔥 Hábitos</button>
+    <button class="section-tab" data-section="noticias" onclick="switchSection('noticias')">📰 Notícias</button>
+    <button class="section-tab" data-section="humor" onclick="switchSection('humor')">😊 Humor</button>
+    <button class="section-tab" data-section="mercado" onclick="switchSection('mercado')">🛒 Mercado</button>
+    <button class="section-tab" data-section="compare" onclick="switchSection('compare')">🏆 Comparar</button>
+    <button class="section-tab" data-section="briefing" onclick="switchSection('briefing')">🌅 Briefing</button>
+    <button class="section-tab" data-section="chat" onclick="switchSection('chat')">🤖 Chat IA</button>
+  </div>
+
+  <div id="content">
+
+    <!-- ─── SAÚDE ─────────────────────────────────────────────────────── -->
+    <div class="section active" id="sec-saude">
+      <div class="readonly-notice" id="health-readonly">
+        👁️ Visualizando dados de <span id="health-readonly-name"></span> (somente leitura)
+      </div>
+      <div class="card">
+        <div class="card-title">Hoje · <span id="health-date"></span></div>
+        <div class="card-grid">
+          <div class="metric">
+            <div class="metric-val" id="m-steps">—</div>
+            <div class="metric-label">Passos</div>
+            <div class="progress-bar"><div class="progress-fill" id="p-steps" style="width:0%"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-val" id="m-sleep">—</div>
+            <div class="metric-label">Sono</div>
+          </div>
+          <div class="metric">
+            <div class="metric-val" id="m-water">—</div>
+            <div class="metric-label">Água</div>
+            <div class="progress-bar"><div class="progress-fill" id="p-water" style="width:0%"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-val" id="m-hr">—</div>
+            <div class="metric-label">FC repouso</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Histórico de passos (30d)</div>
+        <div class="chart-wrap"><div class="mini-bars" id="chart-steps"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Histórico de sono (30d)</div>
+        <div class="chart-wrap"><div class="mini-bars" id="chart-sleep"></div></div>
+      </div>
+    </div>
+
+    <!-- ─── TAREFAS ───────────────────────────────────────────────────── -->
+    <div class="section" id="sec-tarefas">
+      <div class="readonly-notice" id="tasks-readonly">
+        👁️ Visualizando tarefas de <span id="tasks-readonly-name"></span> (somente leitura)
+      </div>
+      <div class="card">
+        <div class="card-title">Tarefas de hoje · <span id="tasks-date"></span></div>
+        <div class="task-input-row" id="task-add-row">
+          <input type="text" id="task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')addTask()">
+          <select id="task-priority" style="width:auto">
+            <option value="normal">Normal</option>
+            <option value="high">Alta</option>
+            <option value="low">Baixa</option>
+          </select>
+          <button class="btn btn-primary" onclick="addTask()">+ Adicionar</button>
+        </div>
+        <div id="task-list"></div>
+      </div>
+    </div>
+
+    <!-- ─── HÁBITOS ───────────────────────────────────────────────────── -->
+    <div class="section" id="sec-habitos">
+      <div class="readonly-notice" id="habits-readonly">
+        👁️ Visualizando hábitos de <span id="habits-readonly-name"></span> (somente leitura)
+      </div>
+      <div class="card">
+        <div class="card-title">Hábitos de hoje</div>
+        <div id="habit-list"></div>
+        <div id="habit-add-wrap" style="margin-top:.75rem">
+          <div class="task-input-row">
+            <input type="text" id="habit-input" placeholder="Novo hábito...">
+            <button class="btn btn-primary" onclick="addHabit()">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── NOTÍCIAS ──────────────────────────────────────────────────── -->
+    <div class="section" id="sec-noticias">
+      <div class="card">
+        <div class="card-title">Brasil</div>
+        <div id="news-br"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Mundo</div>
+        <div id="news-world"></div>
+      </div>
+    </div>
+
+    <!-- ─── HUMOR ─────────────────────────────────────────────────────── -->
+    <div class="section" id="sec-humor">
+      <div class="readonly-notice" id="mood-readonly">
+        👁️ Visualizando humor de <span id="mood-readonly-name"></span>
+      </div>
+      <div class="card">
+        <div class="card-title">Como está o humor hoje?</div>
+        <div class="mood-grid" id="mood-btns">
+          <button class="mood-btn" data-mood="😄" onclick="selectMood('😄')">😄</button>
+          <button class="mood-btn" data-mood="🙂" onclick="selectMood('🙂')">🙂</button>
+          <button class="mood-btn" data-mood="😐" onclick="selectMood('😐')">😐</button>
+          <button class="mood-btn" data-mood="😔" onclick="selectMood('😔')">😔</button>
+          <button class="mood-btn" data-mood="😠" onclick="selectMood('😠')">😠</button>
+          <button class="mood-btn" data-mood="😰" onclick="selectMood('😰')">😰</button>
+          <button class="mood-btn" data-mood="🥰" onclick="selectMood('🥰')">🥰</button>
+          <button class="mood-btn" data-mood="😴" onclick="selectMood('😴')">😴</button>
+        </div>
+        <div id="mood-saved" style="margin-top:.75rem;font-size:.85rem;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Histórico de humor</div>
+        <div id="mood-history"></div>
+      </div>
+    </div>
+
+    <!-- ─── MERCADO ───────────────────────────────────────────────────── -->
+    <div class="section" id="sec-mercado">
+      <div class="card">
+        <div class="card-title">Lista de compras</div>
+        <div class="task-input-row">
+          <input type="text" id="grocery-input" placeholder="Item..." onkeydown="if(event.key==='Enter')addGrocery()">
+          <button class="btn btn-primary" onclick="addGrocery()">+ Adicionar</button>
+        </div>
+        <div id="grocery-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:.5rem" onclick="clearCheckedGrocery()">
+          🗑️ Limpar comprados
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── COMPARAR ──────────────────────────────────────────────────── -->
+    <div class="section" id="sec-compare">
+      <div class="card">
+        <div class="card-title">Pontuação de hoje 🏆</div>
+        <div class="compare-grid">
+          <div class="compare-card b">
+            <div style="font-size:1.5rem">👨</div>
+            <div style="font-weight:700;margin:.2rem 0">Bernardo</div>
+            <div class="compare-big b" id="cmp-b-total">0</div>
+            <div class="compare-label">pontos</div>
+            <div class="compare-detail" id="cmp-b-detail"></div>
+          </div>
+          <div class="compare-card a">
+            <div style="font-size:1.5rem">👩</div>
+            <div style="font-weight:700;margin:.2rem 0">Amanda</div>
+            <div class="compare-big a" id="cmp-a-total">0</div>
+            <div class="compare-label">pontos</div>
+            <div class="compare-detail" id="cmp-a-detail"></div>
+          </div>
+        </div>
+        <div id="cmp-winner" style="text-align:center;margin-top:1rem;font-size:1rem;font-weight:700"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Como ganhar pontos</div>
+        <div style="font-size:.85rem;line-height:1.7;color:var(--muted)">
+          ✅ Tarefa concluída → <strong style="color:var(--text)">+2 pts</strong><br>
+          🔥 Hábito do dia → <strong style="color:var(--text)">+3 pts</strong><br>
+          👟 1000 passos → <strong style="color:var(--text)">+1 pt</strong> (máx 10)<br>
+          💧 ≥ 2L de água → <strong style="color:var(--text)">+2 pts</strong><br>
+          😴 ≥ 7h de sono → <strong style="color:var(--text)">+3 pts</strong><br>
+          😊 Humor registrado → <strong style="color:var(--text)">+1 pt</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Saúde comparada</div>
+        <div class="compare-grid">
+          <div>
+            <div style="font-size:.75rem;color:var(--b-color);font-weight:700;margin-bottom:.4rem">👨 Bernardo</div>
+            <div class="metric" style="margin-bottom:.4rem">
+              <div class="metric-val b" id="cmp-b-steps" style="color:var(--b-color)">—</div>
+              <div class="metric-label">Passos</div>
+            </div>
+            <div class="metric">
+              <div class="metric-val" id="cmp-b-sleep" style="color:var(--b-color)">—</div>
+              <div class="metric-label">Sono</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.75rem;color:var(--a-color);font-weight:700;margin-bottom:.4rem">👩 Amanda</div>
+            <div class="metric" style="margin-bottom:.4rem">
+              <div class="metric-val" id="cmp-a-steps" style="color:var(--a-color)">—</div>
+              <div class="metric-label">Passos</div>
+            </div>
+            <div class="metric">
+              <div class="metric-val" id="cmp-a-sleep" style="color:var(--a-color)">—</div>
+              <div class="metric-label">Sono</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── BRIEFING ──────────────────────────────────────────────────── -->
+    <div class="section" id="sec-briefing">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <div class="card-title" style="margin:0">Resumo do dia — <span id="briefing-for"></span></div>
+          <button class="btn btn-ghost btn-sm" onclick="regenerateBriefing()">↺ Gerar novo</button>
+        </div>
+        <div id="briefing-text">Carregando resumo...</div>
+      </div>
+    </div>
+
+    <!-- ─── CHAT ──────────────────────────────────────────────────────── -->
+    <div class="section" id="sec-chat">
+      <div class="card">
+        <div class="card-title">Chat IA — <span id="chat-for"></span></div>
+        <div id="chat-history"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Ex: adicionar tarefa, marcar hábito..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary" onclick="sendChat()">Enviar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sugestões</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem">
+          <button class="btn btn-ghost btn-sm" onclick="quickChat('Adicionar leite na lista de mercado')">🛒 Leite</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickChat('Marcar academia como feita')">🏋️ Academia feita</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickChat('Resumir meu dia')">📝 Resumir dia</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickChat('Criar tarefa estudar para amanhã')">📚 Estudar amanhã</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #content -->
+</div><!-- #app -->
+
+<div id="toast"></div>
+
+<script>
+// ─── Estado global ─────────────────────────────────────────────────────────
+const D = window.HUB_DATA || {};
+const VIEWER   = D.viewer || 'bernardo';
+let   PROFILE  = VIEWER;   // perfil atualmente visualizado
+let   SECTION  = 'saude';
+
+const TODAY = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+const TODAY_ISO = new Date().toISOString().split('T')[0];
+
+let userData  = { tasks:{}, habits:[], habit_completions:{}, meals:[], settings:{}, moods:{}, grocery:[], kanban:{} };
+let chatHistory = [];
+
+// ─── Boot ──────────────────────────────────────────────────────────────────
+async function boot(){
+  renderViewerBadge();
+  renderScoreboard();
+  await loadUserData(PROFILE);
+  renderAll();
+  setInterval(()=>loadUserData(PROFILE).then(renderAll), 60000);
+}
+
+// ─── Viewer badge ──────────────────────────────────────────────────────────
+function renderViewerBadge(){
+  const isB = VIEWER === 'bernardo';
+  const el  = document.getElementById('viewer-badge');
+  el.textContent = isB ? '👨' : '👩';
+  el.style.background = isB ? 'color-mix(in srgb,#3b82f6 20%,transparent)' : 'color-mix(in srgb,#ec4899 20%,transparent)';
+  el.style.color = isB ? '#3b82f6' : '#ec4899';
+  document.getElementById('viewer-name').textContent = isB ? 'Bernardo' : 'Amanda';
+}
+
+// ─── Scoreboard ────────────────────────────────────────────────────────────
+function renderScoreboard(){
+  const comp = D.competition || {};
+  const scores = comp.scores || {};
+  const bPts = (scores.bernardo||{}).total || 0;
+  const aPts = (scores.amanda||{}).total   || 0;
+  const total = bPts + aPts || 1;
+
+  document.getElementById('score-b').textContent = bPts;
+  document.getElementById('score-a').textContent = aPts;
+  document.getElementById('bar-b').style.width = (bPts/total*100)+'%';
+  document.getElementById('bar-a').style.width = (aPts/total*100)+'%';
+  document.getElementById('ptab-b').textContent = bPts+' pts';
+  document.getElementById('ptab-a').textContent = aPts+' pts';
+
+  const leader = comp.leader;
+  const diff   = comp.diff || 0;
+  const leaderEl = document.getElementById('score-leader');
+  if(leader === 'empate'){
+    leaderEl.innerHTML = '🤝 <span>Empate!</span> Estão iguais hoje';
+  } else {
+    const name  = leader === 'bernardo' ? '👨 Bernardo' : '👩 Amanda';
+    leaderEl.innerHTML = `🏆 <span>${name}</span> está na frente por <span>${diff}</span> pt${diff!==1?'s':''}`;
+  }
+
+  // breakdown do perfil visualizado
+  const bd = (scores[PROFILE]||{}).breakdown || {};
+  const wrap = document.getElementById('score-breakdown-b');
+  wrap.innerHTML = Object.entries(bd).map(([k,v])=>
+    `<span class="score-pill">${k}: +${v}</span>`
+  ).join('');
+}
+
+// ─── Profile switch ────────────────────────────────────────────────────────
+async function switchProfile(p){
+  PROFILE = p;
+  document.querySelectorAll('.profile-tab').forEach(t=>t.classList.toggle('active', t.dataset.profile===p));
+  renderScoreboard();
+  await loadUserData(p);
+  renderAll();
+}
+
+// ─── Section switch ────────────────────────────────────────────────────────
+function switchSection(s){
+  SECTION = s;
+  document.querySelectorAll('.section-tab').forEach(t=>t.classList.toggle('active', t.dataset.section===s));
+  document.querySelectorAll('.section').forEach(el=>el.classList.toggle('active', el.id==='sec-'+s));
+  if(s==='compare') renderCompare();
+}
+
+// ─── Load user data ────────────────────────────────────────────────────────
+async function loadUserData(profile){
+  try{
+    const r = await fetch(`/api/load?u=${profile}`);
+    const data = await r.json();
+    userData = data;
+    return data;
+  }catch(e){ console.error(e); }
+}
+
+// ─── Render all ────────────────────────────────────────────────────────────
+function renderAll(){
+  renderHealth();
+  renderTasks();
+  renderHabits();
+  renderNews();
+  renderMood();
+  renderGrocery();
+  renderBriefing();
+  renderReadonlyNotices();
+}
+
+function renderReadonlyNotices(){
+  const isOwn = PROFILE === VIEWER;
+  const name = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
+  ['health','tasks','habits','mood'].forEach(id=>{
+    const el = document.getElementById(id+'-readonly');
+    const nameEl = document.getElementById(id+'-readonly-name');
+    if(el){ el.classList.toggle('show', !isOwn); }
+    if(nameEl){ nameEl.textContent = name; }
+  });
+  // Desabilita inputs se visualizando o parceiro
+  document.querySelectorAll('#task-add-row, #habit-add-wrap').forEach(el=>{
+    el.style.opacity = isOwn ? '1' : '0.4';
+    el.style.pointerEvents = isOwn ? '' : 'none';
+  });
+}
+
+// ─── Saúde ─────────────────────────────────────────────────────────────────
+function renderHealth(){
+  const pData = D[PROFILE] || {};
+  const h = pData.health || {};
+  document.getElementById('health-date').textContent = h.date ? fmtDate(h.date) : TODAY;
+
+  const steps = h.steps || 0;
+  const goal  = h.steps_goal || 10000;
+  document.getElementById('m-steps').textContent  = steps.toLocaleString('pt-BR');
+  document.getElementById('m-sleep').textContent  = fmtSleep(h.sleep_minutes||0);
+  document.getElementById('m-water').textContent  = (h.water_ml||0)+'ml';
+  document.getElementById('m-hr').textContent     = h.heart_rate ? h.heart_rate+' bpm' : '—';
+  document.getElementById('p-steps').style.width  = Math.min(100,steps/goal*100)+'%';
+  document.getElementById('p-water').style.width  = Math.min(100,(h.water_ml||0)/2500*100)+'%';
+
+  const histKey = PROFILE === 'bernardo' ? 'b_history' : 'a_history';
+  const hist = D[histKey] || {};
+  renderMiniChart('chart-steps', hist, 'steps', '#3b82f6');
+  renderMiniChart('chart-sleep', hist, 'sleep_minutes', '#a78bfa', 480);
+}
+
+function renderMiniChart(elId, hist, key, color, max=null){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const dates = Object.keys(hist).sort().slice(-30);
+  if(!dates.length){ el.innerHTML='<div class="empty">Sem histórico</div>'; return; }
+  const vals  = dates.map(d=>(hist[d]||{})[key]||0);
+  const maxV  = max || Math.max(...vals) || 1;
+  el.innerHTML = dates.map((d,i)=>{
+    const v   = vals[i];
+    const pct = Math.max(4, v/maxV*100);
+    const tip = key==='sleep_minutes' ? fmtSleep(v) : v.toLocaleString('pt-BR');
+    return `<div class="mini-bar" style="height:${pct}%;background:${color};opacity:.7"
+                 data-tip="${fmtDate(d)}: ${tip}"></div>`;
+  }).join('');
+}
+
+// ─── Tarefas ───────────────────────────────────────────────────────────────
+function renderTasks(){
+  document.getElementById('tasks-date').textContent = TODAY;
+  const tasks = (userData.tasks||{})[TODAY_ISO] || [];
+  const el = document.getElementById('task-list');
+  if(!tasks.length){ el.innerHTML='<div class="empty">Nenhuma tarefa para hoje</div>'; return; }
+  el.innerHTML = tasks.map((t,i)=>`
+    <div class="task-item ${t.done?'done':''}" data-i="${i}">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${i})">${t.done?'✓':''}</div>
+      <span class="task-text">${esc(t.text)}</span>
+      ${t.priority==='high'?'<span class="priority-badge priority-high">Alta</span>':''}
+      ${t.priority==='low'?'<span class="priority-badge priority-low">Baixa</span>':''}
+      <button class="btn btn-sm" style="color:var(--danger)" onclick="removeTask(${i})">✕</button>
+    </div>`).join('');
+}
+
+async function addTask(text=null, date=null, priority='normal'){
+  if(PROFILE !== VIEWER){ toast('Você só pode editar suas próprias tarefas','warn'); return; }
+  const input = document.getElementById('task-input');
+  const t = text || input.value.trim();
+  if(!t) return;
+  const d = date || TODAY_ISO;
+  const p = priority || document.getElementById('task-priority').value;
+  const tasks = [...((userData.tasks||{})[d]||[])];
+  tasks.push({id: Date.now(), text:t, done:false, priority:p});
+  userData.tasks = {...(userData.tasks||{}), [d]: tasks};
+  input.value = '';
+  renderTasks();
+  await saveTasks(d, tasks);
+  updateScore();
+}
+
+async function toggleTask(i){
+  if(PROFILE !== VIEWER) return;
+  const tasks = [...((userData.tasks||{})[TODAY_ISO]||[])];
+  tasks[i].done = !tasks[i].done;
+  userData.tasks = {...(userData.tasks||{}), [TODAY_ISO]: tasks};
+  renderTasks();
+  await saveTasks(TODAY_ISO, tasks);
+  updateScore();
+}
+
+async function removeTask(i){
+  if(PROFILE !== VIEWER) return;
+  const tasks = [...((userData.tasks||{})[TODAY_ISO]||[])];
+  tasks.splice(i,1);
+  userData.tasks = {...(userData.tasks||{}), [TODAY_ISO]: tasks};
+  renderTasks();
+  await saveTasks(TODAY_ISO, tasks);
+  updateScore();
+}
+
+async function saveTasks(date, tasks){
+  await api('/api/save/tasks', {date, tasks});
+}
+
+// ─── Hábitos ───────────────────────────────────────────────────────────────
+function renderHabits(){
+  const habits = userData.habits || [];
+  const completions = userData.habit_completions || {};
+  const el = document.getElementById('habit-list');
+
+  if(!habits.length){ el.innerHTML='<div class="empty">Nenhum hábito cadastrado</div>'; return; }
+
+  el.innerHTML = habits.map(h=>{
+    const key  = `${h.id}:${TODAY_ISO}`;
+    const done = key in completions;
+    return `<div class="habit-item">
+      <button class="habit-check-btn ${done?'done':''}" onclick="toggleHabit('${h.id}')">${done?'✓':'○'}</button>
+      <span class="habit-name">${esc(h.name)}</span>
+      <span class="habit-streak">${calcStreak(h.id, completions)}🔥</span>
+      <button class="btn btn-sm" style="color:var(--danger)" onclick="removeHabit('${h.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function calcStreak(habitId, completions){
+  let streak = 0, d = new Date(TODAY_ISO);
+  while(true){
+    const ds = d.toISOString().split('T')[0];
+    if(`${habitId}:${ds}` in completions){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+async function toggleHabit(id){
+  if(PROFILE !== VIEWER){ toast('Você só pode editar seus próprios hábitos','warn'); return; }
+  const key = `${id}:${TODAY_ISO}`;
+  const completions = {...(userData.habit_completions||{})};
+  if(key in completions) delete completions[key];
+  else completions[key] = true;
+  userData.habit_completions = completions;
+  renderHabits();
+  await api('/api/save/habit_completions', {completions});
+  updateScore();
+}
+
+async function addHabit(){
+  if(PROFILE !== VIEWER) return;
+  const input = document.getElementById('habit-input');
+  const name = input.value.trim();
+  if(!name) return;
+  const habits = [...(userData.habits||[])];
+  habits.push({id: 'h'+Date.now(), name, recurrenceType:'daily'});
+  userData.habits = habits;
+  input.value = '';
+  renderHabits();
+  await api('/api/save/habits', {habits});
+}
+
+async function removeHabit(id){
+  if(PROFILE !== VIEWER) return;
+  userData.habits = (userData.habits||[]).filter(h=>h.id!==id);
+  renderHabits();
+  await api('/api/save/habits', {habits: userData.habits});
+}
+
+// ─── Notícias ──────────────────────────────────────────────────────────────
+function renderNews(){
+  const pData = D[PROFILE] || {};
+  const news = pData.news || [];
+  const br    = news.filter(n=>n.region==='br');
+  const world = news.filter(n=>n.region!=='br');
+
+  function renderList(elId, items){
+    const el = document.getElementById(elId);
+    if(!items.length){ el.innerHTML='<div class="empty">Sem notícias</div>'; return; }
+    el.innerHTML = items.map(n=>`
+      <div class="news-item" onclick="window.open('${n.url}','_blank')">
+        <div class="news-title">${esc(n.title)}</div>
+        <div class="news-meta">
+          <span class="news-region ${n.region==='br'?'news-br':'news-world'}">${n.region==='br'?'BR':'Mundo'}</span>
+          ${esc(n.source)} · ${n.pubDate?new Date(n.pubDate).toLocaleDateString('pt-BR'):''}
+        </div>
+      </div>`).join('');
+  }
+  renderList('news-br',    br);
+  renderList('news-world', world);
+}
+
+// ─── Humor ─────────────────────────────────────────────────────────────────
+function renderMood(){
+  const moods = userData.moods || {};
+  const today = moods[TODAY_ISO];
+  document.querySelectorAll('.mood-btn').forEach(b=>
+    b.classList.toggle('selected', today && b.dataset.mood === today.mood)
+  );
+  document.getElementById('mood-saved').textContent = today
+    ? `Humor de hoje: ${today.mood} — registrado às ${today.time}`
+    : 'Nenhum humor registrado hoje';
+
+  const histEl = document.getElementById('mood-history');
+  const entries = Object.entries(moods).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);
+  histEl.innerHTML = entries.length
+    ? entries.map(([d,m])=>`<div style="display:flex;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.85rem">
+        <span>${fmtDate(d)}</span><span style="flex:1"></span><span style="font-size:1.2rem">${m.mood}</span>
+      </div>`).join('')
+    : '<div class="empty">Sem histórico</div>';
+}
+
+async function selectMood(emoji){
+  if(PROFILE !== VIEWER){ toast('Você só pode registrar seu próprio humor','warn'); return; }
+  const mood = {mood: emoji, time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
+  userData.moods = {...(userData.moods||{}), [TODAY_ISO]: mood};
+  renderMood();
+  await api('/api/save/mood', {date: TODAY_ISO, mood});
+  updateScore();
+  toast('Humor registrado!');
+}
+
+// ─── Mercado ───────────────────────────────────────────────────────────────
+function renderGrocery(){
+  const items = userData.grocery || [];
+  const el = document.getElementById('grocery-list');
+  if(!items.length){ el.innerHTML='<div class="empty">Lista vazia</div>'; return; }
+  el.innerHTML = items.map((item,i)=>`
+    <div class="grocery-item ${item.checked?'checked':''}">
+      <input type="checkbox" ${item.checked?'checked':''} onchange="toggleGrocery(${i})" style="width:auto">
+      <span style="flex:1">${esc(item.text)}</span>
+      <button class="btn btn-sm" style="color:var(--danger)" onclick="removeGrocery(${i})">✕</button>
+    </div>`).join('');
+}
+
+async function addGrocery(){
+  const input = document.getElementById('grocery-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const grocery = [...(userData.grocery||[]), {id:Date.now(), text, checked:false}];
+  userData.grocery = grocery;
+  input.value = '';
+  renderGrocery();
+  await api('/api/save/grocery', {grocery});
+  toast('Item adicionado!');
+}
+
+async function toggleGrocery(i){
+  const grocery = [...(userData.grocery||[])];
+  grocery[i].checked = !grocery[i].checked;
+  userData.grocery = grocery;
+  renderGrocery();
+  await api('/api/save/grocery', {grocery});
+}
+
+async function removeGrocery(i){
+  const grocery = [...(userData.grocery||[])];
+  grocery.splice(i,1);
+  userData.grocery = grocery;
+  renderGrocery();
+  await api('/api/save/grocery', {grocery});
+}
+
+async function clearCheckedGrocery(){
+  userData.grocery = (userData.grocery||[]).filter(g=>!g.checked);
+  renderGrocery();
+  await api('/api/save/grocery', {grocery: userData.grocery});
+}
+
+// ─── Comparar ──────────────────────────────────────────────────────────────
+function renderCompare(){
+  const comp = D.competition || {};
+  const scores = comp.scores || {};
+  const bS = scores.bernardo || {total:0, breakdown:{}};
+  const aS = scores.amanda   || {total:0, breakdown:{}};
+
+  document.getElementById('cmp-b-total').textContent = bS.total;
+  document.getElementById('cmp-a-total').textContent = aS.total;
+  document.getElementById('cmp-b-detail').textContent =
+    Object.entries(bS.breakdown||{}).map(([k,v])=>`${k} +${v}`).join(' · ') || '—';
+  document.getElementById('cmp-a-detail').textContent =
+    Object.entries(aS.breakdown||{}).map(([k,v])=>`${k} +${v}`).join(' · ') || '—';
+
+  const winner = document.getElementById('cmp-winner');
+  if(comp.leader === 'empate'){
+    winner.textContent = '🤝 Estão empatados! Hoje é um empate!';
+    winner.style.color = 'var(--warn)';
+  } else {
+    const n = comp.leader === 'bernardo' ? '👨 Bernardo' : '👩 Amanda';
+    const diff = comp.diff || 0;
+    winner.innerHTML = `🏆 ${n} está vencendo por <strong>${diff}</strong> pt${diff!==1?'s':''}!`;
+    winner.style.color = comp.leader === 'bernardo' ? 'var(--b-color)' : 'var(--a-color)';
+  }
+
+  // Health comparison
+  const bH = (D.bernardo||{}).health || {};
+  const aH = (D.amanda||{}).health   || {};
+  document.getElementById('cmp-b-steps').textContent = (bH.steps||0).toLocaleString('pt-BR');
+  document.getElementById('cmp-a-steps').textContent = (aH.steps||0).toLocaleString('pt-BR');
+  document.getElementById('cmp-b-sleep').textContent = fmtSleep(bH.sleep_minutes||0);
+  document.getElementById('cmp-a-sleep').textContent = fmtSleep(aH.sleep_minutes||0);
+}
+
+// ─── Briefing ──────────────────────────────────────────────────────────────
+function renderBriefing(){
+  const pData = D[PROFILE] || {};
+  const br = pData.briefing || {};
+  const name = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
+  document.getElementById('briefing-for').textContent = name;
+  document.getElementById('chat-for').textContent = name;
+  const el = document.getElementById('briefing-text');
+  if(br.content){
+    el.innerHTML = br.content
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n/g,'<br>');
+  } else {
+    el.textContent = 'Briefing não disponível. Configure GEMINI_API_KEY no .env e clique em "Gerar novo".';
+  }
+}
+
+async function regenerateBriefing(){
+  toast('Gerando briefing...');
+  const r = await api('/api/regenerate-briefing', {});
+  if(r && r.ok){ D[PROFILE] = {...(D[PROFILE]||{}), briefing: r.briefing}; renderBriefing(); toast('Briefing atualizado!'); }
+  else toast(r?.error || 'Erro ao gerar briefing', 'error');
+}
+
+// ─── Chat IA ───────────────────────────────────────────────────────────────
+function quickChat(text){ document.getElementById('chat-input').value = text; sendChat(); }
+
+async function sendChat(){
+  if(PROFILE !== VIEWER){ toast('O chat IA age no seu perfil','warn'); return; }
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if(!text) return;
+  input.value = '';
+
+  addChatMsg(text, 'user');
+
+  const r = await api('/api/ai', {
+    text,
+    context: {
+      today:   TODAY_ISO,
+      habits:  userData.habits || [],
+      grocery: userData.grocery || [],
+    }
+  });
+
+  if(!r){ addChatMsg('Erro ao contatar a IA.', 'bot'); return; }
+
+  if(r.message) addChatMsg(r.message, 'bot');
+
+  for(const action of (r.actions||[])){
+    await executeAction(action);
+  }
+}
+
+async function executeAction(action){
+  switch(action.type){
+    case 'addTask':
+      await addTask(action.text, action.date, action.priority);
+      break;
+    case 'toggleHabitDone':{
+      const key = `${action.habitId}:${action.date||TODAY_ISO}`;
+      const completions = {...(userData.habit_completions||{})};
+      completions[key] = true;
+      userData.habit_completions = completions;
+      renderHabits();
+      await api('/api/save/habit_completions', {completions});
+      updateScore();
+      break;
+    }
+    case 'addGroceryItem':
+      userData.grocery = [...(userData.grocery||[]), {id:Date.now(), text:action.text, checked:false}];
+      renderGrocery();
+      await api('/api/save/grocery', {grocery: userData.grocery});
+      break;
+    case 'removeGroceryItem':{
+      const q = (action.text||'').toLowerCase();
+      userData.grocery = (userData.grocery||[]).map(g=>
+        g.text.toLowerCase().includes(q) ? {...g, checked:true} : g
+      );
+      renderGrocery();
+      await api('/api/save/grocery', {grocery: userData.grocery});
+      break;
+    }
+    case 'addHabit':
+      userData.habits = [...(userData.habits||[]), {id:'h'+Date.now(), name:action.name, recurrenceType:action.recurrenceType||'daily'}];
+      renderHabits();
+      await api('/api/save/habits', {habits: userData.habits});
+      break;
+    case 'createCalendarEvent':
+      await api('/api/calendar/create-event', {title:action.title, date:action.date, time:action.time, duration:action.duration||60});
+      break;
+    case 'reply':
+      if(action.message) addChatMsg(action.message, 'bot');
+      break;
+  }
+}
+
+function addChatMsg(text, role){
+  chatHistory.push({text, role});
+  const el = document.getElementById('chat-history');
+  const div = document.createElement('div');
+  div.className = `chat-msg chat-${role}`;
+  div.textContent = text;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── Score update local ────────────────────────────────────────────────────
+function updateScore(){
+  // Recalcula pontuação localmente de forma aproximada
+  const tasks  = (userData.tasks||{})[TODAY_ISO] || [];
+  const done   = tasks.filter(t=>t.done).length;
+  const habits = userData.habits || [];
+  const comps  = userData.habit_completions || {};
+  const doneH  = habits.filter(h=>`${h.id}:${TODAY_ISO}` in comps).length;
+  const hasMood = !!(userData.moods||{})[TODAY_ISO];
+
+  let pts = done * 2 + doneH * 3 + (hasMood ? 1 : 0);
+
+  const pData = D[PROFILE] || {};
+  const h = pData.health || {};
+  pts += Math.min(10, Math.floor((h.steps||0)/1000));
+  if((h.water_ml||0) >= 2000) pts += 2;
+  if((h.sleep_minutes||0) >= 420) pts += 3;
+
+  if(!D.competition) D.competition = {scores:{},leader:'empate',diff:0};
+  if(!D.competition.scores) D.competition.scores = {};
+  D.competition.scores[PROFILE] = {total: pts, breakdown: {}};
+  renderScoreboard();
+}
+
+// ─── Refresh ───────────────────────────────────────────────────────────────
+async function refreshData(){
+  document.getElementById('refresh-btn').textContent = '⟳ Atualizando...';
+  try{
+    await fetch('/refresh');
+    await new Promise(r=>setTimeout(r, 2000));
+    const r = await fetch('/api/hub-data');
+    const data = await r.json();
+    Object.assign(D, data);
+    await loadUserData(PROFILE);
+    renderAll();
+    renderScoreboard();
+    toast('Dados atualizados!');
+  }catch(e){ toast('Erro ao atualizar', 'error'); }
+  document.getElementById('refresh-btn').textContent = '⟳ Atualizar';
+}
+
+// ─── Utils ─────────────────────────────────────────────────────────────────
+async function api(path, body){
+  try{
+    const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    return await r.json();
+  }catch(e){ console.error(path, e); return null; }
+}
+
+function toast(msg, type='success'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type!=='success'?type:''}`;
+  setTimeout(()=>el.className='', 3000);
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtDate(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
+function fmtSleep(mins){
+  if(!mins) return '—';
+  return `${Math.floor(mins/60)}h${String(mins%60).padStart(2,'0')}min`;
+}
+
+// ─── Start ─────────────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>
