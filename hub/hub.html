@@ -27,8 +27,8 @@
   --sand:     #b89878;
   --sand-dim: #f0e4d8;
 
-  --b-color:  #4a6fa5;
-  --b-dim:    #d0dff0;
+  --b-color:  #8b3a5a;
+  --b-dim:    #f0d5e0;
   --a-color:  #c4758a;
   --a-dim:    #f5dde4;
 
@@ -260,7 +260,7 @@ select option { background: var(--surface); }
   color: var(--b-color);
   border-color: var(--b-color);
   background: var(--surface);
-  box-shadow: 0 1px 6px rgba(122,155,196,.18);
+  box-shadow: 0 1px 6px rgba(139,58,90,.18);
 }
 .ptab.active.a {
   color: var(--a-color);
@@ -583,7 +583,7 @@ select option { background: var(--surface); }
   padding: .9rem .75rem;
   text-align: center;
 }
-.vs-card.b { background: var(--b-dim); border: 1px solid #c0d4ec; }
+.vs-card.b { background: var(--b-dim); border: 1px solid var(--b-dim); }
 .vs-card.a { background: var(--a-dim); border: 1px solid var(--rose-mid); }
 .vs-avatar { font-size: 1.3rem; }
 .vs-name {
@@ -610,7 +610,7 @@ select option { background: var(--surface); }
   font-size: .88rem;
   font-weight: 500;
 }
-.winner-box.b { background: var(--b-dim); color: var(--b-color); border: 1px solid #c0d4ec; }
+.winner-box.b { background: var(--b-dim); color: var(--b-color); border: 1px solid var(--b-dim); }
 .winner-box.a { background: var(--a-dim); color: var(--a-color); border: 1px solid var(--rose-mid); }
 .winner-box.tie { background: var(--sand-dim); color: var(--sand); border: 1px solid #d4c0a8; }
 .pts-row {
@@ -685,6 +685,23 @@ select option { background: var(--surface); }
 /* ─── Empty ───────────────────────────────────────────────────────────── */
 .empty { text-align: center; padding: 1.75rem 1rem; color: var(--text3); font-size: .82rem; font-style: italic; }
 .divider { height: 1px; background: var(--border); margin: .4rem 0; }
+
+/* ─── Prof Badge ──────────────────────────────────────────────────────── */
+.prof-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .15rem .5rem;
+  border-radius: 99px;
+  white-space: nowrap;
+  margin-bottom: .1rem;
+}
+.prof-badge.b { background: var(--b-dim); color: var(--b-color); border: 1px solid var(--b-color); opacity: .85; }
+.prof-badge.a { background: var(--a-dim); color: var(--a-color); border: 1px solid var(--a-color); opacity: .85; }
 
 /* ─── Greeting ────────────────────────────────────────────────────────── */
 .greeting-block {
@@ -895,8 +912,9 @@ select option { background: var(--surface); }
   <div id="scoreboard">
     <div class="score-row">
       <div class="score-side">
-        <div class="score-avatar">👨</div>
+        <div class="score-avatar">👨‍💻</div>
         <div class="score-who">Bernardo</div>
+        <div class="prof-badge b">⚙️ Eng. de Computação</div>
         <div class="score-num b" id="pts-b">0</div>
         <div class="score-pts-lbl">pontos</div>
       </div>
@@ -905,8 +923,9 @@ select option { background: var(--surface); }
         <div class="score-mid-heart">♡</div>
       </div>
       <div class="score-side right">
-        <div class="score-avatar">👩</div>
+        <div class="score-avatar">👩‍⚕️</div>
         <div class="score-who">Amanda</div>
+        <div class="prof-badge a">🥗 Nutricionista</div>
         <div class="score-num a" id="pts-a">0</div>
         <div class="score-pts-lbl">pontos</div>
       </div>
@@ -921,14 +940,20 @@ select option { background: var(--surface); }
   <!-- Profile tabs -->
   <div id="ptabs">
     <div class="ptab b active" data-p="bernardo" onclick="switchProfile('bernardo')">
-      <span class="ptab-emoji">👨</span>
-      <span class="ptab-name">Bernardo</span>
+      <span class="ptab-emoji">👨‍💻</span>
+      <div style="display:flex;flex-direction:column;gap:.05rem;align-items:flex-start">
+        <span class="ptab-name">Bernardo</span>
+        <span style="font-size:.58rem;color:var(--b-color);font-weight:600;opacity:.8">Eng. Computação</span>
+      </div>
       <span class="ptab-pts" id="ptab-b">0 pts</span>
       <span class="ptab-you" id="ptab-you-b" style="display:none">você</span>
     </div>
     <div class="ptab a" data-p="amanda" onclick="switchProfile('amanda')">
-      <span class="ptab-emoji">👩</span>
-      <span class="ptab-name">Amanda</span>
+      <span class="ptab-emoji">👩‍⚕️</span>
+      <div style="display:flex;flex-direction:column;gap:.05rem;align-items:flex-start">
+        <span class="ptab-name">Amanda</span>
+        <span style="font-size:.58rem;color:var(--a-color);font-weight:600;opacity:.8">Nutricionista</span>
+      </div>
       <span class="ptab-pts" id="ptab-a">0 pts</span>
       <span class="ptab-you" id="ptab-you-a" style="display:none">você</span>
     </div>
@@ -1182,14 +1207,14 @@ select option { background: var(--surface); }
         <div class="card-body" style="display:flex;flex-direction:column;gap:.65rem">
           <div class="vs-grid">
             <div class="vs-card b">
-              <div class="vs-avatar">👨</div>
+              <div class="vs-avatar">👨‍💻</div>
               <div class="vs-name">Bernardo</div>
               <div class="vs-pts b" id="vs-b">0</div>
               <div class="vs-lbl">pontos</div>
               <div class="vs-det" id="vs-b-det">—</div>
             </div>
             <div class="vs-card a">
-              <div class="vs-avatar">👩</div>
+              <div class="vs-avatar">👩‍⚕️</div>
               <div class="vs-name">Amanda</div>
               <div class="vs-pts a" id="vs-a">0</div>
               <div class="vs-lbl">pontos</div>
@@ -1685,10 +1710,13 @@ function renderGreeting() {
   const days   = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const d = new Date();
-  const pName = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
-  document.getElementById('greeting-text').innerHTML = `${gr}, <span>${pName}</span> ♡`;
+  const isB    = PROFILE === 'bernardo';
+  const pName  = isB ? 'Bernardo' : 'Amanda';
+  const icon   = isB ? '👨‍💻' : '👩‍⚕️';
+  const prof   = isB ? 'Eng. de Computação' : 'Nutricionista';
+  document.getElementById('greeting-text').innerHTML = `${gr}, <span>${pName}</span> ${icon}`;
   document.getElementById('greeting-date').textContent =
-    `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+    `${prof}  ·  ${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
 function renderHome() {
