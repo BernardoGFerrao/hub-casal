@@ -666,6 +666,16 @@ class HubHandler(SimpleHTTPRequestHandler):
             self._handle_login_post()
             return
 
+        if path == "/logout":
+            self.send_response(302)
+            self.send_header("Location", "/login")
+            self.send_header(
+                "Set-Cookie",
+                f"{COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
+            )
+            self.end_headers()
+            return
+
         uid = self._require_auth()
         if not uid:
             return
