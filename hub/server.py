@@ -353,9 +353,12 @@ def _raw_items(user_id: str, date_str: str) -> dict:
 def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
     """Calcula pontuação normalizada.
 
-    A parte de tarefas+hábitos vale sempre até 40 pts para ambos.
-    Quem conclui 100% dos próprios itens faz 40 pts — independente de quantos são.
-    max_items é passado apenas para ser registrado no payload (não afeta o cálculo).
+    Cada item concluído vale 2 pts, mas o peso é ajustado pelo max_items
+    para que quem tem menos itens não seja prejudicado.
+    Fórmula: pts = done * 2 * (max_items / own_total)
+    Exemplo: Bernardo 3 itens, Amanda 1 item, max=3.
+      Bernardo conclui 3: 3 * 2 * (3/3) = 6 pts
+      Amanda   conclui 1: 1 * 2 * (3/1) = 6 pts  ← equivalente
     """
     score = 0
     breakdown = {}
@@ -364,10 +367,8 @@ def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
     own_total = raw["total_tasks"] + raw["total_habits"]
     own_done  = raw["done_tasks"]  + raw["done_habits"]
 
-    # 100% de conclusão = 40 pts para qualquer quantidade de itens
-    TASK_HABIT_POOL = 40
-    if own_total > 0:
-        pts_th = round(own_done / own_total * TASK_HABIT_POOL)
+    if own_total > 0 and max_items > 0:
+        pts_th = round(own_done * 2 * max_items / own_total)
         score += pts_th
         breakdown["tarefas+hábitos"] = pts_th
 

@@ -2868,11 +2868,12 @@ function localScore() {
   const hasMood = !!(ud.moods || {})[TODAY];
   const h = (D[PROFILE] || {}).health || {};
 
-  // 100% de conclusão dos próprios itens = 40 pts para qualquer quantidade
+  // Cada item vale 2 pts, com peso ajustado pelo max entre os dois jogadores.
+  // done * 2 * (maxItems / ownTotal) — quem tem menos itens recebe peso maior por item.
   const ownTotal = total + totalH;
-  const POOL = 40;
-  const thPts = ownTotal > 0
-    ? Math.round((done + doneH) / ownTotal * POOL)
+  const maxItems = Math.max(ownTotal, (D.competition || {}).max_items || 0);
+  const thPts = ownTotal > 0 && maxItems > 0
+    ? Math.round((done + doneH) * 2 * maxItems / ownTotal)
     : 0;
 
   let pts = thPts + (hasMood ? 2 : 0);
