@@ -2868,23 +2868,31 @@ function localScore() {
   const hasMood = !!(ud.moods || {})[TODAY];
   const h = (D[PROFILE] || {}).health || {};
 
-  // Tarefas: até 20 pts, normalizado por % concluída (evita vantagem por ter mais tarefas)
-  const taskPct  = total  > 0 ? done  / total  : 0;
-  const habitPct = totalH > 0 ? doneH / totalH : 0;
-  let pts = Math.round(taskPct * 20) + Math.round(habitPct * 20) + (hasMood ? 2 : 0);
+  // max_items: denominador compartilhado vindo do servidor.
+  // Garante que 1 item de quem tem menos vale o equivalente a todos os itens de quem tem mais.
+  const ownTotal = total + totalH;
+  const serverMax = (D.competition || {}).max_items || 0;
+  const maxItems = Math.max(ownTotal, serverMax);
+
+  const POOL = 40;
+  const thPts = maxItems > 0 && ownTotal > 0
+    ? Math.round((done + doneH) * POOL / maxItems)
+    : 0;
+
+  let pts = thPts + (hasMood ? 2 : 0);
   pts += Math.min(10, Math.floor((h.steps || 0) / 1000));
   if ((h.water_ml || 0) >= 2000) pts += 2;
   if ((h.sleep_minutes || 0) >= 420) pts += 3;
 
   const breakdown = {
-    ...(total  > 0 ? { tarefas: Math.round(taskPct * 20)  } : {}),
-    ...(totalH > 0 ? { hábitos: Math.round(habitPct * 20) } : {}),
-    ...(hasMood     ? { humor: 2 }                          : {}),
-    ...(h.steps     ? { passos: Math.min(10, Math.floor((h.steps||0)/1000)) } : {}),
+    ...(ownTotal > 0 ? { 'tarefas+hábitos': thPts } : {}),
+    ...(hasMood      ? { humor: 2 }                  : {}),
+    ...(h.steps      ? { passos: Math.min(10, Math.floor((h.steps||0)/1000)) } : {}),
   };
 
-  if (!D.competition) D.competition = { scores: {}, leader: 'empate', diff: 0 };
+  if (!D.competition) D.competition = { scores: {}, leader: 'empate', diff: 0, max_items: maxItems };
   if (!D.competition.scores) D.competition.scores = {};
+  D.competition.max_items = maxItems;
   D.competition.scores[PROFILE] = { total: pts, breakdown };
   renderScore();
 }

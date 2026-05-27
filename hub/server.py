@@ -337,28 +337,49 @@ def db_get_health_history(user_id: str) -> dict:
 # Pontuação da competição
 # ---------------------------------------------------------------------------
 
-def _calc_score(user_id: str, date_str: str) -> dict:
-    """Calcula a pontuação do usuário para uma data."""
+def _raw_items(user_id: str, date_str: str) -> dict:
+    """Retorna contagens brutas de tarefas e hábitos para uso no cálculo normalizado."""
+    tasks        = db_get_tasks(user_id, date_str)
+    habits       = db_get(user_id, "user_habits") or []
+    completions  = db_get(user_id, "user_habit_completions") or {}
+    return {
+        "total_tasks":  len(tasks),
+        "done_tasks":   sum(1 for t in tasks if t.get("done")),
+        "total_habits": len(habits),
+        "done_habits":  sum(1 for h in habits if f"{h['id']}:{date_str}" in completions),
+    }
+
+
+def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
+    """Calcula pontuação normalizada.
+
+    max_items: total de tarefas+hábitos do usuário com mais itens no dia.
+    Garante que 100% de conclusão vale sempre 40 pts independente da quantidade.
+    """
     score = 0
     breakdown = {}
 
-    # Tarefas concluídas (2 pts cada)
-    tasks = db_get_tasks(user_id, date_str)
-    done_tasks = sum(1 for t in tasks if t.get("done"))
-    score += done_tasks * 2
-    breakdown["tarefas"] = done_tasks * 2
+    raw = _raw_items(user_id, date_str)
+    own_total = raw["total_tasks"] + raw["total_habits"]
+    own_done  = raw["done_tasks"]  + raw["done_habits"]
 
-    # Hábitos concluídos (3 pts cada)
-    habits = db_get(user_id, "user_habits") or []
-    completions = db_get(user_id, "user_habit_completions") or {}
-    done_habits = sum(1 for h in habits if f"{h['id']}:{date_str}" in completions)
-    score += done_habits * 3
-    breakdown["hábitos"] = done_habits * 3
+    # Tarefas+hábitos: normalizado pelo maior total entre os dois jogadores.
+    # Quem tem menos itens precisa concluir proporcionalmente menos para pontuar igual.
+    TASK_HABIT_POOL = 40
+    if max_items > 0 and own_total > 0:
+        # peso de cada item = POOL × (own_total / max_items) / own_total
+        #                   = POOL / max_items
+        pts_th = round(own_done * TASK_HABIT_POOL / max_items)
+        score += pts_th
+        breakdown["tarefas+hábitos"] = pts_th
 
     # Saúde — passos (1 pt a cada 1000 passos, máx 10)
     conn = get_conn(user_id)
     try:
-        row = conn.execute("SELECT steps, steps_goal, water_ml, sleep_min FROM health_history WHERE date = ?", (date_str,)).fetchone()
+        row = conn.execute(
+            "SELECT steps, water_ml, sleep_min FROM health_history WHERE date = ?",
+            (date_str,)
+        ).fetchone()
     finally:
         conn.close()
 
@@ -367,39 +388,39 @@ def _calc_score(user_id: str, date_str: str) -> dict:
         score += steps_pts
         breakdown["passos"] = steps_pts
 
-        # Água (2 pts se >= 2000ml)
         if (row["water_ml"] or 0) >= 2000:
             score += 2
             breakdown["água"] = 2
 
-        # Sono (3 pts se >= 7h)
         if (row["sleep_min"] or 0) >= 420:
             score += 3
             breakdown["sono"] = 3
 
-    # Humor registrado (1 pt)
+    # Humor registrado (2 pts)
     if db_get_mood(user_id, date_str):
-        score += 1
-        breakdown["humor"] = 1
+        score += 2
+        breakdown["humor"] = 2
 
     return {"total": score, "breakdown": breakdown}
 
 
 def get_competition_data(date_str: str) -> dict:
-    scores = {uid: _calc_score(uid, date_str) for uid in USERS}
+    # Busca totais de ambos para definir o denominador compartilhado
+    raw = {uid: _raw_items(uid, date_str) for uid in USERS}
+    max_items = max(
+        raw[uid]["total_tasks"] + raw[uid]["total_habits"] for uid in USERS
+    )
+
+    scores  = {uid: _calc_score(uid, date_str, max_items) for uid in USERS}
     b_total = scores["bernardo"]["total"]
     a_total = scores["amanda"]["total"]
-    if b_total > a_total:
-        leader = "bernardo"
-    elif a_total > b_total:
-        leader = "amanda"
-    else:
-        leader = "empate"
+    leader  = "bernardo" if b_total > a_total else "amanda" if a_total > b_total else "empate"
     return {
-        "date":     date_str,
-        "scores":   scores,
-        "leader":   leader,
-        "diff":     abs(b_total - a_total),
+        "date":      date_str,
+        "scores":    scores,
+        "leader":    leader,
+        "diff":      abs(b_total - a_total),
+        "max_items": max_items,
     }
 
 
