@@ -666,6 +666,9 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         html = re.sub(r'<script id="hub-data">.*?</script>', '', html, flags=re.DOTALL)
         html = html.replace("</head>", data_block + "\n</head>")
+        # Injeta tema do viewer como classe no <html>
+        theme_class = f"theme-{uid}"
+        html = re.sub(r'<html([^>]*)>', lambda m: f'<html{m.group(1)} class="{theme_class}">', html, count=1)
 
         payload = html.encode("utf-8")
         self.send_response(200)

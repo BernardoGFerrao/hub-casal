@@ -7,41 +7,84 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ─── Tokens ──────────────────────────────────────────────────────────── */
+/* ─── Tokens base ─────────────────────────────────────────────────────── */
 :root {
-  --bg:       #fdf6f0;
-  --bg2:      #f9ede4;
-  --surface:  #ffffff;
-  --surface2: #fdf0e8;
-  --border:   #e8d5c8;
-  --border2:  #d4b8a8;
-
-  --text:     #2a1f1a;
-  --text2:    #7a5c50;
-  --text3:    #b89080;
-
-  --rose:     #c4758a;
-  --rose-dim: #f5dde4;
-  --rose-mid: #e8b4c0;
-
-  --sand:     #b89878;
-  --sand-dim: #f0e4d8;
-
-  --b-color:  #8b3a5a;
-  --b-dim:    #f0d5e0;
-  --a-color:  #c4758a;
-  --a-dim:    #f5dde4;
-
   --green:    #7ab898;
   --yellow:   #c4a45a;
   --red:      #c47878;
-
   --r:        16px;
   --r-sm:     10px;
   --r-xs:     6px;
-
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans:  'Inter', system-ui, sans-serif;
+}
+
+/* ─── Tokens base (fallback sem tema) ────────────────────────────────── */
+:root {
+  --c-sleep:  var(--c-sleep);
+  --c-water:  var(--c-water);
+}
+
+/* ─── Tema Bernardo · azul pastel ─────────────────────────────────────── */
+.theme-bernardo {
+  --bg:        #f0f5fb;
+  --bg2:       #e4edf8;
+  --surface:   #ffffff;
+  --surface2:  #eaf2fb;
+  --border:    #c8d9ee;
+  --border2:   #a8c0e0;
+
+  --text:      #1a2230;
+  --text2:     #4a5c78;
+  --text3:     #8098b8;
+
+  /* acento principal do tema (usado em title, nav active, toast, etc.) */
+  --rose:      #5a86c4;
+  --rose-dim:  #dce8f8;
+  --rose-mid:  #a8c4e8;
+
+  --sand:      #7a9ac4;
+  --sand-dim:  #dce8f4;
+
+  /* cores individuais dos jogadores */
+  --b-color:   #3a6db5;
+  --b-dim:     #d4e4f5;
+  --a-color:   #c4758a;
+  --a-dim:     #f5dde4;
+
+  --c-sleep:   #7a9bc4;
+  --c-water:   #5a8ab8;
+}
+
+/* ─── Tema Amanda · verde pastel ──────────────────────────────────────── */
+.theme-amanda {
+  --bg:        #f2f8f4;
+  --bg2:       #e5f2ea;
+  --surface:   #ffffff;
+  --surface2:  #ecf7f0;
+  --border:    #c0ddc8;
+  --border2:   #9cc8aa;
+
+  --text:      #1a2820;
+  --text2:     #486050;
+  --text3:     #80a888;
+
+  /* acento principal do tema */
+  --rose:      #5aaa78;
+  --rose-dim:  #d8f0e2;
+  --rose-mid:  #a0d4b4;
+
+  --sand:      #7ab88a;
+  --sand-dim:  #dcf0e4;
+
+  /* cores individuais dos jogadores */
+  --b-color:   #5a86c4;
+  --b-dim:     #d4e4f5;
+  --a-color:   #3a9060;
+  --a-dim:     #d0eedd;
+
+  --c-sleep:   #7ab898;
+  --c-water:   #5aaa78;
 }
 
 /* ─── Reset ───────────────────────────────────────────────────────────── */
@@ -996,15 +1039,15 @@ select option { background: var(--surface); }
         </div>
         <div class="qstat">
           <div class="qstat-icon">🌙</div>
-          <div class="qstat-val" id="qs-sleep" style="color:#9b78c4">—</div>
+          <div class="qstat-val" id="qs-sleep" style="color:var(--c-sleep)">—</div>
           <div class="qstat-lbl">Sono</div>
-          <div class="qstat-bar"><div class="qstat-fill" id="qs-sleep-bar" style="background:#9b78c4;width:0"></div></div>
+          <div class="qstat-bar"><div class="qstat-fill" id="qs-sleep-bar" style="background:var(--c-sleep);width:0"></div></div>
         </div>
         <div class="qstat">
           <div class="qstat-icon">💧</div>
-          <div class="qstat-val" id="qs-water" style="color:#78a8c4">—</div>
+          <div class="qstat-val" id="qs-water" style="color:var(--c-water)">—</div>
           <div class="qstat-lbl">Água</div>
-          <div class="qstat-bar"><div class="qstat-fill" id="qs-water-bar" style="background:#78a8c4;width:0"></div></div>
+          <div class="qstat-bar"><div class="qstat-fill" id="qs-water-bar" style="background:var(--c-water);width:0"></div></div>
         </div>
         <div class="qstat">
           <div class="qstat-icon">😊</div>
@@ -1083,14 +1126,14 @@ select option { background: var(--surface); }
               <div class="pbar"><div class="pbar-fill" id="p-steps" style="width:0;background:var(--b-color)"></div></div>
             </div>
             <div class="metric">
-              <div class="metric-val" id="m-sleep" style="color:#9b78c4">—</div>
+              <div class="metric-val" id="m-sleep" style="color:var(--c-sleep)">—</div>
               <div class="metric-lbl">Sono</div>
-              <div class="pbar"><div class="pbar-fill" id="p-sleep" style="width:0;background:#9b78c4"></div></div>
+              <div class="pbar"><div class="pbar-fill" id="p-sleep" style="width:0;background:var(--c-sleep)"></div></div>
             </div>
             <div class="metric">
-              <div class="metric-val" id="m-water" style="color:#78a8c4">—</div>
+              <div class="metric-val" id="m-water" style="color:var(--c-water)">—</div>
               <div class="metric-lbl">Água</div>
-              <div class="pbar"><div class="pbar-fill" id="p-water" style="width:0;background:#78a8c4"></div></div>
+              <div class="pbar"><div class="pbar-fill" id="p-water" style="width:0;background:var(--c-water)"></div></div>
             </div>
             <div class="metric">
               <div class="metric-val" id="m-hr" style="color:var(--rose)">—</div>
@@ -1431,7 +1474,7 @@ function renderHealth() {
   document.getElementById('p-water').style.width = Math.min(100, (h.water_ml || 0) / 2500 * 100) + '%';
   const hist = D[PROFILE === 'bernardo' ? 'b_history' : 'a_history'] || {};
   buildChart('chart-steps', hist, 'steps',         'var(--b-color)', 10000);
-  buildChart('chart-sleep', hist, 'sleep_minutes', '#9b78c4',        480);
+  buildChart('chart-sleep', hist, 'sleep_minutes', 'var(--c-sleep)',        480);
 }
 
 function buildChart(id, hist, key, color, ref) {
