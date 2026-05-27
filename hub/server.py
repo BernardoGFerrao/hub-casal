@@ -570,6 +570,25 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json({"ok": False, "events": [], "error": str(e)})
             return
 
+        if path == "/api/calendar/events":
+            # Agrega eventos dos dois perfis (o viewer vê tudo)
+            try:
+                from hub_generator import fetch_calendar_events
+                all_events = []
+                for user_id in USERS:
+                    try:
+                        evs = fetch_calendar_events(user_id)
+                        for ev in evs:
+                            ev["user"] = user_id
+                        all_events.extend(evs)
+                    except Exception:
+                        pass
+                all_events.sort(key=lambda e: e.get("start", ""))
+                self._json({"ok": True, "events": all_events})
+            except Exception as e:
+                self._json({"ok": False, "events": [], "error": str(e)})
+            return
+
         if path == "/hub.html":
             self._serve_hub(uid)
             return

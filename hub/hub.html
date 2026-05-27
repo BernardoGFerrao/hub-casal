@@ -685,6 +685,185 @@ select option { background: var(--surface); }
 /* ─── Empty ───────────────────────────────────────────────────────────── */
 .empty { text-align: center; padding: 1.75rem 1rem; color: var(--text3); font-size: .82rem; font-style: italic; }
 .divider { height: 1px; background: var(--border); margin: .4rem 0; }
+
+/* ─── Greeting ────────────────────────────────────────────────────────── */
+.greeting-block {
+  padding: .85rem 1rem;
+  background: linear-gradient(135deg, var(--rose-dim) 0%, var(--sand-dim) 100%);
+  border-radius: var(--r);
+  border: 1px solid var(--rose-mid);
+}
+.greeting-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--rose);
+  line-height: 1.2;
+}
+.greeting-text span { font-weight: 700; }
+.greeting-date {
+  font-size: .72rem;
+  color: var(--text3);
+  margin-top: .18rem;
+  font-weight: 500;
+}
+
+/* ─── Quick Stats ─────────────────────────────────────────────────────── */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .5rem;
+}
+@media(min-width:480px) { .quick-stats { grid-template-columns: repeat(4, 1fr); } }
+.qstat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .75rem .7rem;
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.qstat-icon { font-size: 1.1rem; line-height: 1; margin-bottom: .15rem; }
+.qstat-val {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.01em;
+}
+.qstat-lbl {
+  font-size: .6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text3);
+  margin-top: .05rem;
+}
+.qstat-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: .4rem; }
+.qstat-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+/* ─── Home Grid ───────────────────────────────────────────────────────── */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+@media(max-width:480px) { .home-grid { grid-template-columns: 1fr; } }
+.home-grid-full { grid-column: 1 / -1; }
+
+/* ─── Mini Task / Habit ───────────────────────────────────────────────── */
+.mini-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .4rem .5rem;
+  border-radius: var(--r-xs);
+  background: var(--bg2);
+  font-size: .8rem;
+  border: 1px solid transparent;
+}
+.mini-item.done { opacity: .5; text-decoration: line-through; }
+.mini-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.see-more {
+  font-size: .72rem;
+  color: var(--rose);
+  text-align: right;
+  margin-top: .4rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+.see-more:hover { text-decoration: underline; }
+
+/* ─── Calendar ────────────────────────────────────────────────────────── */
+.gcal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: .6rem;
+}
+.gcal-hdr {
+  font-size: .62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-align: center;
+  padding: .2rem 0;
+  letter-spacing: .04em;
+}
+.gcal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  border-radius: var(--r-xs);
+  cursor: default;
+  position: relative;
+  color: var(--text2);
+  transition: background .12s;
+}
+.gcal-day:not(:empty):hover { background: var(--bg2); }
+.gcal-day.today {
+  background: var(--rose);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 50%;
+}
+.gcal-day.has-event::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--rose);
+}
+.gcal-day.today.has-event::after { background: rgba(255,255,255,.75); }
+.gcal-day.other-month { color: var(--text3); opacity: .45; }
+.gcal-day.gcal-sel { background: var(--rose-dim); color: var(--rose); font-weight: 600; border-radius: var(--r-xs); }
+.gcal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .55rem;
+}
+.gcal-nav-btn {
+  padding: .18rem .5rem;
+  border-radius: var(--r-xs);
+  font-size: .75rem;
+  color: var(--text3);
+  border: 1px solid var(--border);
+  transition: all .12s;
+}
+.gcal-nav-btn:hover { color: var(--rose); border-color: var(--rose); }
+.gcal-month-lbl {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: .9rem;
+  color: var(--text2);
+}
+.gcal-event {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  padding: .45rem .6rem;
+  background: var(--bg2);
+  border-radius: var(--r-xs);
+  border-left: 3px solid var(--rose);
+  font-size: .8rem;
+  line-height: 1.35;
+}
+.gcal-event + .gcal-event { margin-top: .3rem; }
+.gcal-event-time { font-size: .65rem; color: var(--text3); white-space: nowrap; font-weight: 600; margin-top: .1rem; }
+.gcal-event-title { color: var(--text); flex: 1; }
+.gcal-event.b { border-color: var(--b-color); }
+.gcal-event.a { border-color: var(--a-color); }
 </style>
 </head>
 <body>
@@ -757,12 +936,14 @@ select option { background: var(--surface); }
 
   <!-- Nav -->
   <nav id="nav">
-    <button class="ntab active" data-s="saude"    onclick="go('saude')"><span class="ni">🏃</span>Saúde</button>
+    <button class="ntab active" data-s="inicio"   onclick="go('inicio')"><span class="ni">🏠</span>Início</button>
+    <button class="ntab"        data-s="saude"    onclick="go('saude')"><span class="ni">🏃</span>Saúde</button>
     <button class="ntab"        data-s="tarefas"  onclick="go('tarefas')"><span class="ni">✅</span>Tarefas</button>
     <button class="ntab"        data-s="habitos"  onclick="go('habitos')"><span class="ni">⭐</span>Hábitos</button>
     <button class="ntab"        data-s="humor"    onclick="go('humor')"><span class="ni">🌸</span>Humor</button>
     <button class="ntab"        data-s="mercado"  onclick="go('mercado')"><span class="ni">🛒</span>Mercado</button>
     <button class="ntab"        data-s="compare"  onclick="go('compare')"><span class="ni">🏆</span>Placar</button>
+    <button class="ntab"        data-s="agenda"   onclick="go('agenda')"><span class="ni">📅</span>Agenda</button>
     <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ni">📰</span>Notícias</button>
     <button class="ntab"        data-s="briefing" onclick="go('briefing')"><span class="ni">✨</span>Briefing</button>
     <button class="ntab"        data-s="chat"     onclick="go('chat')"><span class="ni">💬</span>Chat IA</button>
@@ -771,8 +952,98 @@ select option { background: var(--surface); }
   <!-- Content -->
   <main id="content">
 
+    <!-- INÍCIO -->
+    <div class="section active" id="sec-inicio">
+
+      <!-- Saudação -->
+      <div class="greeting-block">
+        <div class="greeting-text" id="greeting-text">Olá ♡</div>
+        <div class="greeting-date" id="greeting-date"></div>
+      </div>
+
+      <!-- Quick stats do perfil ativo -->
+      <div class="quick-stats">
+        <div class="qstat">
+          <div class="qstat-icon">🏃</div>
+          <div class="qstat-val" id="qs-steps" style="color:var(--b-color)">—</div>
+          <div class="qstat-lbl">Passos</div>
+          <div class="qstat-bar"><div class="qstat-fill" id="qs-steps-bar" style="background:var(--b-color);width:0"></div></div>
+        </div>
+        <div class="qstat">
+          <div class="qstat-icon">🌙</div>
+          <div class="qstat-val" id="qs-sleep" style="color:#9b78c4">—</div>
+          <div class="qstat-lbl">Sono</div>
+          <div class="qstat-bar"><div class="qstat-fill" id="qs-sleep-bar" style="background:#9b78c4;width:0"></div></div>
+        </div>
+        <div class="qstat">
+          <div class="qstat-icon">💧</div>
+          <div class="qstat-val" id="qs-water" style="color:#78a8c4">—</div>
+          <div class="qstat-lbl">Água</div>
+          <div class="qstat-bar"><div class="qstat-fill" id="qs-water-bar" style="background:#78a8c4;width:0"></div></div>
+        </div>
+        <div class="qstat">
+          <div class="qstat-icon">😊</div>
+          <div class="qstat-val" id="qs-mood" style="font-size:1.6rem;line-height:1">—</div>
+          <div class="qstat-lbl">Humor</div>
+        </div>
+      </div>
+
+      <!-- Grid: tarefas + hábitos | notícia -->
+      <div class="home-grid">
+        <div class="card">
+          <div class="card-head"><span class="card-label">Tarefas de hoje</span></div>
+          <div class="card-body" style="padding:.7rem .9rem">
+            <div id="ov-tasks"></div>
+            <div class="see-more" onclick="go('tarefas')">Ver todas →</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-label">Hábitos</span></div>
+          <div class="card-body" style="padding:.7rem .9rem">
+            <div id="ov-habits"></div>
+            <div class="see-more" onclick="go('habitos')">Ver todos →</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-label">Manchete do dia</span></div>
+          <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label">Próximos eventos</span>
+            <span class="see-more" style="margin:0" onclick="go('agenda')">Ver agenda →</span>
+          </div>
+          <div class="card-body" style="padding:.7rem .9rem" id="ov-events">
+            <div class="empty">Sem eventos próximos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placar resumido -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">🏆 Placar de hoje</span>
+          <span class="see-more" style="margin:0" onclick="go('compare')">Ver detalhes →</span>
+        </div>
+        <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem">
+          <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:.1rem">
+            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--b-color)">Bernardo</span>
+            <span style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--b-color);line-height:1" id="ov-pts-b">0</span>
+            <span style="font-size:.6rem;color:var(--text3)">pontos</span>
+          </div>
+          <div style="font-family:var(--font-serif);font-style:italic;font-size:1rem;color:var(--rose)">vs ♡</div>
+          <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:.1rem">
+            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--a-color)">Amanda</span>
+            <span style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--a-color);line-height:1" id="ov-pts-a">0</span>
+            <span style="font-size:.6rem;color:var(--text3)">pontos</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- SAÚDE -->
-    <div class="section active" id="sec-saude">
+    <div class="section" id="sec-saude">
       <div class="ro-bar" id="ro-saude"><span>👁</span> Visualizando saúde de <strong id="ro-saude-n"></strong></div>
       <div class="card">
         <div class="card-head">
@@ -960,6 +1231,39 @@ select option { background: var(--surface); }
       </div>
     </div>
 
+    <!-- AGENDA -->
+    <div class="section" id="sec-agenda">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">Calendário</span>
+          <button class="btn btn-outline btn-xs" onclick="calNav(0)">Hoje</button>
+        </div>
+        <div class="card-body">
+          <div class="gcal-nav">
+            <button class="gcal-nav-btn" onclick="calNav(-1)">‹</button>
+            <span class="gcal-month-lbl" id="gcal-month-lbl"></span>
+            <button class="gcal-nav-btn" onclick="calNav(1)">›</button>
+          </div>
+          <div class="gcal-grid" id="gcal-grid"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">Eventos — <span id="gcal-day-lbl">hoje</span></span>
+          <button class="btn btn-outline btn-xs" onclick="refreshCal()">↺ Atualizar</button>
+        </div>
+        <div class="card-body" id="gcal-events">
+          <div class="empty">Carregando agenda...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-label">Próximos 7 dias</span></div>
+        <div class="card-body" id="gcal-upcoming">
+          <div class="empty">Sem eventos próximos</div>
+        </div>
+      </div>
+    </div>
+
     <!-- BRIEFING -->
     <div class="section" id="sec-briefing">
       <div class="card">
@@ -1011,8 +1315,10 @@ let ud = { tasks:{}, habits:[], habit_completions:{}, moods:{}, grocery:[] };
 async function boot() {
   renderViewer();
   renderScore();
+  renderGreeting();
   await loadUD(PROFILE);
   renderAll();
+  initCal();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
 
@@ -1055,6 +1361,8 @@ function go(s) {
   document.querySelectorAll('.ntab').forEach(t => t.classList.toggle('active', t.dataset.s === s));
   document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'sec-' + s));
   if (s === 'compare') renderCompare();
+  if (s === 'agenda')  { buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
+  if (s === 'inicio')  renderHome();
 }
 
 async function loadUD(p) {
@@ -1064,6 +1372,7 @@ async function loadUD(p) {
 function renderAll() {
   renderRO(); renderHealth(); renderTasks(); renderHabits();
   renderNews(); renderMood(); renderGrocery(); renderBriefing();
+  renderHome();
   const pName = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
   document.getElementById('brief-for').textContent = pName;
   document.getElementById('chat-for').textContent  = pName;
@@ -1368,6 +1677,217 @@ async function execAction(a) {
       await api('/api/calendar/create-event', { title: a.title, date: a.date, time: a.time, duration: a.duration || 60 }); break;
     case 'reply': if (a.message) pushMsg(a.message, 'bot'); break;
   }
+}
+
+function renderGreeting() {
+  const h  = new Date().getHours();
+  const gr = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  const days   = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const d = new Date();
+  const pName = PROFILE === 'bernardo' ? 'Bernardo' : 'Amanda';
+  document.getElementById('greeting-text').innerHTML = `${gr}, <span>${pName}</span> ♡`;
+  document.getElementById('greeting-date').textContent =
+    `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+function renderHome() {
+  renderGreeting();
+  // quick stats do perfil ativo
+  const h = (D[PROFILE] || {}).health || {};
+  const pColor = PROFILE === 'bernardo' ? 'var(--b-color)' : 'var(--a-color)';
+  const sv = document.getElementById('qs-steps');
+  if (sv) { sv.style.color = pColor; sv.textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—'; }
+  const sb = document.getElementById('qs-steps-bar');
+  if (sb) { sb.style.background = pColor; sb.style.width = Math.min(100,(h.steps||0)/10000*100)+'%'; }
+  const slv = document.getElementById('qs-sleep');
+  if (slv) slv.textContent = fmtSleep(h.sleep_minutes||0);
+  const slb = document.getElementById('qs-sleep-bar');
+  if (slb) slb.style.width = Math.min(100,(h.sleep_minutes||0)/480*100)+'%';
+  const wv = document.getElementById('qs-water');
+  if (wv) wv.textContent = h.water_ml ? h.water_ml+'ml' : '—';
+  const wb = document.getElementById('qs-water-bar');
+  if (wb) wb.style.width = Math.min(100,(h.water_ml||0)/2500*100)+'%';
+  const mv = document.getElementById('qs-mood');
+  if (mv) mv.textContent = ((ud.moods||{})[TODAY]||{}).mood || '—';
+
+  // mini tarefas
+  const tasks  = ((ud.tasks||{})[TODAY]||[]).slice(0,4);
+  const ovT    = document.getElementById('ov-tasks');
+  if (ovT) ovT.innerHTML = tasks.length
+    ? tasks.map(t => `<div class="mini-item ${t.done?'done':''}">
+        <div class="mini-dot" style="background:${t.done?'var(--green)':'var(--border2)'}"></div>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.text)}</span>
+      </div>`).join('')
+    : '<div class="empty" style="padding:.5rem">Sem tarefas hoje</div>';
+
+  // mini hábitos
+  const habits = (ud.habits||[]).slice(0,4);
+  const comps  = ud.habit_completions||{};
+  const ovH    = document.getElementById('ov-habits');
+  if (ovH) ovH.innerHTML = habits.length
+    ? habits.map(h => {
+        const done = `${h.id}:${TODAY}` in comps;
+        return `<div class="mini-item ${done?'done':''}">
+          <div class="mini-dot" style="background:${done?'var(--green)':'var(--border2)'}"></div>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.name)}</span>
+        </div>`;
+      }).join('')
+    : '<div class="empty" style="padding:.5rem">Sem hábitos</div>';
+
+  // manchete
+  const news  = ((D[PROFILE]||{}).news||[]);
+  const topN  = news[0];
+  const ovN   = document.getElementById('ov-news');
+  if (ovN) ovN.innerHTML = topN
+    ? `<a href="${topN.url}" target="_blank" rel="noopener" style="display:flex;flex-direction:column;gap:.25rem;text-decoration:none">
+        <div style="font-size:.82rem;font-weight:500;line-height:1.35;color:var(--text)">${esc(topN.title)}</div>
+        <div style="font-size:.65rem;color:var(--text3)">${esc(topN.source)}</div>
+       </a>`
+    : '<div class="empty" style="padding:.5rem">Sem notícias</div>';
+
+  // placar
+  const sc = (D.competition||{}).scores||{};
+  const bEl = document.getElementById('ov-pts-b'); if(bEl) bEl.textContent = (sc.bernardo||{}).total||0;
+  const aEl = document.getElementById('ov-pts-a'); if(aEl) aEl.textContent = (sc.amanda||{}).total||0;
+
+  // próximos eventos (usa dados já carregados do calendário)
+  renderUpcomingInHome();
+}
+
+// ─── Calendário ────────────────────────────────────────────────────────────
+let _calEvents = [];   // [{title, start, end, color, allDay}]
+let _calYear, _calMonth, _calSelDate;
+
+function initCal() {
+  const now = new Date();
+  _calYear  = now.getFullYear();
+  _calMonth = now.getMonth();
+  _calSelDate = TODAY;
+  buildCalGrid();
+  loadCalEvents();
+}
+
+function calNav(delta) {
+  if (delta === 0) {
+    const now = new Date();
+    _calYear  = now.getFullYear();
+    _calMonth = now.getMonth();
+    _calSelDate = TODAY;
+  } else {
+    _calMonth += delta;
+    if (_calMonth > 11) { _calMonth = 0;  _calYear++; }
+    if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+  }
+  buildCalGrid();
+  renderCalEvents(_calSelDate);
+}
+
+function buildCalGrid() {
+  const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const lbl = document.getElementById('gcal-month-lbl');
+  if (lbl) lbl.textContent = `${MONTHS[_calMonth]} ${_calYear}`;
+
+  const first = new Date(_calYear, _calMonth, 1).getDay();
+  const days  = new Date(_calYear, _calMonth + 1, 0).getDate();
+  const eventDates = new Set(_calEvents.map(e => e.start.slice(0,10)));
+
+  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+    .map(d => `<div class="gcal-hdr">${d}</div>`).join('');
+
+  for (let i = 0; i < first; i++) {
+    const pd = new Date(_calYear, _calMonth, -first + i + 1);
+    html += `<div class="gcal-day other-month">${pd.getDate()}</div>`;
+  }
+  for (let d = 1; d <= days; d++) {
+    const ds = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = ['gcal-day', ds===TODAY?'today':'', eventDates.has(ds)?'has-event':'', ds===_calSelDate&&ds!==TODAY?'gcal-sel':''].filter(Boolean).join(' ');
+    html += `<div class="${cls}" onclick="selectCalDay('${ds}')">${d}</div>`;
+  }
+  const grid = document.getElementById('gcal-grid');
+  if (grid) grid.innerHTML = html;
+}
+
+function selectCalDay(ds) {
+  _calSelDate = ds;
+  buildCalGrid();
+  renderCalEvents(ds);
+  const [,m,d] = ds.split('-');
+  const lbl = document.getElementById('gcal-day-lbl');
+  if (lbl) lbl.textContent = ds === TODAY ? 'hoje' : `${d}/${m}`;
+}
+
+function renderCalEvents(dateStr) {
+  const el = document.getElementById('gcal-events');
+  if (!el) return;
+  const evs = _calEvents.filter(e => e.start.slice(0,10) === dateStr);
+  if (!evs.length) { el.innerHTML = '<div class="empty">Nenhum evento neste dia</div>'; return; }
+  el.innerHTML = evs.map(e => {
+    const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
+    const time = e.allDay ? 'dia todo' : e.start.slice(11,16);
+    return `<div class="gcal-event ${who}">
+      <span class="gcal-event-time">${time}</span>
+      <span class="gcal-event-title">${esc(e.title)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderUpcoming() {
+  const el = document.getElementById('gcal-upcoming');
+  if (!el) return;
+  const end = new Date(); end.setDate(end.getDate() + 7);
+  const endStr = end.toISOString().slice(0,10);
+  const evs = _calEvents.filter(e => e.start.slice(0,10) >= TODAY && e.start.slice(0,10) <= endStr)
+    .sort((a,b) => a.start.localeCompare(b.start)).slice(0,8);
+  if (!evs.length) { el.innerHTML = '<div class="empty">Sem eventos nos próximos 7 dias</div>'; return; }
+  el.innerHTML = evs.map(e => {
+    const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
+    const [,m,d] = e.start.slice(0,10).split('-');
+    const time = e.allDay ? `${d}/${m} — dia todo` : `${d}/${m} ${e.start.slice(11,16)}`;
+    return `<div class="gcal-event ${who}">
+      <span class="gcal-event-time">${time}</span>
+      <span class="gcal-event-title">${esc(e.title)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderUpcomingInHome() {
+  const el = document.getElementById('ov-events');
+  if (!el) return;
+  const end = new Date(); end.setDate(end.getDate() + 7);
+  const endStr = end.toISOString().slice(0,10);
+  const evs = _calEvents.filter(e => e.start.slice(0,10) >= TODAY && e.start.slice(0,10) <= endStr)
+    .sort((a,b) => a.start.localeCompare(b.start)).slice(0,3);
+  if (!evs.length) { el.innerHTML = '<div class="empty" style="padding:.5rem">Sem eventos próximos</div>'; return; }
+  el.innerHTML = evs.map(e => {
+    const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
+    const [,m,d] = e.start.slice(0,10).split('-');
+    const time = e.allDay ? `${d}/${m}` : `${d}/${m} ${e.start.slice(11,16)}`;
+    return `<div class="gcal-event ${who}" style="margin-bottom:.3rem">
+      <span class="gcal-event-time">${time}</span>
+      <span class="gcal-event-title">${esc(e.title)}</span>
+    </div>`;
+  }).join('');
+}
+
+async function loadCalEvents() {
+  try {
+    const r = await fetch('/api/calendar/events');
+    if (r.ok) {
+      const data = await r.json();
+      _calEvents = data.events || [];
+      buildCalGrid();
+      renderCalEvents(_calSelDate);
+      renderUpcoming();
+      renderUpcomingInHome();
+    }
+  } catch(e) {}
+}
+
+async function refreshCal() {
+  toast('Atualizando agenda...');
+  await loadCalEvents();
+  toast('Agenda atualizada ♡');
 }
 
 function localScore() {
