@@ -2251,7 +2251,6 @@ async function _renderForDate() {
   renderMood();
   renderTasks();
   renderNews();
-  renderHome();
   const isToday = _healthViewDate === TODAY;
   if (isToday) {
     _lastCompData = null;
@@ -2265,6 +2264,7 @@ async function _renderForDate() {
     renderScore(_lastCompData);
     renderCompare(_lastCompData);
   }
+  renderHome();
 }
 
 function healthNavDay(dir) {
