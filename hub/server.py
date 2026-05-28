@@ -778,6 +778,19 @@ class HubHandler(SimpleHTTPRequestHandler):
             db_set(uid, "user_hub_settings", body.get("hub_settings", {}))
             self._json({"ok": True})
 
+        elif path == "/api/run-jobs":
+            try:
+                spec = importlib.util.spec_from_file_location("hub_generator", HUB_DIR / "hub_generator.py")
+                mod  = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                mod.generate_jobs_json(uid)
+                data_dir = USERS[uid]["data_dir"]
+                jobs_file = data_dir / "jobs_today.json"
+                jobs = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
+                self._json({"ok": True, "jobs": jobs})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e), "jobs": []})
+
         elif path == "/api/ai":
             self._handle_ai(uid, body)
 

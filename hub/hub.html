@@ -591,13 +591,19 @@ select option { background: var(--surface); }
 /* ─── Mood ────────────────────────────────────────────────────────────── */
 .mood-row { display: flex; gap: .35rem; flex-wrap: wrap; }
 .mbtn {
-  font-size: 1.55rem; padding: .38rem .48rem;
+  font-size: 1.55rem; padding: .3rem .42rem .2rem;
   border-radius: var(--r-sm);
   border: 1.5px solid transparent;
   transition: all .15s; line-height: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+}
+.mbtn-score {
+  font-size: .6rem; font-weight: 700; color: var(--text3);
+  line-height: 1; margin-top: .1rem;
 }
 .mbtn:hover { background: var(--bg2); }
 .mbtn.sel { border-color: var(--rose); background: var(--rose-dim); }
+.mbtn.sel .mbtn-score { color: var(--rose); }
 .mood-note { font-size: .75rem; color: var(--text3); margin-top: .5rem; font-style: italic; }
 .mh-row {
   display: flex; align-items: center; gap: .5rem;
@@ -1394,9 +1400,9 @@ select option { background: var(--surface); }
         <div class="card-body">
           <div class="metrics">
             <div class="metric">
-              <div class="metric-val" id="m-steps" style="color:var(--b-color)">—</div>
+              <div class="metric-val" id="m-steps" style="color:var(--rose)">—</div>
               <div class="metric-lbl">Passos</div>
-              <div class="pbar"><div class="pbar-fill" id="p-steps" style="width:0;background:var(--b-color)"></div></div>
+              <div class="pbar"><div class="pbar-fill" id="p-steps" style="width:0;background:var(--rose)"></div></div>
             </div>
             <div class="metric">
               <div class="metric-val" id="m-sleep" style="color:var(--c-sleep)">—</div>
@@ -1421,21 +1427,17 @@ select option { background: var(--surface); }
         <div class="card-head"><span class="card-label">🌸 Humor de hoje</span></div>
         <div class="card-body">
           <div class="mood-row">
-            <button class="mbtn" data-m="😄" onclick="setMood('😄')">😄</button>
-            <button class="mbtn" data-m="🙂" onclick="setMood('🙂')">🙂</button>
-            <button class="mbtn" data-m="😐" onclick="setMood('😐')">😐</button>
-            <button class="mbtn" data-m="😔" onclick="setMood('😔')">😔</button>
-            <button class="mbtn" data-m="😠" onclick="setMood('😠')">😠</button>
-            <button class="mbtn" data-m="😰" onclick="setMood('😰')">😰</button>
-            <button class="mbtn" data-m="🥰" onclick="setMood('🥰')">🥰</button>
-            <button class="mbtn" data-m="😴" onclick="setMood('😴')">😴</button>
+            <button class="mbtn" data-m="🥰" onclick="setMood('🥰')" title="Apaixonado · 5">🥰<span class="mbtn-score">5</span></button>
+            <button class="mbtn" data-m="😄" onclick="setMood('😄')" title="Feliz · 5">😄<span class="mbtn-score">5</span></button>
+            <button class="mbtn" data-m="🙂" onclick="setMood('🙂')" title="Bem · 4">🙂<span class="mbtn-score">4</span></button>
+            <button class="mbtn" data-m="😴" onclick="setMood('😴')" title="Sonolento · 3">😴<span class="mbtn-score">3</span></button>
+            <button class="mbtn" data-m="😐" onclick="setMood('😐')" title="Ok · 3">😐<span class="mbtn-score">3</span></button>
+            <button class="mbtn" data-m="😔" onclick="setMood('😔')" title="Mal · 2">😔<span class="mbtn-score">2</span></button>
+            <button class="mbtn" data-m="😰" onclick="setMood('😰')" title="Ansioso · 1">😰<span class="mbtn-score">1</span></button>
+            <button class="mbtn" data-m="😠" onclick="setMood('😠')" title="Raiva · 1">😠<span class="mbtn-score">1</span></button>
           </div>
           <div class="mood-note" id="mood-note"></div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Histórico de humor</span></div>
-        <div class="card-body" id="mood-hist"></div>
       </div>
     </div>
 
@@ -1740,9 +1742,21 @@ select option { background: var(--surface); }
 
     <!-- VAGAS -->
     <div class="section" id="sec-vagas">
+      <!-- Job Scout -->
+      <div class="card" style="margin-bottom:.6rem">
+        <div class="card-head">
+          <span class="card-label">🔍 Job Scout</span>
+          <button class="btn btn-rose btn-xs" id="scout-btn" onclick="runJobScout()">Buscar vagas</button>
+        </div>
+        <div class="card-body" id="scout-results" style="font-size:.8rem;color:var(--text2)">
+          <div id="scout-status">Clique em "Buscar vagas" para executar o Job Scout com suas configurações.</div>
+          <div id="scout-list" style="margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem"></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head">
-          <span class="card-label">💼 Vagas de emprego</span>
+          <span class="card-label">💼 Minhas candidaturas</span>
           <button class="btn btn-rose btn-xs" onclick="openJobForm()">+ Nova vaga</button>
         </div>
         <div class="card-body" style="padding-top:.5rem">
@@ -3010,6 +3024,30 @@ function filterJobs(f) {
   renderJobs();
 }
 
+async function runJobScout() {
+  const btn = document.getElementById('scout-btn');
+  const status = document.getElementById('scout-status');
+  const list   = document.getElementById('scout-list');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+  status.textContent = 'Executando Job Scout, aguarde...';
+  list.innerHTML = '';
+  try {
+    const r = await fetch('/api/run-jobs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    const data = await r.json();
+    if (!data.ok) { status.textContent = 'Erro: ' + (data.error || 'falha desconhecida'); return; }
+    const jobs = data.jobs || [];
+    status.textContent = jobs.length ? `${jobs.length} vaga(s) encontrada(s):` : 'Nenhuma vaga encontrada com as configurações atuais.';
+    list.innerHTML = jobs.map(j => `
+      <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="display:block;padding:.4rem .5rem;background:var(--bg2);border-radius:var(--r-xs);border:1px solid var(--border);text-decoration:none">
+        <div style="font-weight:600;color:var(--text);font-size:.8rem">${esc(j.title||'')}</div>
+        <div style="color:var(--text3);font-size:.72rem">${esc(j.source||'')}${j.date ? ' · ' + esc(j.date) : ''}</div>
+      </a>`).join('');
+    // Atualiza D com as novas vagas
+    if (D[PROFILE]) D[PROFILE].job_listings = jobs;
+  } catch(e) { status.textContent = 'Erro ao buscar vagas.'; }
+  btn.disabled = false; btn.textContent = 'Buscar vagas';
+}
+
 function renderJobs() {
   loadJobs();
   const el = document.getElementById('jobs-list');
@@ -3417,7 +3455,7 @@ async function refreshData() {
   btn.classList.add('spinning'); btn.disabled = true;
   try {
     await fetch('/refresh');
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 6000));
     const r = await fetch('/api/hub-data');
     Object.assign(D, await r.json());
     await loadUD(PROFILE); renderAll(); renderScore();
