@@ -2570,7 +2570,7 @@ function renderHealth() {
     ? ((D[PROFILE] || {}).health || {})
     : ((D[histKey] || {})[_healthViewDate] || {});
 
-  const s = (PROFILE === VIEWER ? ud.settings : null) || {};
+  const s = ud.settings || {};
   const waterMode = (isToday && s.water_mode === 'manual') ? 'manual' : 'auto';
   const waterMl   = waterMode === 'manual' ? (s.water_manual_ml || 0) : (h.water_ml || 0);
   const waterGoal = s.water_goal || 2500;
