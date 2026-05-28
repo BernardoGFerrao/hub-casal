@@ -596,17 +596,20 @@ def db_chat_unread_count(user_id: str) -> int:
 
 
 def get_monthly_champion(year: int, month: int) -> dict:
-    """Conta dias ganhos por cada um no mês e retorna o campeão."""
-    import calendar as _cal
-    days_in_month = _cal.monthrange(year, month)[1]
+    """Conta dias ganhos por cada um no mês, apenas até hoje."""
+    from datetime import date as _d
+    today = _d.today()
+    last_day = today.day if (year == today.year and month == today.month) else __import__('calendar').monthrange(year, month)[1]
     wins = {"bernardo": 0, "amanda": 0, "empate": 0}
-    for day in range(1, days_in_month + 1):
+    for day in range(1, last_day + 1):
         date_str = f"{year:04d}-{month:02d}-{day:02d}"
         raw = {uid: _raw_items(uid, date_str) for uid in USERS}
         max_items = max((raw[uid]["total_tasks"] + raw[uid]["total_habits"] for uid in USERS), default=0)
         scores = {uid: _calc_score(uid, date_str, max_items) for uid in USERS}
         b = scores["bernardo"]["total"]
         a = scores["amanda"]["total"]
+        if b == 0 and a == 0:
+            continue  # dia sem dados — não conta
         if b > a:   wins["bernardo"] += 1
         elif a > b: wins["amanda"]   += 1
         else:       wins["empate"]   += 1
