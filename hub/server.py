@@ -770,11 +770,14 @@ class HubHandler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/calendar/events":
-            # Agrega eventos dos dois perfis (o viewer vê tudo)
+            # Retorna eventos do perfil solicitado (default: viewer)
+            # ?user=bernardo|amanda|all
+            target = qs.get("user", [uid])[0]
+            targets = list(USERS.keys()) if target == "all" else [target] if target in USERS else [uid]
             try:
                 from hub_generator import fetch_calendar_events
                 all_events = []
-                for user_id in USERS:
+                for user_id in targets:
                     try:
                         evs = fetch_calendar_events(user_id)
                         for ev in evs:

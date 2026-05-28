@@ -1561,7 +1561,7 @@ select option { background: var(--surface); }
       <div id="task-subtab-lista">
         <div class="ro-bar" id="ro-tarefas"><span>👁</span> Visualizando tarefas de <strong id="ro-tarefas-n"></strong></div>
         <div class="card">
-          <div class="card-head"><span class="card-label">Tarefas de hoje</span></div>
+          <div class="card-head"><span class="card-label">Tarefas — <span id="task-date-lbl">Hoje</span></span></div>
           <div class="card-body">
             <div class="add-row" id="task-add-row">
               <input id="task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')addTask()">
@@ -1760,8 +1760,11 @@ select option { background: var(--surface); }
     <div class="section" id="sec-agenda">
       <div class="card">
         <div class="card-head">
-          <span class="card-label">Calendário</span>
-          <button class="btn btn-outline btn-xs" onclick="calNav(0)">Hoje</button>
+          <span class="card-label">Calendário — <span id="cal-owner-label">Meu</span></span>
+          <div style="display:flex;gap:.4rem">
+            <button class="btn btn-outline btn-xs" id="cal-partner-btn" onclick="calTogglePartner()">Ver agenda de <span id="cal-partner-name"></span></button>
+            <button class="btn btn-outline btn-xs" onclick="calNav(0)">Hoje</button>
+          </div>
         </div>
         <div class="card-body">
           <div class="gcal-nav">
@@ -2063,8 +2066,9 @@ function renderViewer() {
   document.getElementById('ptab-you-a').style.display = isB ? 'none' : '';
 }
 
-function renderScore() {
-  const sc   = (D.competition || {}).scores || {};
+function renderScore(comp) {
+  const data = comp || D.competition || {};
+  const sc   = data.scores || {};
   const bPts = (sc.bernardo || {}).total || 0;
   const aPts = (sc.amanda   || {}).total || 0;
   const tot  = bPts + aPts || 1;
@@ -2074,18 +2078,22 @@ function renderScore() {
   document.getElementById('ptab-a').textContent = aPts + ' pts';
   document.getElementById('fill-b').style.width = (bPts / tot * 100) + '%';
   document.getElementById('fill-a').style.width = (aPts / tot * 100) + '%';
-  const { leader, diff } = D.competition || {};
+  const { leader, diff } = data;
+  const isToday = (_healthViewDate || TODAY) === TODAY;
+  const dayLabel = isToday ? 'hoje' : `em ${fmtD(_healthViewDate)}`;
   const cap = document.getElementById('score-caption');
-  if (leader === 'empate') cap.innerHTML = 'Estão empatados hoje ♡';
+  if (leader === 'empate') cap.innerHTML = `Estão empatados ${dayLabel} ♡`;
   else {
     const n = leader === 'bernardo' ? 'Bernardo' : 'Amanda';
-    cap.innerHTML = `<strong>${n}</strong> está na frente por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}`;
+    cap.innerHTML = `<strong>${n}</strong> está na frente ${dayLabel} por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}`;
   }
 }
 
 async function switchProfile(p) {
   PROFILE = p;
   _healthViewDate = TODAY;
+  _calShowingPartner = false;
+  _updateCalOwnerUI();
   document.querySelectorAll('.ptab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
   applyProfileAccent();
   _updateViewerOnlyTabs();
@@ -2125,7 +2133,7 @@ function go(s) {
     el.classList.toggle('active', el.id === 'sec-' + s);
   });
   if (s === 'compare') renderCompare();
-  if (s === 'agenda')  { buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
+  if (s === 'agenda')  { _updateCalOwnerUI(); buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
   if (s === 'inicio')  renderHome();
   if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
   if (s === 'tarefas')   renderKanban();
@@ -2221,10 +2229,25 @@ function renderHealth() {
   }
 }
 
+async function _renderForDate() {
+  renderHealth();
+  renderTasks();
+  renderNews();
+  // Busca placar do dia selecionado
+  const isToday = _healthViewDate === TODAY;
+  if (isToday) {
+    renderScore();
+  } else {
+    try {
+      const r = await fetch('/api/competition?date=' + _healthViewDate);
+      if (r.ok) renderScore(await r.json());
+    } catch(e) { renderScore(); }
+  }
+}
+
 function healthNavDay(dir) {
   const histKey = PROFILE === 'bernardo' ? 'b_history' : 'a_history';
   const hist = D[histKey] || {};
-  // Monta índice de datas com dados, do mais recente ao mais antigo, incluindo hoje
   const idx = [TODAY, ...Object.keys(hist).filter(d => d !== TODAY)].sort((a,b) => b.localeCompare(a));
   const cur = idx.indexOf(_healthViewDate);
   if (dir === 1 && cur > 0) {
@@ -2232,17 +2255,16 @@ function healthNavDay(dir) {
   } else if (dir === -1 && cur < idx.length - 1) {
     _healthViewDate = idx[cur + 1];
   } else if (dir === -1) {
-    // sem dados, recua 1 dia mesmo assim
     const d = new Date(_healthViewDate + 'T12:00:00');
     d.setDate(d.getDate() - 1);
     _healthViewDate = d.toISOString().slice(0, 10);
   }
-  renderHealth();
+  _renderForDate();
 }
 
 function healthGoToday() {
   _healthViewDate = TODAY;
-  renderHealth();
+  _renderForDate();
 }
 
 // ── Progresso ─────────────────────────────────────────────────────────────
@@ -2423,16 +2445,23 @@ function buildChart(id, hist, key, color, ref) {
 }
 
 function renderTasks() {
-  const tasks = (ud.tasks || {})[TODAY] || [];
+  const date  = _healthViewDate || TODAY;
+  const tasks = (ud.tasks || {})[date] || [];
   const el    = document.getElementById('task-list');
-  if (!tasks.length) { el.innerHTML = '<div class="empty">Nenhuma tarefa para hoje</div>'; return; }
+  const isPast = date !== TODAY;
+  // Label da data na aba tarefas
+  const lbl = document.getElementById('task-date-lbl');
+  if (lbl) lbl.textContent = isPast ? fmtD(date) : 'Hoje';
+  const addRow = document.getElementById('task-add-row');
+  if (addRow) addRow.style.display = (isPast || PROFILE !== VIEWER) ? 'none' : '';
+  if (!tasks.length) { el.innerHTML = `<div class="empty">Nenhuma tarefa para ${isPast ? fmtD(date) : 'hoje'}</div>`; return; }
   el.innerHTML = tasks.map((t, i) => `
     <div class="task-item ${t.done ? 'done' : ''}">
-      <div class="chk ${t.done ? 'done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</div>
+      <div class="chk ${t.done ? 'done' : ''}" onclick="${isPast ? '' : `toggleTask(${i})`}">${t.done ? '✓' : ''}</div>
       <span class="task-txt">${esc(t.text)}</span>
       ${t.priority === 'high' ? '<span class="pbadge ph">Alta</span>' : ''}
       ${t.priority === 'low'  ? '<span class="pbadge pl">Baixa</span>' : ''}
-      <button class="btn btn-ghost btn-xs" onclick="removeTask(${i})">✕</button>
+      ${!isPast && PROFILE === VIEWER ? `<button class="btn btn-ghost btn-xs" onclick="removeTask(${i})">✕</button>` : ''}
     </div>`).join('');
 }
 
@@ -2521,8 +2550,13 @@ async function removeHabit(id) {
 }
 
 function renderNews() {
-  const news = (D[PROFILE] || {}).news || [];
+  const isToday = (_healthViewDate || TODAY) === TODAY;
+  const news = isToday ? ((D[PROFILE] || {}).news || []) : [];
   const container = document.getElementById('news-topics-container');
+  if (!isToday) {
+    if (container) container.innerHTML = `<div class="empty" style="padding:1.5rem 0;text-align:center">Notícias disponíveis apenas para o dia de hoje</div>`;
+    return;
+  }
   if (!container) return;
 
   // Usa settings do PROFILE (notícias do perfil visualizado, não do viewer)
@@ -2797,15 +2831,44 @@ function renderHome() {
 }
 
 // ─── Calendário ────────────────────────────────────────────────────────────
-let _calEvents = [];   // [{title, start, end, color, allDay}]
+let _calEvents = [];
 let _calYear, _calMonth, _calSelDate;
+let _calShowingPartner = false;  // false = minha agenda, true = agenda do parceiro
 
 function initCal() {
   const now = new Date();
   _calYear  = now.getFullYear();
   _calMonth = now.getMonth();
   _calSelDate = TODAY;
+  _calShowingPartner = false;
+  _updateCalOwnerUI();
   buildCalGrid();
+  loadCalEvents();
+}
+
+function _calOwnerUser() {
+  // Quem é o dono da agenda exibida
+  return _calShowingPartner
+    ? (PROFILE === 'bernardo' ? 'amanda' : 'bernardo')
+    : PROFILE;
+}
+
+function _updateCalOwnerUI() {
+  const owner   = _calOwnerUser();
+  const partner = owner === 'bernardo' ? 'amanda' : 'bernardo';
+  const ownerName   = owner   === 'bernardo' ? 'Bernardo' : 'Amanda';
+  const partnerName = partner === 'bernardo' ? 'Bernardo' : 'Amanda';
+  const lbl = document.getElementById('cal-owner-label');
+  if (lbl) lbl.textContent = _calShowingPartner ? `de ${ownerName}` : 'Meu';
+  const pn = document.getElementById('cal-partner-name');
+  if (pn) pn.textContent = partnerName;
+  const btn = document.getElementById('cal-partner-btn');
+  if (btn) btn.className = _calShowingPartner ? 'btn btn-rose btn-xs' : 'btn btn-outline btn-xs';
+}
+
+function calTogglePartner() {
+  _calShowingPartner = !_calShowingPartner;
+  _updateCalOwnerUI();
   loadCalEvents();
 }
 
@@ -2914,7 +2977,8 @@ function renderUpcomingInHome() {
 
 async function loadCalEvents() {
   try {
-    const r = await fetch('/api/calendar/events');
+    const owner = _calOwnerUser();
+    const r = await fetch('/api/calendar/events?user=' + owner);
     if (r.ok) {
       const data = await r.json();
       _calEvents = data.events || [];
