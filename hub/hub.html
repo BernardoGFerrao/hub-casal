@@ -1767,6 +1767,7 @@ select option { background: var(--surface); }
         <div class="card-head">
           <span class="card-label">🔍 Job Scout</span>
           <button class="btn btn-rose btn-xs" id="scout-btn" onclick="runJobScout()">Buscar vagas</button>
+          <button class="btn btn-outline btn-xs" onclick="clearJobs()" style="color:var(--text3)">Limpar banco</button>
         </div>
         <div class="card-body" style="font-size:.8rem;color:var(--text2)">
           <div id="scout-status" style="color:var(--text3);font-style:italic;margin-bottom:.4rem">Clique em "Buscar vagas" para executar com suas configurações.</div>
@@ -3141,6 +3142,15 @@ async function scoutMarkSeen(jobId) {
   j.seen = 1; j.is_new = false;
   renderScoutList();
   _updateScoutStatus();
+}
+
+async function clearJobs() {
+  if (!confirm('Limpar todas as vagas do banco? Elas voltarão na próxima busca.')) return;
+  await fetch('/api/jobs/clear', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+  _scoutJobs = [];
+  renderScoutList();
+  _updateScoutStatus();
+  toast('Banco de vagas limpo ♡');
 }
 
 async function runJobScout() {

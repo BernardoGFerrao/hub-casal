@@ -957,6 +957,15 @@ class HubHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 self._json({"ok": False, "error": str(e)})
 
+        elif path == "/api/jobs/clear":
+            conn = get_conn(uid)
+            try:
+                conn.execute("DELETE FROM user_jobs")
+                conn.commit()
+            finally:
+                conn.close()
+            self._json({"ok": True})
+
         elif path == "/api/jobs/seen":
             job_id = body.get("id", "")
             if job_id:
