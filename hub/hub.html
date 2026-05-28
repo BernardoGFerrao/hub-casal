@@ -1006,13 +1006,22 @@ select option { background: var(--surface); }
 .home-main-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
   gap: .6rem;
   align-items: stretch;
 }
-.home-main-grid > div { display: flex; flex-direction: column; gap: .6rem; }
-.home-main-grid > div > .card:last-child { flex: 1; overflow: hidden; }
-@media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; align-items: start; } }
-@media(max-width:600px) { .home-main-grid > div > .card:last-child { flex: none; overflow: visible; } }
+.home-main-grid .col-agenda {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+}
+.home-main-grid .col-agenda > .card { flex: 1; }
+@media(max-width:600px) {
+  .home-main-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .home-main-grid .col-agenda { grid-column: 1; grid-row: auto; }
+  .home-main-grid .col-agenda > .card { flex: none; }
+}
 
 /* ─── Home Grid (legado) ──────────────────────────────────────────────── */
 .home-grid {
@@ -1326,39 +1335,29 @@ select option { background: var(--surface); }
         </div>
       </div>
 
-      <!-- Grid principal: col esq = tarefas+hábitos | col dir = agenda -->
+      <!-- Grid principal: tarefas | agenda (span 2 linhas) / manchete -->
       <div class="home-main-grid">
 
-        <!-- Coluna esquerda: tarefas & hábitos + manchete -->
-        <div>
-          <div class="card">
-            <div class="card-head">
-              <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
-            </div>
-            <div class="card-body" style="padding:.7rem .9rem;display:flex;flex-direction:column;gap:.5rem">
-              <div id="ov-tasks-wrap">
-                <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">📝 Tarefas</div>
-                <div id="ov-tasks"></div>
-              </div>
-              <div id="ov-habits-wrap" style="margin-top:.3rem">
-                <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">🔁 Hábitos</div>
-                <div id="ov-habits"></div>
-              </div>
-              <div class="see-more" onclick="go('tarefas')">Ver todas →</div>
-            </div>
+        <!-- L1 col1: tarefas & hábitos -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
           </div>
-
-          <!-- Manchete do dia -->
-          <div class="card">
-            <div class="card-head"><span class="card-label">📰 Manchete do dia</span></div>
-            <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
+          <div class="card-body" style="padding:.7rem .9rem;display:flex;flex-direction:column;gap:.5rem">
+            <div id="ov-tasks-wrap">
+              <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">📝 Tarefas</div>
+              <div id="ov-tasks"></div>
+            </div>
+            <div id="ov-habits-wrap" style="margin-top:.3rem">
+              <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">🔁 Hábitos</div>
+              <div id="ov-habits"></div>
+            </div>
+            <div class="see-more" onclick="go('tarefas')">Ver todas →</div>
           </div>
         </div>
 
-        <!-- Coluna direita: apenas agenda -->
-        <div>
-
-          <!-- Mini calendário + próximos eventos -->
+        <!-- L1+L2 col2: agenda (span 2 linhas) -->
+        <div class="col-agenda">
           <div class="card">
             <div class="card-head">
               <span class="card-label">📅 Agenda</span>
@@ -1374,19 +1373,14 @@ select option { background: var(--surface); }
               <div id="mini-cal-events" style="margin-top:.4rem"></div>
             </div>
           </div>
-
-          <!-- Próxima refeição -->
-          <div class="card" id="ov-meal-card" style="display:none">
-            <div class="card-head"><span class="card-label">🥗 Próxima refeição</span>
-              <span class="see-more" style="margin:0" onclick="go('dieta')">Ver dieta →</span>
-            </div>
-            <div class="card-body" style="padding:.7rem .9rem">
-              <div style="font-size:.95rem;font-weight:600;color:var(--text)" id="ov-meal-name">—</div>
-              <div style="font-size:.72rem;color:var(--text3);margin-top:.15rem" id="ov-meal-time"></div>
-            </div>
-          </div>
-
         </div>
+
+        <!-- L2 col1: manchete do dia -->
+        <div class="card">
+          <div class="card-head"><span class="card-label">📰 Manchete do dia</span></div>
+          <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
+        </div>
+
       </div>
 
       <!-- Vagas recentes — full width -->
@@ -2954,13 +2948,12 @@ function buildMiniCalGrid() {
   const eventDates = new Set(_calEvents.map(e => e.start.slice(0,10)));
   let html = ['D','S','T','Q','Q','S','S'].map(d => `<div class="gcal-hdr" style="font-size:.55rem">${d}</div>`).join('');
   for (let i = 0; i < first; i++) {
-    const pd = new Date(_miniCalYear, _miniCalMonth, -first + i + 1);
-    html += `<div class="gcal-day other-month" style="font-size:.65rem">${pd.getDate()}</div>`;
+    html += `<div class="gcal-day" style="visibility:hidden"></div>`;
   }
   for (let d = 1; d <= days; d++) {
     const ds = `${_miniCalYear}-${String(_miniCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const cls = ['gcal-day', ds===TODAY?'today':'', eventDates.has(ds)?'has-event':'', ds===_calSelDate&&ds!==TODAY?'gcal-sel':''].filter(Boolean).join(' ');
-    html += `<div class="${cls}" style="font-size:.65rem" onclick="miniCalSelectDay('${ds}')">${d}</div>`;
+    html += `<div class="${cls}" onclick="miniCalSelectDay('${ds}')">${d}</div>`;
   }
   const grid = document.getElementById('mini-cal-grid');
   if (grid) grid.innerHTML = html;
