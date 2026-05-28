@@ -999,7 +999,8 @@ def generate_jobs_json(user_id: str):
                 from unicodedata import normalize as _unorm
                 local_city_norms.add(_unorm("NFKD", loc_str.lower()).encode("ascii","ignore").decode())
 
-        _REMOTE_RE = re.compile(r"\b(remot[ao]|remote|home.?office|teletrabalho)\b", re.IGNORECASE)
+        import re as _re
+        _REMOTE_RE = _re.compile(r"\b(remot[ao]|remote|home.?office|teletrabalho)\b", _re.IGNORECASE)
         _HYBRID_SET = {"hybrid", "hibrido", "híbrido"}
         _ONSITE_SET = {"on-site", "onsite", "presencial"}
 
