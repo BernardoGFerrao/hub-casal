@@ -952,7 +952,7 @@ select option { background: var(--surface); }
 /* ─── Chat Casal ──────────────────────────────────────────────────────── */
 .chat-fab-wrap {
   position: fixed; bottom: 1.5rem; right: 5.5rem;
-  width: 50px; height: 50px;
+  display: flex; align-items: flex-start; gap: 4px;
   z-index: 100;
 }
 .chat-fab {
@@ -965,12 +965,13 @@ select option { background: var(--surface); }
 }
 .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,.28); }
 .chat-fab-badge {
-  position: absolute; top: -6px; right: -6px;
-  background: #e53935; color: #fff; border-radius: 99px;
-  font-size: .65rem; font-weight: 700; padding: .15rem .4rem;
-  min-width: 18px; text-align: center; display: none;
-  pointer-events: none; z-index: 101; line-height: 1.4;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #e53935; color: #fff;
+  font-size: .6rem; font-weight: 700;
+  display: none; align-items: center; justify-content: center;
+  pointer-events: none;
   box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  flex-shrink: 0;
 }
 .chat-panel {
   position: fixed; bottom: 5.5rem; right: 5.5rem;
@@ -4063,7 +4064,7 @@ async function checkChatBadge() {
 function updateChatBadge(count) {
   const badge = document.getElementById('chat-badge');
   if (!badge) return;
-  if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = ''; }
+  if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'flex'; }
   else badge.style.display = 'none';
 }
 
