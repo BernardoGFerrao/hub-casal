@@ -1317,7 +1317,7 @@ select option { background: var(--surface); }
   <!-- Day navigation bar (global) -->
   <div id="day-nav-bar">
     <button class="health-day-btn" id="health-prev" onclick="healthNavDay(-1)">‹</button>
-    <span class="health-day-label" id="health-day-label" onclick="healthGoToday()">Hoje</span>
+    <span class="health-day-label" id="health-day-label" onclick="healthGoToday()">📅 Hoje</span>
     <button class="health-day-btn" id="health-next" onclick="healthNavDay(1)">›</button>
     <span class="health-today-link" id="health-today-link" style="display:none" onclick="healthGoToday()">↩ Hoje</span>
   </div>
@@ -2217,7 +2217,7 @@ function renderHealth() {
 
   // Atualiza label do dia
   const dayLbl = document.getElementById('health-day-label');
-  if (dayLbl) dayLbl.textContent = isToday ? 'Hoje' : fmtD(_healthViewDate);
+  if (dayLbl) dayLbl.textContent = isToday ? '📅 Hoje' : '📅 ' + fmtD(_healthViewDate);
   const todayLink = document.getElementById('health-today-link');
   if (todayLink) todayLink.style.display = isToday ? 'none' : '';
   // Botão next desabilitado no dia atual
@@ -2471,20 +2471,21 @@ function renderTasks() {
   const date  = _healthViewDate || TODAY;
   const tasks = (ud.tasks || {})[date] || [];
   const el    = document.getElementById('task-list');
-  const isPast = date !== TODAY;
-  // Label da data na aba tarefas
+  const isPast   = date < TODAY;
+  const isFuture = date > TODAY;
+  const dayLabel = date === TODAY ? 'hoje' : fmtD(date);
   const lbl = document.getElementById('task-date-lbl');
-  if (lbl) lbl.textContent = isPast ? fmtD(date) : 'Hoje';
+  if (lbl) lbl.textContent = date === TODAY ? 'Hoje' : fmtD(date);
   const addRow = document.getElementById('task-add-row');
   if (addRow) addRow.style.display = (isPast || PROFILE !== VIEWER) ? 'none' : '';
-  if (!tasks.length) { el.innerHTML = `<div class="empty">Nenhuma tarefa para ${isPast ? fmtD(date) : 'hoje'}</div>`; return; }
+  if (!tasks.length) { el.innerHTML = `<div class="empty">Nenhuma tarefa para ${dayLabel}</div>`; return; }
   el.innerHTML = tasks.map((t, i) => `
     <div class="task-item ${t.done ? 'done' : ''}">
-      <div class="chk ${t.done ? 'done' : ''}" onclick="${isPast ? '' : `toggleTask(${i})`}">${t.done ? '✓' : ''}</div>
+      <div class="chk ${t.done ? 'done' : ''}" onclick="${isPast ? '' : `toggleTask(${i}, '${date}')`}">${t.done ? '✓' : ''}</div>
       <span class="task-txt">${esc(t.text)}</span>
       ${t.priority === 'high' ? '<span class="pbadge ph">Alta</span>' : ''}
       ${t.priority === 'low'  ? '<span class="pbadge pl">Baixa</span>' : ''}
-      ${!isPast && PROFILE === VIEWER ? `<button class="btn btn-ghost btn-xs" onclick="removeTask(${i})">✕</button>` : ''}
+      ${!isPast && PROFILE === VIEWER ? `<button class="btn btn-ghost btn-xs" onclick="removeTask(${i}, '${date}')">✕</button>` : ''}
     </div>`).join('');
 }
 
@@ -2493,7 +2494,7 @@ async function addTask(text, date, priority) {
   const inp = document.getElementById('task-input');
   const t   = text || inp.value.trim();
   if (!t) return;
-  const d = date || TODAY, p = priority || document.getElementById('task-pri').value;
+  const d = date || _healthViewDate || TODAY, p = priority || document.getElementById('task-pri').value;
   const tasks = [...((ud.tasks || {})[d] || [])];
   tasks.push({ id: Date.now(), text: t, done: false, priority: p });
   ud.tasks = { ...(ud.tasks || {}), [d]: tasks };
@@ -2503,24 +2504,26 @@ async function addTask(text, date, priority) {
   localScore();
 }
 
-async function toggleTask(i) {
+async function toggleTask(i, date) {
   if (PROFILE !== VIEWER) return;
-  const tasks = [...((ud.tasks || {})[TODAY] || [])];
+  const d = date || TODAY;
+  const tasks = [...((ud.tasks || {})[d] || [])];
   tasks[i].done = !tasks[i].done;
-  ud.tasks = { ...(ud.tasks || {}), [TODAY]: tasks };
+  ud.tasks = { ...(ud.tasks || {}), [d]: tasks };
   renderTasks();
-  await api('/api/save/tasks', { date: TODAY, tasks });
-  localScore();
+  await api('/api/save/tasks', { date: d, tasks });
+  if (d === TODAY) localScore();
 }
 
-async function removeTask(i) {
+async function removeTask(i, date) {
   if (PROFILE !== VIEWER) return;
-  const tasks = [...((ud.tasks || {})[TODAY] || [])];
+  const d = date || TODAY;
+  const tasks = [...((ud.tasks || {})[d] || [])];
   tasks.splice(i, 1);
-  ud.tasks = { ...(ud.tasks || {}), [TODAY]: tasks };
+  ud.tasks = { ...(ud.tasks || {}), [d]: tasks };
   renderTasks();
-  await api('/api/save/tasks', { date: TODAY, tasks });
-  localScore();
+  await api('/api/save/tasks', { date: d, tasks });
+  if (d === TODAY) localScore();
 }
 
 function renderHabits() {
@@ -2776,8 +2779,12 @@ async function execAction(a) {
     case 'addHabit':
       ud.habits = [...(ud.habits || []), { id: 'h' + Date.now(), name: a.name, recurrenceType: a.recurrenceType || 'daily' }];
       renderHabits(); await api('/api/save/habits', { habits: ud.habits }); break;
-    case 'createCalendarEvent':
-      await api('/api/calendar/create-event', { title: a.title, date: a.date, time: a.time, duration: a.duration || 60 }); break;
+    case 'createCalendarEvent': {
+      const res = await api('/api/calendar/create-event', { title: a.title, date: a.date, time: a.time, duration: a.duration || 60 });
+      if (res?.ok) { toast('Evento criado no calendário ♡'); loadCalEvents(); }
+      else { toast(res?.error || 'Erro ao criar evento no calendário', '⚠️'); }
+      break;
+    }
     case 'reply': if (a.message) pushMsg(a.message, 'bot'); break;
   }
 }
@@ -3762,7 +3769,7 @@ async function executeAIActions(actions) {
       else if(a.type==='toggleHabitDone'){const key=`${a.habitId}:${a.date||TODAY}`;const comps={...(ud.habit_completions||{})}; comps[key]=true; ud.habit_completions=comps; renderHabits(); await api('/api/save/habit_completions',{completions:comps}); localScore(); done.push('hábito marcado');}
       else if(a.type==='addGroceryItem'){ud.grocery=[...(ud.grocery||[]),{id:Date.now(),text:a.text,checked:false}];renderGrocery();await api('/api/save/grocery',{grocery:ud.grocery});done.push(`"${a.text}" no mercado`);}
       else if(a.type==='addHabit'){ud.habits=[...(ud.habits||[]),{id:'h'+Date.now(),name:a.name,recurrenceType:a.recurrenceType||'daily'}];renderHabits();await api('/api/save/habits',{habits:ud.habits});done.push(`hábito "${a.name}"`);}
-      else if(a.type==='createCalendarEvent'){const res=await api('/api/calendar/create-event',{title:a.title,date:a.date,time:a.time,duration:a.duration||60});if(res?.ok)done.push(`evento "${a.title}"`);}
+      else if(a.type==='createCalendarEvent'){const res=await api('/api/calendar/create-event',{title:a.title,date:a.date,time:a.time,duration:a.duration||60});if(res?.ok){done.push(`evento "${a.title}"`);loadCalEvents();}else{done.push(`⚠️ erro: ${res?.error||'calendário indisponível'}`);}}
       else if(a.type==='addMeal'){const meals=loadMeals();meals.push({id:String(Date.now()),name:a.name,time:a.time||'12:00',days:a.days||[1,2,3,4,5],ingredients:a.ingredients||[]});saveMealsUD(meals);renderDietMeals();done.push(`refeição "${a.name}"`);}
       else if(a.type==='reply'){}
     }catch(e){}
