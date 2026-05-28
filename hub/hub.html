@@ -1443,7 +1443,6 @@ select option { background: var(--surface); }
     <button class="ntab"        data-s="compare"  onclick="go('compare')"><span class="ni">🏆</span>Placar</button>
     <button class="ntab"        data-s="agenda"   onclick="go('agenda')"><span class="ni">📅</span>Agenda</button>
     <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ni">📰</span>Notícias</button>
-    <button class="ntab"        data-s="treino"   onclick="go('treino')"><span class="ni">🏋️</span>Treino</button>
     <button class="ntab"        data-s="vagas"    onclick="go('vagas')"><span class="ni">💼</span>Vagas</button>
     <button class="ntab"        data-s="config"   onclick="go('config')"><span class="ni">⚙️</span>Config</button>
   </nav>
@@ -1568,6 +1567,13 @@ select option { background: var(--surface); }
     <!-- SAÚDE -->
     <div class="section" id="sec-saude">
       <div class="ro-bar" id="ro-saude"><span>👁</span> Visualizando saúde de <strong id="ro-saude-n"></strong></div>
+      <!-- Sub-abas Saúde -->
+      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;overflow-x:auto">
+        <button class="workout-tab-btn active" id="stab-metricas" onclick="switchSaudeTab('metricas')">📊 Métricas</button>
+        <button class="workout-tab-btn" id="stab-treino" onclick="switchSaudeTab('treino')">🏋️ Treino</button>
+      </div>
+      <!-- Conteúdo: Métricas -->
+      <div id="saude-metricas">
       <div class="card">
         <div class="card-head">
           <span class="card-label">Saúde</span>
@@ -1631,6 +1637,25 @@ select option { background: var(--surface); }
           <div class="mood-note" id="mood-note"></div>
         </div>
       </div>
+      </div><!-- fim saude-metricas -->
+
+      <!-- Conteúdo: Treino -->
+      <div id="saude-treino" style="display:none">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label">🏋️ Plano de Treino</span>
+            <button class="btn btn-outline btn-xs" onclick="openWorkoutEditor()">✏️ Editar</button>
+          </div>
+          <div class="card-body" style="padding:.5rem 0">
+            <div id="workout-header" style="text-align:center;margin-bottom:1rem">
+              <div id="workout-title" style="font-size:1.05rem;font-weight:700;color:var(--text)"></div>
+              <div id="workout-subtitle" style="font-size:.8rem;color:var(--text3);margin-top:.2rem"></div>
+            </div>
+            <div id="workout-tabs" style="display:flex;gap:.4rem;margin-bottom:1rem;padding:0 .5rem;overflow-x:auto"></div>
+            <div id="workout-table-wrap" style="overflow-x:auto;padding:0 .25rem"></div>
+          </div>
+        </div>
+      </div><!-- fim saude-treino -->
     </div>
 
     <!-- PROGRESSO -->
@@ -1923,26 +1948,6 @@ select option { background: var(--surface); }
           <button class="btn btn-outline btn-xs" onclick="regenBriefing()">↺ Gerar novo</button>
         </div>
         <div class="card-body"><div id="brief-body">Carregando...</div></div>
-      </div>
-    </div>
-
-    <!-- TREINO -->
-    <div class="section" id="sec-treino">
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label">🏋️ Plano de Treino</span>
-          <button class="btn btn-outline btn-xs" onclick="openWorkoutEditor()">✏️ Editar</button>
-        </div>
-        <div class="card-body" style="padding:.5rem 0">
-          <div id="workout-header" style="text-align:center;margin-bottom:1rem">
-            <div id="workout-title" style="font-size:1.05rem;font-weight:700;color:var(--text)"></div>
-            <div id="workout-subtitle" style="font-size:.8rem;color:var(--text3);margin-top:.2rem"></div>
-          </div>
-          <!-- Tabs por treino -->
-          <div id="workout-tabs" style="display:flex;gap:.4rem;margin-bottom:1rem;padding:0 .5rem;overflow-x:auto"></div>
-          <!-- Tabela do treino ativo -->
-          <div id="workout-table-wrap" style="overflow-x:auto;padding:0 .25rem"></div>
-        </div>
       </div>
     </div>
 
@@ -2399,7 +2404,6 @@ function go(s) {
   if (s === 'inicio')  renderHome();
   if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
   if (s === 'tarefas')   renderKanban();
-  if (s === 'treino')    { if (!_workout) loadWorkout(); else renderWorkout(); }
   if (s === 'vagas')     renderJobs();
   if (s === 'config')    loadCfg();
   if (s === 'progresso') requestAnimationFrame(() => requestAnimationFrame(renderProgresso));
@@ -4137,6 +4141,15 @@ function updateChatBadge(count) {
 }
 
 // ─── Treino ────────────────────────────────────────────────────────────────
+function switchSaudeTab(tab) {
+  document.getElementById('saude-metricas').style.display = tab === 'metricas' ? '' : 'none';
+  document.getElementById('saude-treino').style.display   = tab === 'treino'   ? '' : 'none';
+  document.getElementById('stab-metricas').classList.toggle('active', tab === 'metricas');
+  document.getElementById('stab-treino').classList.toggle('active', tab === 'treino');
+  if (tab === 'treino' && !_workout) loadWorkout();
+  else if (tab === 'treino') renderWorkout();
+}
+
 let _workout = null;
 let _workoutDraft = null;
 let _workoutActiveDay = 0;
