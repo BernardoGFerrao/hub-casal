@@ -89,6 +89,64 @@
   --c-water:   #5aaa78;
 }
 
+/* ─── Modo escuro · Bernardo ──────────────────────────────────────────── */
+.theme-bernardo.dark {
+  --bg:        #0f1620;
+  --bg2:       #162030;
+  --surface:   #1a2840;
+  --surface2:  #1e3050;
+  --border:    #2a3f60;
+  --border2:   #3a5280;
+
+  --text:      #d8e8f8;
+  --text2:     #90aed0;
+  --text3:     #5a7aa8;
+
+  --rose:      #6a9ed4;
+  --rose-dim:  #1a3060;
+  --rose-mid:  #3a5888;
+
+  --sand:      #6a8ab4;
+  --sand-dim:  #1a2a50;
+
+  --b-color:   #6a9ed4;
+  --b-dim:     #1a3060;
+  --a-color:   #5ab870;
+  --a-dim:     #0f2820;
+
+  --c-sleep:   #6a9bc4;
+  --c-water:   #5a8ab8;
+}
+
+/* ─── Modo escuro · Amanda ────────────────────────────────────────────── */
+.theme-amanda.dark {
+  --bg:        #0f1a12;
+  --bg2:       #152018;
+  --surface:   #1a2a1e;
+  --surface2:  #1e3224;
+  --border:    #2a4030;
+  --border2:   #3a5840;
+
+  --text:      #d0f0d8;
+  --text2:     #80b890;
+  --text3:     #507858;
+
+  --rose:      #60c078;
+  --rose-dim:  #0f2818;
+  --rose-mid:  #2a5838;
+
+  --sand:      #6ab87a;
+  --sand-dim:  #102018;
+
+  --b-color:   #6a9ed4;
+  --b-dim:     #1a2840;
+  --a-color:   #60c078;
+  --a-dim:     #0f2818;
+
+  --c-sleep:   #6ab898;
+  --c-water:   #5ab878;
+}
+
 /* ─── Reset ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
@@ -1855,6 +1913,12 @@ select option { background: var(--surface); }
           </div>
 
           <div class="divider"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <label class="cfg-label">🌙 Modo escuro</label>
+            <button id="cfg-dark-btn" class="btn btn-outline" onclick="toggleDarkMode()" style="min-width:90px">Ativar</button>
+          </div>
+
+          <div class="divider"></div>
           <div style="display:flex;flex-direction:column;gap:.3rem">
             <label class="cfg-label">Conta</label>
             <div style="font-size:.8rem;color:var(--text3);margin-bottom:.3rem">Sessão: <strong id="cfg-viewer-name" style="color:var(--text2)"></strong></div>
@@ -2107,12 +2171,29 @@ function _updateViewerOnlyTabs() {
 }
 
 function applyProfileAccent() {
-  // When viewing the partner's profile, swap the full theme so the whole UI reflects their color
   const html = document.documentElement;
   html.classList.remove('theme-bernardo', 'theme-amanda', 'profile-b-view', 'profile-a-view');
   html.classList.add('theme-' + PROFILE);
   if (PROFILE === 'bernardo') html.classList.add('profile-b-view');
   else                         html.classList.add('profile-a-view');
+  // reaplica dark mode se estava ativo
+  if (ud.settings?.dark_mode) html.classList.add('dark');
+  else html.classList.remove('dark');
+  _updateDarkBtn();
+}
+
+function _updateDarkBtn() {
+  const btn = document.getElementById('cfg-dark-btn');
+  if (!btn) return;
+  const on = !!(ud.settings?.dark_mode);
+  btn.textContent = on ? 'Desativar' : 'Ativar';
+  btn.className   = on ? 'btn btn-rose' : 'btn btn-outline';
+}
+
+async function toggleDarkMode() {
+  ud.settings = { ...(ud.settings || {}), dark_mode: !(ud.settings?.dark_mode) };
+  applyProfileAccent();
+  await api('/api/save/settings', { settings: ud.settings });
 }
 
 let _currentSection = 'inicio';
@@ -3422,6 +3503,7 @@ async function loadCfg() {
   const waterEl = document.getElementById('cfg-water'); if (waterEl) waterEl.value = s.water_goal || '';
   const sleepEl = document.getElementById('cfg-sleep'); if (sleepEl) sleepEl.value = s.sleep_goal_h || '';
   _applyWaterModeUI(s.water_mode || 'auto');
+  _updateDarkBtn();
   const nm = document.getElementById('cfg-viewer-name');
   if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
 
