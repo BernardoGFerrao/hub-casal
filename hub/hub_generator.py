@@ -552,8 +552,9 @@ def _fetch_news_rss(region: str, query: str = None) -> list:
 def generate_news_json(user_id: str):
     logger.info("[%s] Buscando notícias...", user_id)
     try:
-        topics_br    = ["Brasil", "tecnologia", "economia"]
-        topics_world = ["world news", "technology"]
+        hs           = _get_hub_settings(user_id)
+        topics_br    = hs.get("news_topics_br")    or ["Brasil", "tecnologia", "economia"]
+        topics_world = hs.get("news_topics_world") or ["world news", "technology"]
         news = []
         for topic in topics_br:
             for item in _fetch_news_rss("br", query=topic):
@@ -601,6 +602,16 @@ def _fetch_weather() -> str:
     except Exception:
         pass
     return "indisponível"
+
+
+def _get_hub_settings(user_id: str) -> dict:
+    try:
+        conn = sqlite3.connect(_db_path(user_id))
+        row  = conn.execute("SELECT value FROM kv_store WHERE key = 'user_hub_settings'").fetchone()
+        conn.close()
+        return json.loads(row[0]) if row else {}
+    except Exception:
+        return {}
 
 
 def _get_today_tasks(user_id: str, date_str: str) -> list:
@@ -725,6 +736,80 @@ e termine com uma motivação curta. Use **negrito** para os itens mais importan
 
 
 # ---------------------------------------------------------------------------
+# Vagas (Job Scout via Google News RSS)
+# ---------------------------------------------------------------------------
+
+def generate_jobs_json(user_id: str):
+    logger.info("[%s] Buscando vagas...", user_id)
+    try:
+        hs       = _get_hub_settings(user_id)
+        keywords = hs.get("job_keywords")  or []
+        locations= hs.get("job_locations") or []
+        level    = hs.get("job_level",  "")
+        mode     = hs.get("job_mode",   "")
+        days     = int(hs.get("job_days", 7))
+
+        if not keywords:
+            logger.info("[%s] Nenhuma palavra-chave de vaga configurada, pulando", user_id)
+            (_data_dir(user_id) / "jobs_today.json").write_text("[]", encoding="utf-8")
+            return
+
+        from urllib.parse import quote_plus
+        import re, xml.etree.ElementTree as ET, html as html_module
+        from datetime import timezone
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        headers = {"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,pt;q=0.9"}
+        seen, results = set(), []
+
+        for kw in keywords:
+            loc_part = (" " + " OR ".join(locations)) if locations else ""
+            level_part = (" " + level) if level else ""
+            mode_part  = (" " + mode)  if mode  else ""
+            q = quote_plus(f"{kw}{loc_part}{level_part}{mode_part} vaga emprego")
+            url = f"https://news.google.com/rss/search?q={q}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+            try:
+                r    = requests.get(url, headers=headers, timeout=15)
+                root = ET.fromstring(r.content)
+                for item in root.findall(".//item")[:8]:
+                    link  = item.findtext("link", "") or ""
+                    if link in seen: continue
+                    seen.add(link)
+                    title_raw = html_module.unescape(item.findtext("title", "") or "")
+                    source = ""
+                    if " - " in title_raw:
+                        parts = title_raw.rsplit(" - ", 1)
+                        title_raw, source = parts[0].strip(), parts[1].strip()
+                    pub_raw = item.findtext("pubDate", "") or ""
+                    try:
+                        from email.utils import parsedate_to_datetime
+                        pub_dt = parsedate_to_datetime(pub_raw)
+                        if pub_dt < cutoff: continue
+                        pub_str = pub_dt.strftime("%d/%m")
+                    except Exception:
+                        pub_str = ""
+                    results.append({
+                        "title":   title_raw,
+                        "company": source,
+                        "via":     source,
+                        "url":     link,
+                        "keyword": kw,
+                        "pub":     pub_str,
+                        "is_new":  True,
+                    })
+            except Exception as e:
+                logger.warning("[%s] Vaga RSS falhou para '%s': %s", user_id, kw, e)
+
+        (_data_dir(user_id) / "jobs_today.json").write_text(
+            json.dumps(results[:30], ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        logger.info("[%s] %d vagas encontradas", user_id, len(results))
+    except Exception as e:
+        logger.error("[%s] Erro vagas: %s", user_id, e)
+        (_data_dir(user_id) / "jobs_today.json").write_text("[]", encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -732,6 +817,7 @@ def generate_hub_data(user_id: str):
     logger.info("=== Atualizando dados: %s ===", USERS[user_id]["name"])
     generate_health_json(user_id)
     generate_news_json(user_id)
+    generate_jobs_json(user_id)
     generate_calendar_json(user_id)
     generate_daily_briefing(user_id)
     logger.info("=== %s atualizado ===", USERS[user_id]["name"])

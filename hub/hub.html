@@ -851,6 +851,21 @@ select option { background: var(--surface); }
 .empty { text-align: center; padding: 1.75rem 1rem; color: var(--text3); font-size: .82rem; font-style: italic; }
 .divider { height: 1px; background: var(--border); margin: .4rem 0; }
 
+/* ─── Config tags (temas de notícias / job scout) ─────────────────────── */
+.cfg-label { font-size: .72rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
+.cfg-tags { display: flex; flex-wrap: wrap; gap: .35rem; min-height: 26px; }
+.cfg-tag {
+  display: flex; align-items: center; gap: .25rem;
+  padding: .18rem .55rem; border-radius: 99px;
+  background: var(--rose-dim); border: 1px solid var(--rose-mid);
+  font-size: .72rem; color: var(--rose); font-weight: 500;
+}
+.cfg-tag button {
+  background: none; border: none; color: var(--rose);
+  cursor: pointer; font-size: .8rem; line-height: 1; padding: 0 .1rem;
+}
+.cfg-tag button:hover { color: var(--red); }
+
 /* ─── Prof Badge ──────────────────────────────────────────────────────── */
 .prof-badge {
   display: inline-flex;
@@ -926,7 +941,39 @@ select option { background: var(--surface); }
 .qstat-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: .4rem; }
 .qstat-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
 
-/* ─── Home Grid ───────────────────────────────────────────────────────── */
+/* ─── Home stats row (métricas inline) ────────────────────────────────── */
+.home-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .5rem;
+}
+@media(max-width:480px) { .home-stats-row { grid-template-columns: repeat(2, 1fr); } }
+.home-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .65rem .75rem .5rem;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.home-stat:hover { border-color: var(--border2); }
+.home-stat-top { display: flex; align-items: baseline; gap: .3rem; margin-bottom: .25rem; }
+.home-stat-icon { font-size: .9rem; line-height: 1; }
+.home-stat-val { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; line-height: 1; color: var(--rose); }
+.home-stat-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: .3rem; }
+.home-stat-fill { height: 100%; border-radius: 99px; background: var(--rose); transition: width .6s cubic-bezier(.4,0,.2,1); width: 0; }
+.home-stat-lbl { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); }
+
+/* ─── Home main grid ──────────────────────────────────────────────────── */
+.home-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+  align-items: start;
+}
+@media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; } }
+
+/* ─── Home Grid (legado) ──────────────────────────────────────────────── */
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1201,78 +1248,113 @@ select option { background: var(--surface); }
         <div class="greeting-date" id="greeting-date"></div>
       </div>
 
-      <!-- Quick stats do perfil ativo -->
-      <div class="quick-stats">
-        <div class="qstat">
-          <div class="qstat-icon">🏃</div>
-          <div class="qstat-val" id="qs-steps" style="color:var(--b-color)">—</div>
-          <div class="qstat-lbl">Passos</div>
-          <div class="qstat-bar"><div class="qstat-fill" id="qs-steps-bar" style="background:var(--b-color);width:0"></div></div>
+      <!-- Quick stats inline (como hub antigo) -->
+      <div class="home-stats-row">
+        <div class="home-stat" onclick="go('saude')">
+          <div class="home-stat-top">
+            <span class="home-stat-icon">🏃</span>
+            <span class="home-stat-val" id="qs-steps">—</span>
+          </div>
+          <div class="home-stat-bar"><div class="home-stat-fill" id="qs-steps-bar"></div></div>
+          <div class="home-stat-lbl">PASSOS</div>
         </div>
-        <div class="qstat">
-          <div class="qstat-icon">🌙</div>
-          <div class="qstat-val" id="qs-sleep" style="color:var(--c-sleep)">—</div>
-          <div class="qstat-lbl">Sono</div>
-          <div class="qstat-bar"><div class="qstat-fill" id="qs-sleep-bar" style="background:var(--c-sleep);width:0"></div></div>
+        <div class="home-stat" onclick="go('saude')">
+          <div class="home-stat-top">
+            <span class="home-stat-icon">🌙</span>
+            <span class="home-stat-val" id="qs-sleep">—</span>
+          </div>
+          <div class="home-stat-bar"><div class="home-stat-fill" id="qs-sleep-bar" style="background:var(--c-sleep)"></div></div>
+          <div class="home-stat-lbl">SONO</div>
         </div>
-        <div class="qstat">
-          <div class="qstat-icon">💧</div>
-          <div class="qstat-val" id="qs-water" style="color:var(--c-water)">—</div>
-          <div class="qstat-lbl">Água</div>
-          <div class="qstat-bar"><div class="qstat-fill" id="qs-water-bar" style="background:var(--c-water);width:0"></div></div>
+        <div class="home-stat" onclick="go('saude')">
+          <div class="home-stat-top">
+            <span class="home-stat-icon">💧</span>
+            <span class="home-stat-val" id="qs-water">—</span>
+          </div>
+          <div class="home-stat-bar"><div class="home-stat-fill" id="qs-water-bar" style="background:var(--c-water)"></div></div>
+          <div class="home-stat-lbl">ÁGUA</div>
         </div>
-        <div class="qstat">
-          <div class="qstat-icon">😊</div>
-          <div class="qstat-val" id="qs-mood" style="font-size:1.6rem;line-height:1">—</div>
-          <div class="qstat-lbl">Humor</div>
+        <div class="home-stat">
+          <div class="home-stat-top">
+            <span class="home-stat-icon">😊</span>
+            <span class="home-stat-val" id="qs-mood" style="font-size:1.4rem;line-height:1">—</span>
+          </div>
+          <div class="home-stat-bar" style="opacity:0"></div>
+          <div class="home-stat-lbl">HUMOR</div>
         </div>
       </div>
 
-      <!-- Mini calendário -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label">📅 Calendário</span>
-          <span class="see-more" style="margin:0" onclick="go('agenda')">Ver agenda →</span>
-        </div>
-        <div class="card-body" style="padding:.6rem .85rem">
-          <div class="gcal-nav" style="margin-bottom:.4rem">
-            <button class="gcal-nav-btn" onclick="miniCalNav(-1)">‹</button>
-            <span class="gcal-month-lbl" id="mini-cal-lbl"></span>
-            <button class="gcal-nav-btn" onclick="miniCalNav(1)">›</button>
-          </div>
-          <div class="gcal-grid" id="mini-cal-grid" style="gap:1px"></div>
-          <div id="mini-cal-events" style="margin-top:.5rem"></div>
-        </div>
-      </div>
+      <!-- Grid principal: col esq = tarefas+hábitos | col dir = agenda + vagas + notícia -->
+      <div class="home-main-grid">
 
-      <!-- Grid: tarefas + hábitos | notícia -->
-      <div class="home-grid">
-        <div class="card">
-          <div class="card-head"><span class="card-label">Tarefas de hoje</span></div>
-          <div class="card-body" style="padding:.7rem .9rem">
-            <div id="ov-tasks"></div>
-            <div class="see-more" onclick="go('tarefas')">Ver todas →</div>
+        <!-- Coluna esquerda: tarefas & hábitos -->
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <div class="card">
+            <div class="card-head">
+              <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
+            </div>
+            <div class="card-body" style="padding:.7rem .9rem;display:flex;flex-direction:column;gap:.5rem">
+              <div id="ov-tasks-wrap">
+                <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">📝 Tarefas</div>
+                <div id="ov-tasks"></div>
+              </div>
+              <div id="ov-habits-wrap" style="margin-top:.3rem">
+                <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.3rem">🔁 Hábitos</div>
+                <div id="ov-habits"></div>
+              </div>
+              <div class="see-more" onclick="go('tarefas')">Ver todas →</div>
+            </div>
+          </div>
+
+          <!-- Manchete do dia -->
+          <div class="card">
+            <div class="card-head"><span class="card-label">📰 Manchete do dia</span></div>
+            <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-head"><span class="card-label">Hábitos</span></div>
-          <div class="card-body" style="padding:.7rem .9rem">
-            <div id="ov-habits"></div>
-            <div class="see-more" onclick="go('habitos')">Ver todos →</div>
+
+        <!-- Coluna direita: agenda + vagas novas + próxima refeição -->
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+
+          <!-- Mini calendário + próximos eventos -->
+          <div class="card">
+            <div class="card-head">
+              <span class="card-label">📅 Agenda</span>
+              <span class="see-more" style="margin:0" onclick="go('agenda')">Ver agenda →</span>
+            </div>
+            <div class="card-body" style="padding:.5rem .85rem">
+              <div class="gcal-nav" style="margin-bottom:.3rem">
+                <button class="gcal-nav-btn" onclick="miniCalNav(-1)">‹</button>
+                <span class="gcal-month-lbl" id="mini-cal-lbl"></span>
+                <button class="gcal-nav-btn" onclick="miniCalNav(1)">›</button>
+              </div>
+              <div class="gcal-grid" id="mini-cal-grid" style="gap:1px"></div>
+              <div id="mini-cal-events" style="margin-top:.4rem"></div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-label">Manchete do dia</span></div>
-          <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
-        </div>
-        <div class="card">
-          <div class="card-head">
-            <span class="card-label">Próximos eventos</span>
-            <span class="see-more" style="margin:0" onclick="go('agenda')">Ver agenda →</span>
+
+          <!-- Vagas novas -->
+          <div class="card" id="ov-jobs-card">
+            <div class="card-head">
+              <span class="card-label">💼 Vagas novas</span>
+              <span class="see-more" style="margin:0" onclick="go('vagas')">Ver todas →</span>
+            </div>
+            <div class="card-body" style="padding:.6rem .9rem" id="ov-jobs">
+              <div class="empty">Sem vagas recentes</div>
+            </div>
           </div>
-          <div class="card-body" style="padding:.7rem .9rem" id="ov-events">
-            <div class="empty">Sem eventos próximos</div>
+
+          <!-- Próxima refeição -->
+          <div class="card" id="ov-meal-card" style="display:none">
+            <div class="card-head"><span class="card-label">🥗 Próxima refeição</span>
+              <span class="see-more" style="margin:0" onclick="go('dieta')">Ver dieta →</span>
+            </div>
+            <div class="card-body" style="padding:.7rem .9rem">
+              <div style="font-size:.95rem;font-weight:600;color:var(--text)" id="ov-meal-name">—</div>
+              <div style="font-size:.72rem;color:var(--text3);margin-top:.15rem" id="ov-meal-time"></div>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -1687,12 +1769,14 @@ select option { background: var(--surface); }
 
     <!-- CONFIGURAÇÕES -->
     <div class="section" id="sec-config">
+
+      <!-- Metas de saúde -->
       <div class="card">
-        <div class="card-head"><span class="card-label">⚙️ Configurações</span></div>
+        <div class="card-head"><span class="card-label">⚙️ Metas de saúde</span></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
 
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de passos</label>
+            <label class="cfg-label">Meta de passos</label>
             <div style="display:flex;gap:.5rem;align-items:center">
               <input type="number" id="cfg-steps" placeholder="10000" min="1000" max="50000" step="500" style="flex:1">
               <button class="btn btn-rose" onclick="saveCfg('steps_goal',document.getElementById('cfg-steps').value)">Salvar</button>
@@ -1700,7 +1784,7 @@ select option { background: var(--surface); }
           </div>
 
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de água (ml)</label>
+            <label class="cfg-label">Meta de água (ml)</label>
             <div style="display:flex;gap:.5rem;align-items:center">
               <input type="number" id="cfg-water" placeholder="2500" min="500" max="5000" step="100" style="flex:1">
               <button class="btn btn-rose" onclick="saveCfg('water_goal',document.getElementById('cfg-water').value)">Salvar</button>
@@ -1708,7 +1792,7 @@ select option { background: var(--surface); }
           </div>
 
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Meta de sono (horas)</label>
+            <label class="cfg-label">Meta de sono (horas)</label>
             <div style="display:flex;gap:.5rem;align-items:center">
               <input type="number" id="cfg-sleep" placeholder="8" min="4" max="12" step=".5" style="flex:1">
               <button class="btn btn-rose" onclick="saveCfg('sleep_goal_h',document.getElementById('cfg-sleep').value)">Salvar</button>
@@ -1716,9 +1800,8 @@ select option { background: var(--surface); }
           </div>
 
           <div class="divider"></div>
-
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">✨ Briefing diário (IA)</label>
+            <label class="cfg-label">✨ Briefing diário (IA)</label>
             <div style="display:flex;gap:.5rem">
               <button class="btn btn-outline" style="flex:1" onclick="regenBriefing()">↺ Gerar briefing</button>
               <button class="btn btn-outline" style="flex:1" onclick="openAIPanel()">✨ Abrir assistente</button>
@@ -1726,13 +1809,97 @@ select option { background: var(--surface); }
           </div>
 
           <div class="divider"></div>
-
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Conta</label>
+            <label class="cfg-label">Conta</label>
             <div style="font-size:.8rem;color:var(--text3);margin-bottom:.3rem">Sessão: <strong id="cfg-viewer-name" style="color:var(--text2)"></strong></div>
             <button class="btn btn-outline" onclick="logout()" style="border-color:var(--red);color:var(--red)">→ Sair da conta</button>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Temas de notícias -->
+      <div class="card">
+        <div class="card-head"><span class="card-label">📰 Temas de notícias</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
+
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label class="cfg-label">🇧🇷 Brasil — temas de busca</label>
+            <div class="cfg-tags" id="cfg-news-br-tags"></div>
+            <div style="display:flex;gap:.4rem">
+              <input type="text" id="cfg-news-br-input" placeholder="Ex: tecnologia, política, esportes" style="flex:1" onkeydown="if(event.key==='Enter')cfgNewsAddTag('br')">
+              <button class="btn btn-rose" onclick="cfgNewsAddTag('br')">+</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label class="cfg-label">🌐 Mundo — temas de busca</label>
+            <div class="cfg-tags" id="cfg-news-world-tags"></div>
+            <div style="display:flex;gap:.4rem">
+              <input type="text" id="cfg-news-world-input" placeholder="Ex: technology, sports, science" style="flex:1" onkeydown="if(event.key==='Enter')cfgNewsAddTag('world')">
+              <button class="btn btn-rose" onclick="cfgNewsAddTag('world')">+</button>
+            </div>
+          </div>
+
+          <button class="btn btn-rose" onclick="saveNewsTopics()">Salvar temas</button>
+          <div style="font-size:.72rem;color:var(--text3)">As alterações serão aplicadas no próximo refresh de dados.</div>
+        </div>
+      </div>
+
+      <!-- Job Scout -->
+      <div class="card">
+        <div class="card-head"><span class="card-label">💼 Job Scout — busca de vagas</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
+
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label class="cfg-label">Palavras-chave</label>
+            <div class="cfg-tags" id="cfg-job-kw-tags"></div>
+            <div style="display:flex;gap:.4rem">
+              <input type="text" id="cfg-job-kw-input" placeholder="Ex: Analista de Dados" style="flex:1" onkeydown="if(event.key==='Enter')cfgJobAddTag('kw')">
+              <button class="btn btn-rose" onclick="cfgJobAddTag('kw')">+</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label class="cfg-label">Localidades</label>
+            <div class="cfg-tags" id="cfg-job-loc-tags"></div>
+            <div style="display:flex;gap:.4rem">
+              <input type="text" id="cfg-job-loc-input" placeholder="Ex: Porto Alegre" style="flex:1" onkeydown="if(event.key==='Enter')cfgJobAddTag('loc')">
+              <button class="btn btn-rose" onclick="cfgJobAddTag('loc')">+</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+            <div style="display:flex;flex-direction:column;gap:.3rem">
+              <label class="cfg-label">Senioridade</label>
+              <select id="cfg-job-level" style="width:100%">
+                <option value="">Qualquer</option>
+                <option value="estágio">Estágio</option>
+                <option value="júnior">Júnior</option>
+                <option value="pleno">Pleno</option>
+                <option value="sênior">Sênior</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.3rem">
+              <label class="cfg-label">Modalidade</label>
+              <select id="cfg-job-mode" style="width:100%">
+                <option value="">Qualquer</option>
+                <option value="remoto">Remoto</option>
+                <option value="presencial">Presencial</option>
+                <option value="híbrido">Híbrido</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.3rem">
+              <label class="cfg-label">Vagas dos últimos</label>
+              <div style="display:flex;align-items:center;gap:.3rem">
+                <input type="number" id="cfg-job-days" placeholder="7" min="1" max="30" style="flex:1">
+                <span style="font-size:.75rem;color:var(--text3)">dias</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-rose" onclick="saveJobScout()">Salvar configurações</button>
+          <div style="font-size:.72rem;color:var(--text3)">As alterações serão aplicadas no próximo refresh de dados.</div>
         </div>
       </div>
 
@@ -2197,65 +2364,98 @@ function renderGreeting() {
 
 function renderHome() {
   renderGreeting();
-  // quick stats do perfil ativo
   const h = (D[PROFILE] || {}).health || {};
-  const pColor = PROFILE === 'bernardo' ? 'var(--b-color)' : 'var(--a-color)';
+  const s = ud.settings || {};
+  const stepsGoal = s.steps_goal || 10000;
+  const waterGoal = s.water_goal || 2000;
+  const sleepGoal = (s.sleep_goal_h || 8) * 60;
+
+  // quick stats (novos IDs home-stat)
   const sv = document.getElementById('qs-steps');
-  if (sv) { sv.style.color = pColor; sv.textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—'; }
+  if (sv) sv.textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
   const sb = document.getElementById('qs-steps-bar');
-  if (sb) { sb.style.background = pColor; sb.style.width = Math.min(100,(h.steps||0)/10000*100)+'%'; }
+  if (sb) sb.style.width = Math.min(100,(h.steps||0)/stepsGoal*100)+'%';
   const slv = document.getElementById('qs-sleep');
   if (slv) slv.textContent = fmtSleep(h.sleep_minutes||0);
   const slb = document.getElementById('qs-sleep-bar');
-  if (slb) slb.style.width = Math.min(100,(h.sleep_minutes||0)/480*100)+'%';
+  if (slb) slb.style.width = Math.min(100,(h.sleep_minutes||0)/sleepGoal*100)+'%';
   const wv = document.getElementById('qs-water');
   if (wv) wv.textContent = h.water_ml ? h.water_ml+'ml' : '—';
   const wb = document.getElementById('qs-water-bar');
-  if (wb) wb.style.width = Math.min(100,(h.water_ml||0)/2500*100)+'%';
+  if (wb) wb.style.width = Math.min(100,(h.water_ml||0)/waterGoal*100)+'%';
   const mv = document.getElementById('qs-mood');
   if (mv) mv.textContent = ((ud.moods||{})[TODAY]||{}).mood || '—';
 
   // mini tarefas
-  const tasks  = ((ud.tasks||{})[TODAY]||[]).slice(0,4);
-  const ovT    = document.getElementById('ov-tasks');
+  const tasks = ((ud.tasks||{})[TODAY]||[]).slice(0,5);
+  const ovT   = document.getElementById('ov-tasks');
   if (ovT) ovT.innerHTML = tasks.length
     ? tasks.map(t => `<div class="mini-item ${t.done?'done':''}">
         <div class="mini-dot" style="background:${t.done?'var(--green)':'var(--border2)'}"></div>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.text)}</span>
       </div>`).join('')
-    : '<div class="empty" style="padding:.5rem">Sem tarefas hoje</div>';
+    : '<div class="empty" style="padding:.3rem 0">Sem tarefas hoje</div>';
 
   // mini hábitos
-  const habits = (ud.habits||[]).slice(0,4);
+  const habits = (ud.habits||[]).slice(0,5);
   const comps  = ud.habit_completions||{};
   const ovH    = document.getElementById('ov-habits');
   if (ovH) ovH.innerHTML = habits.length
-    ? habits.map(h => {
-        const done = `${h.id}:${TODAY}` in comps;
+    ? habits.map(hb => {
+        const done = `${hb.id}:${TODAY}` in comps;
         return `<div class="mini-item ${done?'done':''}">
           <div class="mini-dot" style="background:${done?'var(--green)':'var(--border2)'}"></div>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.name)}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hb.name)}</span>
         </div>`;
       }).join('')
-    : '<div class="empty" style="padding:.5rem">Sem hábitos</div>';
+    : '<div class="empty" style="padding:.3rem 0">Sem hábitos</div>';
 
   // manchete
-  const news  = ((D[PROFILE]||{}).news||[]);
-  const topN  = news[0];
-  const ovN   = document.getElementById('ov-news');
+  const topN = ((D[PROFILE]||{}).news||[])[0];
+  const ovN  = document.getElementById('ov-news');
   if (ovN) ovN.innerHTML = topN
-    ? `<a href="${topN.url}" target="_blank" rel="noopener" style="display:flex;flex-direction:column;gap:.25rem;text-decoration:none">
-        <div style="font-size:.82rem;font-weight:500;line-height:1.35;color:var(--text)">${esc(topN.title)}</div>
-        <div style="font-size:.65rem;color:var(--text3)">${esc(topN.source)}</div>
+    ? `<a href="${topN.url}" target="_blank" rel="noopener" style="display:flex;flex-direction:column;gap:.3rem;text-decoration:none">
+        <div style="font-size:.82rem;font-weight:500;line-height:1.4;color:var(--text)">${esc(topN.title)}</div>
+        <div style="font-size:.65rem;color:var(--text3)">${esc(topN.source)} · ${esc(topN.topic||'')}</div>
        </a>`
     : '<div class="empty" style="padding:.5rem">Sem notícias</div>';
+
+  // vagas novas no início
+  const newJobs = (_jobs||[]).filter(j => j.status === 'new' || !j.status).slice(0,3);
+  const allJobsFromData = ((D[PROFILE]||{}).job_listings||[]).slice(0,3);
+  const jobsToShow = allJobsFromData.length ? allJobsFromData : newJobs;
+  const ovJ = document.getElementById('ov-jobs');
+  const jCard = document.getElementById('ov-jobs-card');
+  if (ovJ) {
+    if (jobsToShow.length) {
+      ovJ.innerHTML = jobsToShow.map(j => `
+        <div style="padding:.35rem 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:.1rem">
+          <div style="font-size:.82rem;font-weight:500;color:var(--text)">${esc(j.title||j.cargo||'—')}</div>
+          <div style="font-size:.65rem;color:var(--text3)">${esc(j.company||j.empresa||'—')} · ${esc(j.source||j.via||'')}</div>
+          ${j.is_new ? '<span style="font-size:.6rem;background:var(--rose-dim);color:var(--rose);border-radius:99px;padding:.08rem .4rem;width:fit-content">Nova</span>' : ''}
+        </div>`).join('');
+      if (jCard) jCard.style.display = '';
+    } else {
+      if (jCard) jCard.style.display = 'none';
+    }
+  }
+
+  // próxima refeição
+  const next = getNextMeal();
+  const mCard = document.getElementById('ov-meal-card');
+  if (mCard) {
+    if (next) {
+      mCard.style.display = '';
+      const mn = document.getElementById('ov-meal-name'); if(mn) mn.textContent = next.meal.name;
+      const mt = document.getElementById('ov-meal-time'); if(mt) mt.textContent = 'Hoje às ' + next.label;
+    } else { mCard.style.display = 'none'; }
+  }
 
   // placar
   const sc = (D.competition||{}).scores||{};
   const bEl = document.getElementById('ov-pts-b'); if(bEl) bEl.textContent = (sc.bernardo||{}).total||0;
   const aEl = document.getElementById('ov-pts-a'); if(aEl) aEl.textContent = (sc.amanda||{}).total||0;
 
-  // próximos eventos (usa dados já carregados do calendário)
   renderUpcomingInHome();
 }
 
@@ -2705,6 +2905,18 @@ function loadCfg() {
   const sleepEl = document.getElementById('cfg-sleep'); if (sleepEl) sleepEl.value = s.sleep_goal_h || '';
   const nm = document.getElementById('cfg-viewer-name');
   if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
+
+  // Temas de notícias
+  const hs = ud.hub_settings || {};
+  _renderCfgTags('cfg-news-br-tags',    hs.news_topics_br    || ['Brasil','tecnologia','economia'], 'br');
+  _renderCfgTags('cfg-news-world-tags', hs.news_topics_world || ['world news','technology'],        'world');
+
+  // Job Scout
+  _renderCfgTags('cfg-job-kw-tags',  hs.job_keywords  || [], 'kw');
+  _renderCfgTags('cfg-job-loc-tags', hs.job_locations || [], 'loc');
+  const lvl = document.getElementById('cfg-job-level');  if (lvl)  lvl.value  = hs.job_level  || '';
+  const mode = document.getElementById('cfg-job-mode');  if (mode) mode.value = hs.job_mode   || '';
+  const days = document.getElementById('cfg-job-days');  if (days) days.value = hs.job_days   || 7;
 }
 
 async function saveCfg(key, val) {
@@ -2712,6 +2924,70 @@ async function saveCfg(key, val) {
   ud.settings = { ...(ud.settings||{}), [key]: Number(val) };
   await api('/api/save/settings', { settings: ud.settings });
   toast('Configuração salva ♡');
+}
+
+// Helpers de tags de configuração
+let _cfgNewsTagsBr    = [];
+let _cfgNewsTagsWorld = [];
+let _cfgJobKwTags     = [];
+let _cfgJobLocTags    = [];
+
+function _renderCfgTags(containerId, tags, type) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (type === 'br')    _cfgNewsTagsBr    = [...tags];
+  if (type === 'world') _cfgNewsTagsWorld = [...tags];
+  if (type === 'kw')    _cfgJobKwTags     = [...tags];
+  if (type === 'loc')   _cfgJobLocTags    = [...tags];
+  el.innerHTML = tags.map((t, i) =>
+    `<span class="cfg-tag">${esc(t)}<button onclick="_cfgRemoveTag('${type}',${i})">×</button></span>`
+  ).join('');
+}
+
+function _cfgRemoveTag(type, idx) {
+  if (type === 'br')    { _cfgNewsTagsBr.splice(idx,1);    _renderCfgTags('cfg-news-br-tags',    _cfgNewsTagsBr,    'br'); }
+  if (type === 'world') { _cfgNewsTagsWorld.splice(idx,1); _renderCfgTags('cfg-news-world-tags', _cfgNewsTagsWorld, 'world'); }
+  if (type === 'kw')    { _cfgJobKwTags.splice(idx,1);     _renderCfgTags('cfg-job-kw-tags',     _cfgJobKwTags,     'kw'); }
+  if (type === 'loc')   { _cfgJobLocTags.splice(idx,1);    _renderCfgTags('cfg-job-loc-tags',    _cfgJobLocTags,    'loc'); }
+}
+
+function cfgNewsAddTag(region) {
+  const inp = document.getElementById(`cfg-news-${region}-input`);
+  const val = inp.value.trim(); if (!val) return;
+  inp.value = '';
+  if (region === 'br')    _renderCfgTags('cfg-news-br-tags',    [..._cfgNewsTagsBr,    val], 'br');
+  if (region === 'world') _renderCfgTags('cfg-news-world-tags', [..._cfgNewsTagsWorld, val], 'world');
+}
+
+function cfgJobAddTag(type) {
+  const inp = document.getElementById(`cfg-job-${type}-input`);
+  const val = inp.value.trim(); if (!val) return;
+  inp.value = '';
+  if (type === 'kw')  _renderCfgTags('cfg-job-kw-tags',  [..._cfgJobKwTags,  val], 'kw');
+  if (type === 'loc') _renderCfgTags('cfg-job-loc-tags', [..._cfgJobLocTags, val], 'loc');
+}
+
+async function saveNewsTopics() {
+  ud.hub_settings = {
+    ...(ud.hub_settings||{}),
+    news_topics_br:    _cfgNewsTagsBr,
+    news_topics_world: _cfgNewsTagsWorld,
+  };
+  await api('/api/save/hub_settings', { hub_settings: ud.hub_settings });
+  toast('Temas salvos ♡ — atualiza os dados para aplicar');
+}
+
+async function saveJobScout() {
+  ud.hub_settings = {
+    ...(ud.hub_settings||{}),
+    job_keywords:  _cfgJobKwTags,
+    job_locations: _cfgJobLocTags,
+    job_level:     document.getElementById('cfg-job-level').value,
+    job_mode:      document.getElementById('cfg-job-mode').value,
+    job_days:      Number(document.getElementById('cfg-job-days').value) || 7,
+  };
+  await api('/api/save/hub_settings', { hub_settings: ud.hub_settings });
+  toast('Job Scout salvo ♡ — atualiza os dados para aplicar');
 }
 
 // ─── Dieta ─────────────────────────────────────────────────────────────────

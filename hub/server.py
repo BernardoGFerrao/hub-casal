@@ -551,6 +551,7 @@ class HubHandler(SimpleHTTPRequestHandler):
                 "habit_completions":  db_get(view_user, "user_habit_completions") or {},
                 "meals":              db_get(view_user, "user_meals") or [],
                 "settings":           db_get(view_user, "user_settings") or {},
+                "hub_settings":       db_get(view_user, "user_hub_settings") or {},
                 "moods":              db_get_all_moods(view_user),
                 "grocery":            db_get(view_user, "user_grocery") or [],
                 "kanban":             db_get(view_user, "user_kanban") or {},
@@ -625,12 +626,13 @@ class HubHandler(SimpleHTTPRequestHandler):
             except Exception:
                 return default
         return {
-            "health":   read_json("health_today.json", {}),
-            "news":     read_json("news_today.json", []),
-            "briefing": read_json("daily_briefing.json", {}),
-            "name":     USERS[user_id]["name"],
-            "color":    USERS[user_id]["color"],
-            "avatar":   USERS[user_id]["avatar"],
+            "health":       read_json("health_today.json", {}),
+            "news":         read_json("news_today.json", []),
+            "briefing":     read_json("daily_briefing.json", {}),
+            "job_listings": read_json("jobs_today.json", []),
+            "name":         USERS[user_id]["name"],
+            "color":        USERS[user_id]["color"],
+            "avatar":       USERS[user_id]["avatar"],
         }
 
     def _serve_hub(self, uid: str):
@@ -767,6 +769,10 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         elif path == "/api/save/jobs":
             db_set(uid, "user_jobs", body.get("jobs", []))
+            self._json({"ok": True})
+
+        elif path == "/api/save/hub_settings":
+            db_set(uid, "user_hub_settings", body.get("hub_settings", {}))
             self._json({"ok": True})
 
         elif path == "/api/ai":
