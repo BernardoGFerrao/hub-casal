@@ -1229,6 +1229,8 @@ select option { background: var(--surface); }
 .gcal-event-title { color: var(--text); flex: 1; }
 .gcal-event.b { border-color: var(--b-color); }
 .gcal-event.a { border-color: var(--a-color); }
+.gcal-event.holiday { border-color: #f59e0b; background: rgba(245,158,11,.06); }
+.gcal-event.today .gcal-event-time { color: var(--rose); }
 
 /* ─── Job Card ────────────────────────────────────────────────────────────── */
 .job-card {
@@ -1830,7 +1832,7 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-label">Próximos 7 dias</span></div>
+        <div class="card-head"><span class="card-label">Próximos 14 dias</span></div>
         <div class="card-body" id="gcal-upcoming">
           <div class="empty">Sem eventos próximos</div>
         </div>
@@ -3052,17 +3054,23 @@ function renderCalEvents(dateStr) {
 function renderUpcoming() {
   const el = document.getElementById('gcal-upcoming');
   if (!el) return;
-  const end = new Date(); end.setDate(end.getDate() + 7);
+  const end = new Date(); end.setDate(end.getDate() + 14);
   const endStr = end.toISOString().slice(0,10);
   const evs = _calEvents.filter(e => e.start.slice(0,10) >= TODAY && e.start.slice(0,10) <= endStr)
-    .sort((a,b) => a.start.localeCompare(b.start)).slice(0,8);
-  if (!evs.length) { el.innerHTML = '<div class="empty">Sem eventos nos próximos 7 dias</div>'; return; }
+    .sort((a,b) => a.start.localeCompare(b.start));
+  if (!evs.length) { el.innerHTML = '<div class="empty">Sem eventos nos próximos 14 dias</div>'; return; }
+  const _dowPt = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   el.innerHTML = evs.map(e => {
     const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
-    const [,m,d] = e.start.slice(0,10).split('-');
-    const time = e.allDay ? `${d}/${m} — dia todo` : `${d}/${m} ${e.start.slice(11,16)}`;
-    return `<div class="gcal-event ${who}">
-      <span class="gcal-event-time">${time}</span>
+    const isHoliday = e.kind === 'holiday';
+    const dateStr = e.start.slice(0,10);
+    const [,m,d] = dateStr.split('-');
+    const dow = _dowPt[new Date(dateStr + 'T12:00:00').getDay()];
+    const isToday = dateStr === TODAY;
+    const time = e.all_day ? `${dow} ${d}/${m}` : `${dow} ${d}/${m} ${e.start.slice(11,16)}`;
+    const icon = isHoliday ? '🎉' : '';
+    return `<div class="gcal-event ${who}${isHoliday?' holiday':''}${isToday?' today':''}">
+      <span class="gcal-event-time">${icon}${time}${isToday?' · hoje':''}</span>
       <span class="gcal-event-title">${esc(e.title)}</span>
     </div>`;
   }).join('');
