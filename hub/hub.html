@@ -2086,16 +2086,19 @@ const VIEWER = D.viewer || 'bernardo';
 let   PROFILE = VIEWER;
 const TODAY   = new Date().toISOString().split('T')[0];
 let _healthViewDate = TODAY;
-let _lastCompData   = null;  // dados de competição do dia selecionado
+let _lastCompData   = null;
+let _darkMode       = false;  // preferência do VIEWER, independente do perfil visitado
 let ud = { tasks:{}, habits:[], habit_completions:{}, moods:{}, grocery:[] };
 
 async function boot() {
   renderViewer();
   renderScore();
   renderGreeting();
-  applyProfileAccent();
   _updateViewerOnlyTabs();
   await loadUD(PROFILE);
+  // Inicializa dark mode do VIEWER
+  _darkMode = !!(ud.settings?.dark_mode);
+  applyProfileAccent();
   // Zera água manual se o dia mudou
   const s = ud.settings || {};
   if (s.water_mode === 'manual' && s.water_manual_date !== TODAY) {
@@ -2176,24 +2179,27 @@ function applyProfileAccent() {
   html.classList.add('theme-' + PROFILE);
   if (PROFILE === 'bernardo') html.classList.add('profile-b-view');
   else                         html.classList.add('profile-a-view');
-  // reaplica dark mode se estava ativo
-  if (ud.settings?.dark_mode) html.classList.add('dark');
-  else html.classList.remove('dark');
+  if (_darkMode) html.classList.add('dark');
+  else           html.classList.remove('dark');
   _updateDarkBtn();
 }
 
 function _updateDarkBtn() {
   const btn = document.getElementById('cfg-dark-btn');
   if (!btn) return;
-  const on = !!(ud.settings?.dark_mode);
-  btn.textContent = on ? 'Desativar' : 'Ativar';
-  btn.className   = on ? 'btn btn-rose' : 'btn btn-outline';
+  btn.textContent = _darkMode ? 'Desativar' : 'Ativar';
+  btn.className   = _darkMode ? 'btn btn-rose' : 'btn btn-outline';
 }
 
 async function toggleDarkMode() {
-  ud.settings = { ...(ud.settings || {}), dark_mode: !(ud.settings?.dark_mode) };
+  _darkMode = !_darkMode;
+  // dark_mode é sempre do VIEWER — salva via endpoint que usa uid=VIEWER no servidor
+  await fetch('/api/save/dark-mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dark_mode: _darkMode })
+  });
   applyProfileAccent();
-  await api('/api/save/settings', { settings: ud.settings });
 }
 
 let _currentSection = 'inicio';

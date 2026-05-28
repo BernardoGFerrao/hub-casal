@@ -936,6 +936,13 @@ class HubHandler(SimpleHTTPRequestHandler):
             db_set(uid, "user_settings", body.get("settings", {}))
             self._json({"ok": True})
 
+        elif path == "/api/save/dark-mode":
+            # dark_mode é sempre do VIEWER (uid), independente do perfil visitado
+            current = db_get(uid, "user_settings") or {}
+            current["dark_mode"] = body.get("dark_mode", False)
+            db_set(uid, "user_settings", current)
+            self._json({"ok": True})
+
         elif path == "/api/save/mood":
             date = body.get("date")
             mood = body.get("mood")
