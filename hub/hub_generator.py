@@ -1062,6 +1062,20 @@ def generate_jobs_json(user_id: str):
         if removed:
             logger.info("[%s] Filtro loc removeu %d vagas fora da região", user_id, removed)
 
+        # Filtro de senioridade
+        if level and level.lower() in ("júnior", "junior", "estágio", "estagio"):
+            _SENIOR_RE = _re.compile(
+                r"\b(s[êe]nior|sr\.?|pleno|pl\.?|especialista|specialist|"
+                r"coordenador|gerente|diretor|manager|lead|principal|staff|"
+                r"arquiteto|architect)\b",
+                _re.IGNORECASE,
+            )
+            before_sen = len(results)
+            results = [j for j in results if not _SENIOR_RE.search(j.get("title", ""))]
+            removed_sen = before_sen - len(results)
+            if removed_sen:
+                logger.info("[%s] Filtro senioridade removeu %d vagas sênior/pleno", user_id, removed_sen)
+
         # Formata pub como dd/mm para exibição
         for j in results:
             pub = j.get("pub", "")
