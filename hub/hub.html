@@ -976,7 +976,7 @@ select option { background: var(--surface); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: .6rem;
-  align-items: start;
+  align-items: stretch;
 }
 @media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; } }
 
@@ -1296,7 +1296,7 @@ select option { background: var(--surface); }
       <div class="home-main-grid">
 
         <!-- Coluna esquerda: tarefas & hábitos -->
-        <div style="display:flex;flex-direction:column;gap:.6rem">
+        <div style="display:flex;flex-direction:column;gap:.6rem;height:100%">
           <div class="card">
             <div class="card-head">
               <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
@@ -1315,14 +1315,14 @@ select option { background: var(--surface); }
           </div>
 
           <!-- Manchete do dia -->
-          <div class="card">
+          <div class="card" style="flex:1">
             <div class="card-head"><span class="card-label">📰 Manchete do dia</span></div>
             <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
           </div>
         </div>
 
         <!-- Coluna direita: agenda + vagas novas + próxima refeição -->
-        <div style="display:flex;flex-direction:column;gap:.6rem">
+        <div style="display:flex;flex-direction:column;gap:.6rem;height:100%">
 
           <!-- Mini calendário + próximos eventos -->
           <div class="card">
