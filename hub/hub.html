@@ -1446,7 +1446,7 @@ select option { background: var(--surface); }
             </div>
             <div class="metric">
               <div class="metric-val" id="m-water" style="color:var(--c-water)">—</div>
-              <div class="metric-lbl">Água</div>
+              <div class="metric-lbl">Água <span id="water-mode-badge" style="font-size:.6rem;opacity:.6;display:none">(manual)</span></div>
               <div class="pbar"><div class="pbar-fill" id="p-water" style="width:0;background:var(--c-water)"></div></div>
             </div>
             <div class="metric">
@@ -1456,6 +1456,22 @@ select option { background: var(--surface); }
           </div>
         </div>
       </div>
+      <!-- Hidratação manual -->
+      <div id="water-manual-card" style="display:none">
+        <div class="card">
+          <div class="card-head"><span class="card-label">💧 Hidratação manual</span><span id="water-manual-total" style="font-size:.75rem;color:var(--c-water)">0 ml</span></div>
+          <div class="card-body">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-outline" onclick="addWater(150)">+150ml</button>
+              <button class="btn btn-outline" onclick="addWater(200)">+200ml</button>
+              <button class="btn btn-outline" onclick="addWater(300)">+300ml</button>
+              <button class="btn btn-outline" onclick="addWater(500)">+500ml</button>
+              <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="addWater(-1)">Zerar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- HUMOR integrado -->
       <div class="ro-bar show" id="ro-humor" style="display:none"><span>👁</span> Visualizando humor de <strong id="ro-humor-n"></strong></div>
       <div class="card">
@@ -1808,6 +1824,14 @@ select option { background: var(--surface); }
           </div>
 
           <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label class="cfg-label">Fonte de hidratação</label>
+            <div style="display:flex;gap:.5rem">
+              <button id="cfg-water-auto" class="btn btn-rose" onclick="saveWaterMode('auto')" style="flex:1">Automático (Google Fit)</button>
+              <button id="cfg-water-manual" class="btn btn-outline" onclick="saveWaterMode('manual')" style="flex:1">Manual</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
             <label class="cfg-label">Meta de sono (horas)</label>
             <div style="display:flex;gap:.5rem;align-items:center">
               <input type="number" id="cfg-sleep" placeholder="8" min="4" max="12" step=".5" style="flex:1">
@@ -2000,6 +2024,12 @@ async function boot() {
   applyProfileAccent();
   _updateViewerOnlyTabs();
   await loadUD(PROFILE);
+  // Zera água manual se o dia mudou
+  const s = ud.settings || {};
+  if (s.water_mode === 'manual' && s.water_manual_date !== TODAY) {
+    ud.settings = { ...s, water_manual_ml: 0, water_manual_date: TODAY };
+    await api('/api/save/settings', { settings: ud.settings });
+  }
   renderAll();
   initCal();
   initMiniCal();
@@ -2132,15 +2162,27 @@ function renderRO() {
 
 function renderHealth() {
   const h = (D[PROFILE] || {}).health || {};
+  const s = (PROFILE === VIEWER ? ud.settings : null) || {};
+  const waterMode = s.water_mode || 'auto';
+  const waterMl   = waterMode === 'manual' ? (s.water_manual_ml || 0) : (h.water_ml || 0);
+  const waterGoal = s.water_goal || 2500;
   document.getElementById('health-date').textContent = h.date ? fmtD(h.date) : fmtD(TODAY);
   document.getElementById('health-sync').textContent = h.synced_at ? 'sync ' + h.synced_at : '';
   document.getElementById('m-steps').textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
   document.getElementById('m-sleep').textContent = fmtSleep(h.sleep_minutes || 0);
-  document.getElementById('m-water').textContent = h.water_ml ? h.water_ml + 'ml' : '—';
+  document.getElementById('m-water').textContent = waterMl ? waterMl + 'ml' : '—';
   document.getElementById('m-hr').textContent    = h.heart_rate ? h.heart_rate + ' bpm' : '—';
   document.getElementById('p-steps').style.width = Math.min(100, (h.steps || 0) / (h.steps_goal || 10000) * 100) + '%';
   document.getElementById('p-sleep').style.width = Math.min(100, (h.sleep_minutes || 0) / 480 * 100) + '%';
-  document.getElementById('p-water').style.width = Math.min(100, (h.water_ml || 0) / 2500 * 100) + '%';
+  document.getElementById('p-water').style.width = Math.min(100, waterMl / waterGoal * 100) + '%';
+  const badge = document.getElementById('water-mode-badge');
+  if (badge) badge.style.display = waterMode === 'manual' ? '' : 'none';
+  // card manual só aparece para o próprio viewer
+  const manCard = document.getElementById('water-manual-card');
+  if (manCard) {
+    manCard.style.display = (PROFILE === VIEWER && waterMode === 'manual') ? '' : 'none';
+    document.getElementById('water-manual-total').textContent = waterMl + ' ml / ' + waterGoal + ' ml';
+  }
 }
 
 // ── Progresso ─────────────────────────────────────────────────────────────
@@ -3228,6 +3270,7 @@ async function loadCfg() {
   const stepEl = document.getElementById('cfg-steps'); if (stepEl) stepEl.value = s.steps_goal || '';
   const waterEl = document.getElementById('cfg-water'); if (waterEl) waterEl.value = s.water_goal || '';
   const sleepEl = document.getElementById('cfg-sleep'); if (sleepEl) sleepEl.value = s.sleep_goal_h || '';
+  _applyWaterModeUI(s.water_mode || 'auto');
   const nm = document.getElementById('cfg-viewer-name');
   if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
 
@@ -3260,6 +3303,37 @@ async function saveCfg(key, val) {
   ud.settings = { ...(ud.settings||{}), [key]: Number(val) };
   await api('/api/save/settings', { settings: ud.settings });
   toast('Configuração salva ♡');
+}
+
+function _applyWaterModeUI(mode) {
+  const btnAuto   = document.getElementById('cfg-water-auto');
+  const btnManual = document.getElementById('cfg-water-manual');
+  if (!btnAuto) return;
+  if (mode === 'manual') {
+    btnAuto.className   = 'btn btn-outline';
+    btnManual.className = 'btn btn-rose';
+  } else {
+    btnAuto.className   = 'btn btn-rose';
+    btnManual.className = 'btn btn-outline';
+  }
+}
+
+async function saveWaterMode(mode) {
+  ud.settings = { ...(ud.settings||{}), water_mode: mode };
+  if (mode === 'auto') delete ud.settings.water_manual_ml;
+  _applyWaterModeUI(mode);
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
+  toast(mode === 'manual' ? 'Modo manual ativado' : 'Modo automático ativado');
+}
+
+async function addWater(ml) {
+  const s = ud.settings || {};
+  const cur = s.water_manual_ml || 0;
+  const next = ml < 0 ? 0 : cur + ml;
+  ud.settings = { ...s, water_manual_ml: next };
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
 }
 
 // ─── Tags de texto simples (notícias / palavras-chave) ──────────────────────
