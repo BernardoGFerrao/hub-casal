@@ -1913,6 +1913,34 @@ select option { background: var(--surface); }
       </div>
 
       <div class="card">
+        <div class="card-head"><span class="card-label">🔑 Integrações Google</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.75rem">
+          <div style="font-size:.75rem;color:var(--text3)">
+            Cole abaixo os tokens OAuth gerados pelo servidor. Execute na VPS:<br>
+            <code style="font-size:.7rem;background:var(--bg2);padding:.15rem .3rem;border-radius:4px;display:inline-block;margin-top:.3rem">python hub/hub_generator.py --auth-health --user bernardo</code>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label class="cfg-label">Token Google Health (saúde)</label>
+            <div style="display:flex;gap:.4rem">
+              <input type="password" id="cfg-token-health" placeholder="Cole o conteúdo do token_health.json..." style="flex:1;font-size:.72rem">
+              <button class="btn btn-rose btn-xs" onclick="saveToken('health')">Salvar</button>
+            </div>
+            <div id="cfg-token-health-status" style="font-size:.68rem;color:var(--text3)"></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label class="cfg-label">Token Google Calendar</label>
+            <div style="display:flex;gap:.4rem">
+              <input type="password" id="cfg-token-calendar" placeholder="Cole o conteúdo do token_calendar.json..." style="flex:1;font-size:.72rem">
+              <button class="btn btn-rose btn-xs" onclick="saveToken('calendar')">Salvar</button>
+            </div>
+            <div id="cfg-token-calendar-status" style="font-size:.68rem;color:var(--text3)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-head"><span class="card-label">Sobre o Hub</span></div>
         <div class="card-body" style="font-size:.8rem;color:var(--text3);line-height:1.7">
           <div><strong style="color:var(--text2)">Our Little Hub</strong> · versão casal</div>
@@ -3277,6 +3305,33 @@ async function saveJobScout() {
   await api('/api/save/hub_settings', { hub_settings: _viewerHubSettings });
   if (PROFILE === VIEWER) ud.hub_settings = _viewerHubSettings;
   toast('Job Scout salvo ♡ — atualiza os dados para aplicar');
+}
+
+async function saveToken(kind) {
+  const input  = document.getElementById(`cfg-token-${kind}`);
+  const status = document.getElementById(`cfg-token-${kind}-status`);
+  const raw    = (input?.value || '').trim();
+  if (!raw) { if (status) status.textContent = '⚠ Cole o conteúdo do JSON primeiro.'; return; }
+  try {
+    JSON.parse(raw); // valida que é JSON válido
+  } catch(e) {
+    if (status) status.textContent = '✕ JSON inválido — certifique-se de copiar o arquivo inteiro.';
+    return;
+  }
+  if (status) status.textContent = 'Salvando...';
+  const r = await fetch('/api/save/token', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ kind, token: raw }),
+  });
+  const d = await r.json();
+  if (d.ok) {
+    if (status) status.textContent = '✓ Token salvo com sucesso!';
+    if (input)  input.value = '';
+    toast('Token salvo ♡');
+  } else {
+    if (status) status.textContent = '✕ Erro: ' + (d.error || 'falha desconhecida');
+  }
 }
 
 // ─── Dieta ─────────────────────────────────────────────────────────────────

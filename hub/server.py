@@ -943,6 +943,20 @@ class HubHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 self._json({"ok": False, "error": str(e), "jobs": []})
 
+        elif path == "/api/save/token":
+            kind  = body.get("kind", "")   # "health" | "calendar"
+            token = body.get("token", "")
+            if kind not in ("health", "calendar") or not token:
+                self._json({"ok": False, "error": "kind ou token inválido"})
+                return
+            try:
+                token_data = json.loads(token) if isinstance(token, str) else token
+                token_path = USERS[uid]["data_dir"] / f"token_{kind}.json"
+                token_path.write_text(json.dumps(token_data, indent=2), encoding="utf-8")
+                self._json({"ok": True})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)})
+
         elif path == "/api/jobs/seen":
             job_id = body.get("id", "")
             if job_id:

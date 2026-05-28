@@ -1000,31 +1000,42 @@ def generate_jobs_json(user_id: str):
                 local_city_norms.add(_unorm("NFKD", loc_str.lower()).encode("ascii","ignore").decode())
 
         import re as _re
-        _REMOTE_RE = _re.compile(r"\b(remot[ao]|remote|home.?office|teletrabalho)\b", _re.IGNORECASE)
-        _HYBRID_SET = {"hybrid", "hibrido", "híbrido"}
-        _ONSITE_SET = {"on-site", "onsite", "presencial"}
-
+        from unicodedata import normalize as _un2
         def _norm(s):
-            from unicodedata import normalize as _un
-            return _un("NFKD", s.lower()).encode("ascii","ignore").decode()
+            return _un2("NFKD", s.lower()).encode("ascii","ignore").decode()
+
+        _REMOTE_RE  = _re.compile(r"\b(remot[ao]|remote|home.?office|teletrabalho)\b", _re.IGNORECASE)
+        _HYBRID_SET = {"hybrid", "hibrido", "hibrida"}
+        _ONSITE_SET = {"on-site", "onsite", "presencial"}
+        # Localizações genéricas/nacionais — não filtrar por cidade
+        _GENERIC_RE = _re.compile(
+            r"^(brasil|brazil|rio grande do sul|rs|br|todo o brasil|nacional|"
+            r"qualquer lugar|anywhere|remote|remoto)$"
+        )
 
         before_loc = len(results)
         filtered = []
         for job in results:
-            jloc  = _norm(job.get("location", ""))
-            jmode = _norm(job.get("mode", ""))
-            is_remote = jmode == "remote" or bool(_REMOTE_RE.search(jloc))
-            if is_remote:
+            jloc  = _norm(job.get("location", "")).strip()
+            jmode = _norm(job.get("mode", "")).strip()
+
+            # Remota explícita ou localização genérica nacional → passa sempre
+            is_remote  = jmode == "remote" or bool(_REMOTE_RE.search(jloc)) or bool(_REMOTE_RE.search(jmode))
+            is_generic = not jloc or bool(_GENERIC_RE.match(jloc))
+
+            if is_remote or is_generic:
                 filtered.append(job)
                 continue
+
+            # Híbrida ou presencial com cidade específica → só passa se for cidade aceita
             is_hybrid_onsite = jmode in _HYBRID_SET or jmode in _ONSITE_SET
-            if is_hybrid_onsite or (jloc and not is_remote):
+            if is_hybrid_onsite or jloc:
                 if any(city in jloc for city in local_city_norms):
                     filtered.append(job)
-                else:
-                    continue  # fora da região
+                # senão descarta silenciosamente
             else:
-                filtered.append(job)  # sem localização definida — mantém
+                filtered.append(job)
+
         results = filtered
         removed = before_loc - len(results)
         if removed:
