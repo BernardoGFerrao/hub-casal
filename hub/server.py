@@ -1124,13 +1124,21 @@ Regras de data:
 Retorne APENAS JSON válido, no formato:
 {{"actions": [...], "message": "resumo em português, máximo 1 linha"}}"""
 
+        history = body.get("history", [])
+        # monta contents com histórico (exclui a última mensagem do user que já está em user_text)
+        contents = []
+        for msg in history[:-1]:
+            role = "user" if msg.get("role") == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg.get("text", "")}]})
+        contents.append({"role": "user", "parts": [{"text": user_text}]})
+
         try:
             resp = _req.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}",
                 headers={"Content-Type": "application/json"},
                 json={
                     "system_instruction": {"parts": [{"text": system_prompt}]},
-                    "contents": [{"parts": [{"text": user_text}]}],
+                    "contents": contents,
                     "generationConfig": {"maxOutputTokens": 512, "temperature": 0.1},
                 },
                 timeout=15
