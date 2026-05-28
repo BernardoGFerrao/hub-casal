@@ -976,7 +976,7 @@ select option { background: var(--surface); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: .6rem;
-  align-items: stretch;
+  align-items: start;
 }
 @media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; } }
 
@@ -1296,7 +1296,7 @@ select option { background: var(--surface); }
       <div class="home-main-grid">
 
         <!-- Coluna esquerda: tarefas & hábitos -->
-        <div style="display:flex;flex-direction:column;gap:.6rem;height:100%">
+        <div style="display:flex;flex-direction:column;gap:.6rem">
           <div class="card">
             <div class="card-head">
               <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
@@ -1315,14 +1315,14 @@ select option { background: var(--surface); }
           </div>
 
           <!-- Manchete do dia -->
-          <div class="card" style="flex:1">
+          <div class="card">
             <div class="card-head"><span class="card-label">📰 Manchete do dia</span></div>
             <div class="card-body" style="padding:.7rem .9rem" id="ov-news"></div>
           </div>
         </div>
 
         <!-- Coluna direita: agenda + vagas novas + próxima refeição -->
-        <div style="display:flex;flex-direction:column;gap:.6rem;height:100%">
+        <div style="display:flex;flex-direction:column;gap:.6rem">
 
           <!-- Mini calendário + próximos eventos -->
           <div class="card">
@@ -1937,6 +1937,7 @@ async function boot() {
   initCal();
   initMiniCal();
   await loadCfg();
+  await loadJobsFromDB();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
 
@@ -2935,11 +2936,35 @@ function renderMiniCalEvents(dateStr) {
 
 // ─── Vagas ─────────────────────────────────────────────────────────────────
 let _jobs = [];
+let _scoutJobsDate = null; // data das vagas carregadas (YYYY-MM-DD)
 
-// _scoutJobs: vagas carregadas pelo Job Scout (session only)
+// _scoutJobs: vagas do dia (do DB ou de busca manual)
 let _scoutJobs = [];
-// _scoutDismissed: URLs ignoradas (session only)
+// _scoutDismissed: URLs ignoradas (persistido em localStorage)
 let _scoutDismissed = new Set(JSON.parse(localStorage.getItem('scout_dismissed')||'[]'));
+
+async function loadJobsFromDB() {
+  try {
+    const r    = await fetch('/api/jobs');
+    const data = await r.json();
+    if (data.ok && data.jobs && data.jobs.length) {
+      _scoutJobsDate = data.date;
+      _scoutJobs = data.jobs;
+      const status = document.getElementById('scout-status');
+      if (status) {
+        status.textContent = `${data.jobs.length} vaga(s) de hoje (${_fmtDate(data.date)}) — clique em "Buscar vagas" para atualizar.`;
+        status.style.display = '';
+      }
+      renderScoutList();
+    }
+  } catch(e) { /* silencioso */ }
+}
+
+function _fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
 
 function _saveScoutDismissed() {
   localStorage.setItem('scout_dismissed', JSON.stringify([..._scoutDismissed]));
@@ -3015,9 +3040,16 @@ async function runJobScout() {
     const r    = await fetch('/api/run-jobs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
     const data = await r.json();
     if (!data.ok) { if (status) status.textContent = 'Erro: ' + (data.error || 'falha desconhecida'); return; }
-    _scoutJobs = (data.jobs || []).filter(j => !_scoutDismissed.has(j.url));
-    const total = data.jobs?.length || 0;
-    if (status) status.textContent = total ? `${total} vaga(s) encontrada(s) — ${_scoutJobs.length} nova(s):` : 'Nenhuma vaga encontrada com as configurações atuais.';
+    _scoutJobs = data.jobs || [];
+    _scoutJobsDate = TODAY;
+    const total = _scoutJobs.length;
+    const visible = _scoutJobs.filter(j => !_scoutDismissed.has(j.url)).length;
+    if (status) {
+      status.style.display = '';
+      status.textContent = total
+        ? `${total} vaga(s) encontrada(s) — ${visible} nova(s):`
+        : 'Nenhuma vaga encontrada com as configurações atuais.';
+    }
     renderScoutList();
     if (D[PROFILE]) D[PROFILE].job_listings = data.jobs || [];
   } catch(e) { if (status) status.textContent = 'Erro ao buscar vagas.'; }
@@ -3025,12 +3057,13 @@ async function runJobScout() {
 }
 
 function renderJobs() {
-  // renderiza vagas do scout se já buscadas, senão mostra prompt
   renderScoutList();
-  const list = document.getElementById('scout-list');
-  if (list && !_scoutJobs.length) {
+  if (!_scoutJobs.length) {
     const status = document.getElementById('scout-status');
-    if (status) { status.textContent = 'Clique em "Buscar vagas" para executar com suas configurações.'; status.style.display = ''; }
+    if (status) {
+      status.textContent = 'Nenhuma vaga do dia encontrada. Clique em "Buscar vagas" para executar agora.';
+      status.style.display = '';
+    }
   }
 }
 

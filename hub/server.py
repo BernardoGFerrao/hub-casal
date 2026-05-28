@@ -230,6 +230,10 @@ def init_user_tables(user_id: str):
         CREATE TABLE IF NOT EXISTS user_hub_settings (
             data_json TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS user_jobs_today (
+            date      TEXT PRIMARY KEY,
+            data_json TEXT NOT NULL
+        );
     """)
     conn.commit()
     conn.close()
@@ -308,6 +312,25 @@ def db_get_all_moods(user_id: str) -> dict:
     try:
         rows = conn.execute("SELECT date, data_json FROM user_mood").fetchall()
         return {r["date"]: json.loads(r["data_json"]) for r in rows}
+    finally:
+        conn.close()
+
+
+def db_get_jobs_today(user_id: str, date_str: str) -> list:
+    conn = get_conn(user_id)
+    try:
+        row = conn.execute("SELECT data_json FROM user_jobs_today WHERE date = ?", (date_str,)).fetchone()
+        return json.loads(row["data_json"]) if row else []
+    finally:
+        conn.close()
+
+
+def db_set_jobs_today(user_id: str, date_str: str, jobs: list):
+    conn = get_conn(user_id)
+    try:
+        conn.execute("INSERT OR REPLACE INTO user_jobs_today (date, data_json) VALUES (?, ?)",
+                     (date_str, json.dumps(jobs, ensure_ascii=False)))
+        conn.commit()
     finally:
         conn.close()
 
@@ -430,6 +453,38 @@ def get_competition_data(date_str: str) -> dict:
 # ---------------------------------------------------------------------------
 # hub_generator runner
 # ---------------------------------------------------------------------------
+
+def _run_jobs_and_save(user_id: str):
+    """Executa Job Scout e salva resultado no DB."""
+    try:
+        spec = importlib.util.spec_from_file_location("hub_generator", HUB_DIR / "hub_generator.py")
+        mod  = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.generate_jobs_json(user_id)
+        data_dir  = USERS[user_id]["data_dir"]
+        jobs_file = data_dir / "jobs_today.json"
+        jobs      = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
+        from datetime import date as _d
+        db_set_jobs_today(user_id, str(_d.today()), jobs)
+        print(f"  [scheduler] vagas {user_id}: {len(jobs)} vagas salvas")
+    except Exception as e:
+        print(f"  [scheduler] erro vagas {user_id}: {e}")
+
+
+def _daily_jobs_scheduler():
+    """Thread que executa Job Scout todo dia às 7h."""
+    import datetime as _dt
+    while True:
+        now  = _dt.datetime.now()
+        next_run = now.replace(hour=7, minute=0, second=0, microsecond=0)
+        if now >= next_run:
+            next_run += _dt.timedelta(days=1)
+        wait = (next_run - now).total_seconds()
+        time.sleep(wait)
+        print("  [scheduler] Executando Job Scout diário às 7h...")
+        for uid in USERS:
+            _run_jobs_and_save(uid)
+
 
 def run_generator(user_id: str):
     try:
@@ -565,6 +620,13 @@ class HubHandler(SimpleHTTPRequestHandler):
                 "profile_color":      USERS[view_user]["color"],
                 "profile_avatar":     USERS[view_user]["avatar"],
             })
+            return
+
+        if path == "/api/jobs":
+            from datetime import date as _d
+            today_str = str(_d.today())
+            jobs = db_get_jobs_today(uid, today_str)
+            self._json({"ok": True, "jobs": jobs, "date": today_str})
             return
 
         if path == "/api/hub-data":
@@ -793,6 +855,8 @@ class HubHandler(SimpleHTTPRequestHandler):
                 data_dir = USERS[uid]["data_dir"]
                 jobs_file = data_dir / "jobs_today.json"
                 jobs = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
+                from datetime import date as _d
+                db_set_jobs_today(uid, str(_d.today()), jobs)
                 self._json({"ok": True, "jobs": jobs})
             except Exception as e:
                 self._json({"ok": False, "error": str(e), "jobs": []})
@@ -978,12 +1042,23 @@ def main():
     print(f"   Pressione Ctrl+C para parar\n")
 
     def _bg_init():
+        from datetime import date as _d
+        today_str = str(_d.today())
         print("  Atualizando dados...")
         for uid in USERS:
             run_generator(uid)
+            # Sincroniza vagas do arquivo JSON para o DB (se geradas)
+            jobs_file = USERS[uid]["data_dir"] / "jobs_today.json"
+            if jobs_file.exists():
+                try:
+                    jobs = json.loads(jobs_file.read_text(encoding="utf-8"))
+                    db_set_jobs_today(uid, today_str, jobs)
+                except Exception:
+                    pass
         print("  Dados atualizados!\n")
 
     threading.Thread(target=_bg_init, daemon=True).start()
+    threading.Thread(target=_daily_jobs_scheduler, daemon=True).start()
     threading.Thread(target=open_browser, daemon=True).start()
 
     server = HTTPServer(("0.0.0.0", PORT), HubHandler)
