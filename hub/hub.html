@@ -1544,12 +1544,11 @@ select option { background: var(--surface); }
     <div class="section" id="sec-tarefas">
       <!-- subtabs -->
       <div class="subtabs">
-        <button class="stab active" id="stab-lista"  onclick="switchTaskTab('lista')">Lista</button>
-        <button class="stab"        id="stab-habitos" onclick="switchTaskTab('habitos')">Hábitos</button>
+        <button class="stab active" id="stab-lista"  onclick="switchTaskTab('lista')">Tarefas & Hábitos</button>
         <button class="stab"        id="stab-kanban" onclick="switchTaskTab('kanban')">Kanban</button>
       </div>
 
-      <!-- Lista de tarefas -->
+      <!-- Lista de tarefas + Hábitos -->
       <div id="task-subtab-lista">
         <div class="ro-bar" id="ro-tarefas"><span>👁</span> Visualizando tarefas de <strong id="ro-tarefas-n"></strong></div>
         <div class="card">
@@ -1567,12 +1566,8 @@ select option { background: var(--surface); }
             <div class="task-list" id="task-list"></div>
           </div>
         </div>
-      </div>
-
-      <!-- Hábitos -->
-      <div id="task-subtab-habitos" style="display:none">
         <div class="ro-bar" id="ro-habitos"><span>👁</span> Visualizando hábitos de <strong id="ro-habitos-n"></strong></div>
-        <div class="card">
+        <div class="card" style="margin-top:.6rem">
           <div class="card-head"><span class="card-label"><span id="habit-day-lbl">Hábitos de hoje</span></span></div>
           <div class="card-body">
             <div id="habit-list" style="display:flex;flex-direction:column;gap:.3rem"></div>
@@ -3030,7 +3025,7 @@ async function refreshCal() {
 
 // ─── Subtabs Tarefas ───────────────────────────────────────────────────────
 function switchTaskTab(name) {
-  ['lista','habitos','kanban'].forEach(n => {
+  ['lista','kanban'].forEach(n => {
     document.getElementById('task-subtab-' + n).style.display = n === name ? '' : 'none';
     document.getElementById('stab-' + n).classList.toggle('active', n === name);
   });
