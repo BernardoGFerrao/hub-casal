@@ -984,6 +984,45 @@ def generate_jobs_json(user_id: str):
         gn_jobs = _scrape_google_news_jobs(keywords, locations, days, level, seen)
         results.extend(gn_jobs)
 
+        # Filtro de localização: vagas híbridas/presenciais só passam se forem
+        # de cidades aceitas (configuradas em job_locations) ou remotas
+        local_city_norms = set()
+        for l in locations:
+            loc_str = l.get("loc", "")
+            if loc_str:
+                from unicodedata import normalize as _unorm
+                local_city_norms.add(_unorm("NFKD", loc_str.lower()).encode("ascii","ignore").decode())
+
+        _REMOTE_RE = re.compile(r"\b(remot[ao]|remote|home.?office|teletrabalho)\b", re.IGNORECASE)
+        _HYBRID_SET = {"hybrid", "hibrido", "híbrido"}
+        _ONSITE_SET = {"on-site", "onsite", "presencial"}
+
+        def _norm(s):
+            from unicodedata import normalize as _un
+            return _un("NFKD", s.lower()).encode("ascii","ignore").decode()
+
+        before_loc = len(results)
+        filtered = []
+        for job in results:
+            jloc  = _norm(job.get("location", ""))
+            jmode = _norm(job.get("mode", ""))
+            is_remote = jmode == "remote" or bool(_REMOTE_RE.search(jloc))
+            if is_remote:
+                filtered.append(job)
+                continue
+            is_hybrid_onsite = jmode in _HYBRID_SET or jmode in _ONSITE_SET
+            if is_hybrid_onsite or (jloc and not is_remote):
+                if any(city in jloc for city in local_city_norms):
+                    filtered.append(job)
+                else:
+                    continue  # fora da região
+            else:
+                filtered.append(job)  # sem localização definida — mantém
+        results = filtered
+        removed = before_loc - len(results)
+        if removed:
+            logger.info("[%s] Filtro loc removeu %d vagas fora da região", user_id, removed)
+
         # Formata pub como dd/mm para exibição
         for j in results:
             pub = j.get("pub", "")
