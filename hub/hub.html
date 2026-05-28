@@ -953,15 +953,15 @@ select option { background: var(--surface); }
   font-size: 1.3rem; cursor: pointer;
   box-shadow: 0 4px 18px rgba(0,0,0,.2);
   z-index: 100; display: flex; align-items: center; justify-content: center;
-  transition: transform .2s, box-shadow .2s; overflow: visible;
+  transition: transform .2s, box-shadow .2s;
 }
 .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,.28); }
 .chat-fab-badge {
-  position: absolute; top: -5px; right: -5px;
+  position: fixed; bottom: calc(1.5rem + 36px); right: calc(5.5rem - 4px);
   background: var(--red); color: #fff; border-radius: 99px;
   font-size: .6rem; font-weight: 700; padding: .1rem .35rem;
   min-width: 16px; text-align: center; display: none;
-  pointer-events: none; z-index: 101; line-height: 1.4;
+  pointer-events: none; z-index: 200; line-height: 1.4;
 }
 .chat-panel {
   position: fixed; bottom: 5.5rem; right: 5.5rem;
@@ -2169,9 +2169,8 @@ select option { background: var(--surface); }
     <button class="chat-send" onclick="sendChatMsg()">➤</button>
   </div>
 </div>
-<button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat com parceiro(a)">
-  💬<span class="chat-fab-badge" id="chat-badge"></span>
-</button>
+<button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat com parceiro(a)">💬</button>
+<span class="chat-fab-badge" id="chat-badge"></span>
 
 <div id="toast"><span class="ti" id="toast-icon">♡</span><span id="toast-msg"></span></div>
 
@@ -2208,6 +2207,11 @@ async function boot() {
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
   checkChatBadge();
   setInterval(checkChatBadge, 15000);
+  // garante que a aba inicial fique visível na navbar mobile
+  setTimeout(() => {
+    const firstTab = document.querySelector('.ntab[data-s="inicio"]');
+    if (firstTab) firstTab.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
+  }, 100);
 }
 
 function renderViewer() {
