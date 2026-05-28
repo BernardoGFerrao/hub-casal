@@ -1376,7 +1376,7 @@ select option { background: var(--surface); }
         <!-- L1 col1: tarefas & hábitos -->
         <div class="card">
           <div class="card-head">
-            <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
+            <span class="card-label">📋 Tarefas &amp; Hábitos — <span id="home-tasks-day-lbl">hoje</span></span>
           </div>
           <div class="card-body" style="padding:.7rem .9rem;display:flex;flex-direction:column;gap:.5rem">
             <div id="ov-tasks-wrap">
@@ -2251,6 +2251,7 @@ async function _renderForDate() {
   renderMood();
   renderTasks();
   renderNews();
+  renderHome();
   const isToday = _healthViewDate === TODAY;
   if (isToday) {
     _lastCompData = null;
@@ -2791,13 +2792,20 @@ function renderGreeting() {
 
 function renderHome() {
   renderGreeting();
-  const h = (D[PROFILE] || {}).health || {};
+  const viewDate = _healthViewDate || TODAY;
+  const isToday  = viewDate === TODAY;
+  const histKey  = PROFILE === 'bernardo' ? 'b_history' : 'a_history';
+  const h = isToday ? ((D[PROFILE]||{}).health||{}) : ((D[histKey]||{})[viewDate]||{});
   const s = ud.settings || {};
   const stepsGoal = s.steps_goal || 10000;
   const waterGoal = s.water_goal || 2000;
   const sleepGoal = (s.sleep_goal_h || 8) * 60;
 
-  // quick stats (novos IDs home-stat)
+  // label dinâmico do card de tarefas na home
+  const homeDayLbl = document.getElementById('home-tasks-day-lbl');
+  if (homeDayLbl) homeDayLbl.textContent = isToday ? 'hoje' : fmtD(viewDate);
+
+  // quick stats
   const sv = document.getElementById('qs-steps');
   if (sv) sv.textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
   const sb = document.getElementById('qs-steps-bar');
@@ -2811,17 +2819,17 @@ function renderHome() {
   const wb = document.getElementById('qs-water-bar');
   if (wb) wb.style.width = Math.min(100,(h.water_ml||0)/waterGoal*100)+'%';
   const mv = document.getElementById('qs-mood');
-  if (mv) mv.textContent = ((ud.moods||{})[TODAY]||{}).mood || '—';
+  if (mv) mv.textContent = ((ud.moods||{})[viewDate]||{}).mood || '—';
 
   // mini tarefas
-  const tasks = ((ud.tasks||{})[TODAY]||[]).slice(0,5);
+  const tasks = ((ud.tasks||{})[viewDate]||[]).slice(0,5);
   const ovT   = document.getElementById('ov-tasks');
   if (ovT) ovT.innerHTML = tasks.length
     ? tasks.map(t => `<div class="mini-item ${t.done?'done':''}">
         <div class="mini-dot" style="background:${t.done?'var(--green)':'var(--border2)'}"></div>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.text)}</span>
       </div>`).join('')
-    : '<div class="empty" style="padding:.3rem 0">Sem tarefas hoje</div>';
+    : `<div class="empty" style="padding:.3rem 0">Sem tarefas ${isToday?'hoje':'neste dia'}</div>`;
 
   // mini hábitos
   const habits = (ud.habits||[]).slice(0,5);
@@ -2829,7 +2837,7 @@ function renderHome() {
   const ovH    = document.getElementById('ov-habits');
   if (ovH) ovH.innerHTML = habits.length
     ? habits.map(hb => {
-        const done = `${hb.id}:${TODAY}` in comps;
+        const done = `${hb.id}:${viewDate}` in comps;
         return `<div class="mini-item ${done?'done':''}">
           <div class="mini-dot" style="background:${done?'var(--green)':'var(--border2)'}"></div>
           <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hb.name)}</span>
@@ -2837,33 +2845,35 @@ function renderHome() {
       }).join('')
     : '<div class="empty" style="padding:.3rem 0">Sem hábitos</div>';
 
-  // manchete
-  const topN = ((D[PROFILE]||{}).news||[])[0];
+  // manchete — só mostra para hoje (sem histórico de notícias)
+  const topN = isToday ? ((D[PROFILE]||{}).news||[])[0] : null;
   const ovN  = document.getElementById('ov-news');
   if (ovN) ovN.innerHTML = topN
     ? `<a href="${topN.url}" target="_blank" rel="noopener" style="display:flex;flex-direction:column;gap:.3rem;text-decoration:none">
         <div style="font-size:.82rem;font-weight:500;line-height:1.4;color:var(--text)">${esc(topN.title)}</div>
         <div style="font-size:.65rem;color:var(--text3)">${esc(topN.source)} · ${esc(topN.topic||'')}</div>
        </a>`
-    : '<div class="empty" style="padding:.5rem">Sem notícias</div>';
+    : `<div class="empty" style="padding:.5rem">${isToday?'Sem notícias':'Notícias disponíveis apenas para hoje'}</div>`;
 
   // vagas no início — gerenciado por renderScoutList() após busca
   const jCard = document.getElementById('ov-jobs-card');
   if (jCard && !_scoutJobs.length) jCard.style.display = 'none';
 
-  // próxima refeição
-  const next = getNextMeal();
+  // próxima refeição — só faz sentido para hoje
   const mCard = document.getElementById('ov-meal-card');
   if (mCard) {
-    if (next) {
-      mCard.style.display = '';
-      const mn = document.getElementById('ov-meal-name'); if(mn) mn.textContent = next.meal.name;
-      const mt = document.getElementById('ov-meal-time'); if(mt) mt.textContent = 'Hoje às ' + next.label;
+    if (isToday) {
+      const next = getNextMeal();
+      if (next) {
+        mCard.style.display = '';
+        const mn = document.getElementById('ov-meal-name'); if(mn) mn.textContent = next.meal.name;
+        const mt = document.getElementById('ov-meal-time'); if(mt) mt.textContent = 'Hoje às ' + next.label;
+      } else { mCard.style.display = 'none'; }
     } else { mCard.style.display = 'none'; }
   }
 
-  // placar
-  const sc = (D.competition||{}).scores||{};
+  // placar — usa _lastCompData para dias passados
+  const sc = (_lastCompData || D.competition||{}).scores||{};
   const bEl = document.getElementById('ov-pts-b'); if(bEl) bEl.textContent = (sc.bernardo||{}).total||0;
   const aEl = document.getElementById('ov-pts-a'); if(aEl) aEl.textContent = (sc.amanda||{}).total||0;
 
