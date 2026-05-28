@@ -1007,9 +1007,12 @@ select option { background: var(--surface); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: .6rem;
-  align-items: start;
+  align-items: stretch;
 }
-@media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; } }
+.home-main-grid > div { display: flex; flex-direction: column; gap: .6rem; }
+.home-main-grid > div > .card:last-child { flex: 1; overflow: hidden; }
+@media(max-width:600px) { .home-main-grid { grid-template-columns: 1fr; align-items: start; } }
+@media(max-width:600px) { .home-main-grid > div > .card:last-child { flex: none; overflow: visible; } }
 
 /* ─── Home Grid (legado) ──────────────────────────────────────────────── */
 .home-grid {
@@ -1327,7 +1330,7 @@ select option { background: var(--surface); }
       <div class="home-main-grid">
 
         <!-- Coluna esquerda: tarefas & hábitos + manchete -->
-        <div style="display:flex;flex-direction:column;gap:.6rem">
+        <div>
           <div class="card">
             <div class="card-head">
               <span class="card-label">📋 Tarefas &amp; Hábitos de hoje</span>
@@ -1353,7 +1356,7 @@ select option { background: var(--surface); }
         </div>
 
         <!-- Coluna direita: apenas agenda -->
-        <div style="display:flex;flex-direction:column;gap:.6rem">
+        <div>
 
           <!-- Mini calendário + próximos eventos -->
           <div class="card">
@@ -1965,6 +1968,7 @@ async function boot() {
   renderScore();
   renderGreeting();
   applyProfileAccent();
+  _updateViewerOnlyTabs();
   await loadUD(PROFILE);
   renderAll();
   initCal();
@@ -2006,8 +2010,22 @@ async function switchProfile(p) {
   PROFILE = p;
   document.querySelectorAll('.ptab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
   applyProfileAccent();
+  _updateViewerOnlyTabs();
   await loadUD(p);
   renderAll();
+}
+
+function _updateViewerOnlyTabs() {
+  // Vagas e Config são pessoais — só aparecem quando visualizando o próprio perfil
+  const isOwn = PROFILE === VIEWER;
+  ['vagas', 'config'].forEach(s => {
+    const btn = document.querySelector(`.ntab[data-s="${s}"]`);
+    if (btn) btn.style.display = isOwn ? '' : 'none';
+  });
+  // Se estava em aba privada, volta para início
+  if (!isOwn && ['vagas', 'config'].includes(_currentSection)) {
+    go('inicio');
+  }
 }
 
 function applyProfileAccent() {
@@ -2019,7 +2037,10 @@ function applyProfileAccent() {
   else                         html.classList.add('profile-a-view');
 }
 
+let _currentSection = 'inicio';
+
 function go(s) {
+  _currentSection = s;
   document.querySelectorAll('.ntab').forEach(t => t.classList.toggle('active', t.dataset.s === s));
   document.querySelectorAll('.section').forEach(el => {
     if (el.id === 'sec-briefing') return; // briefing always hidden
