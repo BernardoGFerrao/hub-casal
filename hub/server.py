@@ -686,6 +686,45 @@ def run_all_generators():
 
 
 # ---------------------------------------------------------------------------
+def _default_workout():
+    return {
+        "title": "Plano de Treino Sincronizado (4/3)",
+        "subtitle": "Bernardo & Amanda | Frequência 5x Semana",
+        "days": [
+            {
+                "id": "push", "name": "Treino PUSH (Empurrar)",
+                "exercises": [
+                    {"name": "Supino Inclinado (Máquina)", "sets_b": 4, "sets_a": 3, "reps": "8-12"},
+                    {"name": "Peck Deck (Voador)",          "sets_b": 4, "sets_a": 3, "reps": "10-12"},
+                    {"name": "Desenvolvimento (Máquina/Halt)", "sets_b": 4, "sets_a": 3, "reps": "10-12"},
+                    {"name": "Elevação Lateral",            "sets_b": 4, "sets_a": 3, "reps": "12-15"},
+                    {"name": "Tríceps Corda",               "sets_b": 3, "sets_a": 3, "reps": "12-15"},
+                    {"name": "Tríceps Testa",               "sets_b": 3, "sets_a": 3, "reps": "10-12"},
+                ]
+            },
+            {
+                "id": "pull", "name": "Treino PULL (Puxar)",
+                "exercises": [
+                    {"name": "Puxada Alta Aberta",          "sets_b": 4, "sets_a": 3, "reps": "10-12"},
+                    {"name": "Remada Baixa (Triângulo)",    "sets_b": 4, "sets_a": 3, "reps": "10-12"},
+                    {"name": "Facepull (Corda)",            "sets_b": 4, "sets_a": 3, "reps": "15"},
+                    {"name": "Rosca Direta (Barra W)",      "sets_b": 3, "sets_a": 3, "reps": "10-12"},
+                    {"name": "Rosca Martelo",               "sets_b": 3, "sets_a": 3, "reps": "10-12"},
+                ]
+            },
+            {
+                "id": "legs", "name": "Treino LEGS (Pernas)",
+                "exercises": [
+                    {"name": "Leg Press 45°",               "sets_b": 3, "sets_a": 4, "reps": "10-12"},
+                    {"name": "Cadeira Extensora",           "sets_b": 3, "sets_a": 4, "reps": "12-15"},
+                    {"name": "Cadeira/Mesa Flexora",        "sets_b": 3, "sets_a": 4, "reps": "10-12"},
+                    {"name": "Stiff (Halteres)",            "sets_b": 3, "sets_a": 4, "reps": "10-12"},
+                    {"name": "Panturrilha",                 "sets_b": 4, "sets_a": 4, "reps": "15-20"},
+                ]
+            }
+        ]
+    }
+
 # HTTP Handler
 # ---------------------------------------------------------------------------
 
@@ -870,6 +909,11 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json({"ok": False, "events": [], "error": str(e)})
             return
 
+        if path == "/api/workout":
+            workout = db_get("bernardo", "shared_workout") or _default_workout()
+            self._json({"ok": True, "workout": workout})
+            return
+
         if path == "/api/chat/messages":
             msgs = db_chat_get_messages()
             db_chat_mark_read(uid)
@@ -1052,6 +1096,10 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         elif path == "/api/save/hub_settings":
             db_set(uid, "user_hub_settings", body.get("hub_settings", {}))
+            self._json({"ok": True})
+
+        elif path == "/api/save/workout":
+            db_set("bernardo", "shared_workout", body.get("workout"))
             self._json({"ok": True})
 
         elif path == "/api/run-jobs":

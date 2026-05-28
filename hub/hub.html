@@ -949,6 +949,26 @@ select option { background: var(--surface); }
 .ai-mic { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .42rem .6rem; font-size: .85rem; cursor: pointer; transition: all .15s; }
 .ai-mic.recording { background: #fce8e8; border-color: var(--red); }
 
+/* ─── Treino ─────────────────────────────────────────────────────────── */
+.workout-tab-btn {
+  padding: .35rem .85rem; border-radius: 99px; border: 1px solid var(--border2);
+  background: var(--bg2); color: var(--text2); font-size: .78rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: all .15s;
+}
+.workout-tab-btn.active { background: var(--rose); border-color: var(--rose); color: #fff; }
+.workout-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.workout-table th { background: var(--bg2); color: var(--rose); font-size: .75rem; font-weight: 700; padding: .5rem .6rem; text-align: left; border-bottom: 1px solid var(--border); }
+.workout-table td { padding: .5rem .6rem; border-bottom: 1px solid var(--border); color: var(--text); }
+.workout-table tr:last-child td { border-bottom: none; }
+.workout-table .sets-b { color: #6fa3d8; font-weight: 700; text-align: center; }
+.workout-table .sets-a { color: #e07b9b; font-weight: 700; text-align: center; }
+.workout-table .reps { color: var(--text2); text-align: center; }
+.wm-day-block { background: var(--bg2); border-radius: var(--r-sm); padding: .75rem; }
+.wm-day-title { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; display:flex; gap:.5rem; align-items:center; }
+.wm-exercise-row { display:grid; grid-template-columns:1fr 60px 60px 80px 28px; gap:.35rem; align-items:center; margin-bottom:.35rem; }
+.wm-exercise-row input { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: .25rem .4rem; font-size: .78rem; color: var(--text); font-family: inherit; width: 100%; }
+.wm-exercise-row input:focus { border-color: var(--rose); outline: none; }
+
 /* ─── Chat Casal ──────────────────────────────────────────────────────── */
 .chat-fab-wrap {
   position: fixed; bottom: 1.5rem; right: 5.5rem;
@@ -1423,6 +1443,7 @@ select option { background: var(--surface); }
     <button class="ntab"        data-s="compare"  onclick="go('compare')"><span class="ni">🏆</span>Placar</button>
     <button class="ntab"        data-s="agenda"   onclick="go('agenda')"><span class="ni">📅</span>Agenda</button>
     <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ni">📰</span>Notícias</button>
+    <button class="ntab"        data-s="treino"   onclick="go('treino')"><span class="ni">🏋️</span>Treino</button>
     <button class="ntab"        data-s="vagas"    onclick="go('vagas')"><span class="ni">💼</span>Vagas</button>
     <button class="ntab"        data-s="config"   onclick="go('config')"><span class="ni">⚙️</span>Config</button>
   </nav>
@@ -1905,6 +1926,52 @@ select option { background: var(--surface); }
       </div>
     </div>
 
+    <!-- TREINO -->
+    <div class="section" id="sec-treino">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">🏋️ Plano de Treino</span>
+          <button class="btn btn-outline btn-xs" onclick="openWorkoutEditor()">✏️ Editar</button>
+        </div>
+        <div class="card-body" style="padding:.5rem 0">
+          <div id="workout-header" style="text-align:center;margin-bottom:1rem">
+            <div id="workout-title" style="font-size:1.05rem;font-weight:700;color:var(--text)"></div>
+            <div id="workout-subtitle" style="font-size:.8rem;color:var(--text3);margin-top:.2rem"></div>
+          </div>
+          <!-- Tabs por treino -->
+          <div id="workout-tabs" style="display:flex;gap:.4rem;margin-bottom:1rem;padding:0 .5rem;overflow-x:auto"></div>
+          <!-- Tabela do treino ativo -->
+          <div id="workout-table-wrap" style="overflow-x:auto;padding:0 .25rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal edição de treino -->
+    <div class="modal-overlay" id="workout-modal" onclick="if(event.target===this)closeWorkoutEditor()">
+      <div class="modal-box" style="max-width:560px;width:95vw">
+        <div class="modal-hdr">
+          <span class="modal-title">✏️ Editar Treino</span>
+          <button class="modal-close" onclick="closeWorkoutEditor()">×</button>
+        </div>
+        <div style="padding:1rem;display:flex;flex-direction:column;gap:1rem;max-height:70vh;overflow-y:auto">
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label style="font-size:.8rem;color:var(--text3)">Título do plano</label>
+            <input id="wm-title" class="cfg-input" style="width:100%">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label style="font-size:.8rem;color:var(--text3)">Subtítulo</label>
+            <input id="wm-subtitle" class="cfg-input" style="width:100%">
+          </div>
+          <div id="wm-days" style="display:flex;flex-direction:column;gap:1.2rem"></div>
+          <button class="btn btn-outline btn-xs" onclick="addWorkoutDay()" style="align-self:flex-start">+ Dia</button>
+        </div>
+        <div style="padding:.75rem 1rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end">
+          <button class="btn btn-outline" onclick="closeWorkoutEditor()">Cancelar</button>
+          <button class="btn btn-rose" onclick="saveWorkout()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- VAGAS -->
     <div class="section" id="sec-vagas">
       <div class="card">
@@ -2332,6 +2399,7 @@ function go(s) {
   if (s === 'inicio')  renderHome();
   if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
   if (s === 'tarefas')   renderKanban();
+  if (s === 'treino')    { if (!_workout) loadWorkout(); else renderWorkout(); }
   if (s === 'vagas')     renderJobs();
   if (s === 'config')    loadCfg();
   if (s === 'progresso') requestAnimationFrame(() => requestAnimationFrame(renderProgresso));
@@ -4066,6 +4134,123 @@ function updateChatBadge(count) {
   if (!badge) return;
   if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'flex'; }
   else badge.style.display = 'none';
+}
+
+// ─── Treino ────────────────────────────────────────────────────────────────
+let _workout = null;
+let _workoutActiveDay = 0;
+
+async function loadWorkout() {
+  const r = await fetch('/api/workout');
+  if (!r.ok) return;
+  const data = await r.json();
+  _workout = data.workout;
+  renderWorkout();
+}
+
+function renderWorkout() {
+  if (!_workout) return;
+  document.getElementById('workout-title').textContent = _workout.title || '';
+  document.getElementById('workout-subtitle').textContent = _workout.subtitle || '';
+
+  const tabs = document.getElementById('workout-tabs');
+  tabs.innerHTML = (_workout.days || []).map((d, i) =>
+    `<button class="workout-tab-btn${i===_workoutActiveDay?' active':''}" onclick="switchWorkoutDay(${i})">${d.name}</button>`
+  ).join('');
+
+  renderWorkoutTable();
+}
+
+function switchWorkoutDay(i) {
+  _workoutActiveDay = i;
+  renderWorkout();
+}
+
+function renderWorkoutTable() {
+  const day = (_workout.days || [])[_workoutActiveDay];
+  if (!day) return;
+  const wrap = document.getElementById('workout-table-wrap');
+  const rows = (day.exercises || []).map(e =>
+    `<tr>
+      <td>${esc(e.name)}</td>
+      <td class="sets-b">${e.sets_b}</td>
+      <td class="sets-a">${e.sets_a}</td>
+      <td class="reps">${esc(e.reps)}</td>
+    </tr>`
+  ).join('');
+  wrap.innerHTML = `<table class="workout-table">
+    <thead><tr>
+      <th>Exercício</th>
+      <th style="text-align:center">Ele (Sets)</th>
+      <th style="text-align:center">Ela (Sets)</th>
+      <th style="text-align:center">Reps</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function openWorkoutEditor() {
+  if (!_workout) return;
+  document.getElementById('wm-title').value = _workout.title || '';
+  document.getElementById('wm-subtitle').value = _workout.subtitle || '';
+  renderWorkoutEditorDays();
+  document.getElementById('workout-modal').style.display = 'flex';
+}
+
+function closeWorkoutEditor() {
+  document.getElementById('workout-modal').style.display = '';
+}
+
+function renderWorkoutEditorDays() {
+  const container = document.getElementById('wm-days');
+  container.innerHTML = (_workout.days || []).map((d, di) => `
+    <div class="wm-day-block" id="wm-day-${di}">
+      <div class="wm-day-title">
+        <input class="cfg-input" style="flex:1;font-weight:700" value="${esc(d.name)}" oninput="_workout.days[${di}].name=this.value">
+        <button class="btn btn-outline btn-xs" style="color:var(--red)" onclick="removeWorkoutDay(${di})">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 60px 60px 80px 28px;gap:.35rem;margin-bottom:.25rem;font-size:.72rem;color:var(--text3);font-weight:600">
+        <span>Exercício</span><span style="text-align:center">Ele</span><span style="text-align:center">Ela</span><span style="text-align:center">Reps</span><span></span>
+      </div>
+      ${(d.exercises || []).map((e, ei) => `
+        <div class="wm-exercise-row">
+          <input value="${esc(e.name)}" oninput="_workout.days[${di}].exercises[${ei}].name=this.value" placeholder="Exercício">
+          <input value="${e.sets_b}" oninput="_workout.days[${di}].exercises[${ei}].sets_b=+this.value||0" type="number" min="1" placeholder="Ele">
+          <input value="${e.sets_a}" oninput="_workout.days[${di}].exercises[${ei}].sets_a=+this.value||0" type="number" min="1" placeholder="Ela">
+          <input value="${esc(e.reps)}" oninput="_workout.days[${di}].exercises[${ei}].reps=this.value" placeholder="Reps">
+          <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem" onclick="removeExercise(${di},${ei})">✕</button>
+        </div>`).join('')}
+      <button class="btn btn-outline btn-xs" style="margin-top:.4rem" onclick="addExercise(${di})">+ Exercício</button>
+    </div>`).join('');
+}
+
+function addWorkoutDay() {
+  _workout.days.push({ id: 'day'+Date.now(), name: 'Novo Treino', exercises: [] });
+  renderWorkoutEditorDays();
+}
+
+function removeWorkoutDay(di) {
+  _workout.days.splice(di, 1);
+  if (_workoutActiveDay >= _workout.days.length) _workoutActiveDay = 0;
+  renderWorkoutEditorDays();
+}
+
+function addExercise(di) {
+  _workout.days[di].exercises.push({ name: '', sets_b: 3, sets_a: 3, reps: '10-12' });
+  renderWorkoutEditorDays();
+}
+
+function removeExercise(di, ei) {
+  _workout.days[di].exercises.splice(ei, 1);
+  renderWorkoutEditorDays();
+}
+
+async function saveWorkout() {
+  _workout.title    = document.getElementById('wm-title').value;
+  _workout.subtitle = document.getElementById('wm-subtitle').value;
+  const r = await fetch('/api/save/workout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ workout: _workout }) });
+  if (r.ok) { closeWorkoutEditor(); renderWorkout(); toast('Treino salvo!', '🏋️'); }
+  else toast('Erro ao salvar treino', '⚠️');
 }
 
 // ─── IA Flutuante ──────────────────────────────────────────────────────────
