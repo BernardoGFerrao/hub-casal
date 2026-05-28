@@ -948,7 +948,7 @@ select option { background: var(--surface); }
 /* ─── Chat Casal ──────────────────────────────────────────────────────── */
 .chat-fab-wrap {
   position: fixed; bottom: 1.5rem; right: 5.5rem;
-  z-index: 100;
+  z-index: 100; width: 50px; height: 50px;
 }
 .chat-fab {
   width: 50px; height: 50px; border-radius: 50%;
@@ -957,7 +957,6 @@ select option { background: var(--surface); }
   box-shadow: 0 4px 18px rgba(0,0,0,.2);
   display: flex; align-items: center; justify-content: center;
   transition: transform .2s, box-shadow .2s;
-  position: relative;
 }
 .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,.28); }
 .chat-fab-badge {
@@ -965,9 +964,8 @@ select option { background: var(--surface); }
   background: var(--red); color: #fff; border-radius: 99px;
   font-size: .6rem; font-weight: 700; padding: .1rem .32rem;
   min-width: 16px; text-align: center; display: none;
-  pointer-events: none;
+  pointer-events: none; z-index: 101;
 }
-.chat-fab-wrap { position: relative; }
 .chat-panel {
   position: fixed; bottom: 5.5rem; right: 5.5rem;
   width: 320px; background: var(--surface);
