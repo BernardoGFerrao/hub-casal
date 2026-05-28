@@ -2055,6 +2055,10 @@ async function loadUD(p) {
     const r = await fetch('/api/load?u=' + p);
     ud = await r.json();
     _jobs = ud.jobs || [];
+    // hub_settings do perfil visualizado (usado para notícias)
+    _profileHubSettings = ud.hub_settings || {};
+    // se o perfil for o próprio viewer, sincroniza também o _viewerHubSettings
+    if (p === VIEWER) _viewerHubSettings = _profileHubSettings;
   } catch(e) {}
 }
 
@@ -2382,29 +2386,32 @@ function renderNews() {
   const container = document.getElementById('news-topics-container');
   if (!container) return;
 
-  const hs          = _viewerHubSettings;
+  // Usa settings do PROFILE (notícias do perfil visualizado, não do viewer)
+  const hs          = _profileHubSettings;
   const topicsBr    = hs.news_topics_br    || ['Brasil', 'tecnologia', 'economia'];
   const topicsWorld = hs.news_topics_world || ['world news', 'technology'];
 
   const sections = [
-    ...topicsBr.map(t    => ({ label: t,    region: 'br',    tag: 'ntag-br' })),
-    ...topicsWorld.map(t => ({ label: t,    region: 'world', tag: 'ntag-world' })),
+    ...topicsBr.map(t    => ({ label: t, region: 'br',    tag: 'ntag-br'    })),
+    ...topicsWorld.map(t => ({ label: t, region: 'world', tag: 'ntag-world' })),
   ];
 
   container.innerHTML = sections.map(sec => {
+    const lc = sec.label.toLowerCase();
     const items = news.filter(n =>
       n.region === sec.region &&
-      (n.topic === sec.label || n.title?.toLowerCase().includes(sec.label.toLowerCase()))
+      (n.topic?.toLowerCase() === lc || n.title?.toLowerCase().includes(lc))
     );
+    if (!items.length) return ''; // oculta seções sem notícias
     const regionTag = sec.region === 'br' ? 'BR' : 'Mundo';
-    const rows = items.length ? items.map(n => `
+    const rows = items.map(n => `
       <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
         <div class="news-title">${esc(n.title)}</div>
         <div class="news-foot">
           <span class="ntag ${sec.tag}">${regionTag}</span>
           ${esc(n.source)}
         </div>
-      </a>`).join('') : '<div class="empty">Sem notícias para este tópico</div>';
+      </a>`).join('');
     return `<div class="card" style="margin-bottom:.6rem">
       <div class="card-head"><span class="card-label">${esc(sec.label)}</span></div>
       <div class="card-body"><div class="news-list">${rows}</div></div>
@@ -3119,8 +3126,10 @@ function renderJobs() {
 }
 
 // ─── Configurações ─────────────────────────────────────────────────────────
-// hub_settings são SEMPRE do VIEWER (config pessoal), nunca do parceiro.
-let _viewerHubSettings = {};
+// _viewerHubSettings: config do VIEWER (vagas, salvar configs)
+// _profileHubSettings: config do PROFILE atual (notícias — segue o perfil visto)
+let _viewerHubSettings   = {};
+let _profileHubSettings  = {};
 
 async function loadCfg() {
   const s = ud.settings || {};
