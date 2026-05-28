@@ -595,6 +595,36 @@ def db_chat_unread_count(user_id: str) -> int:
         conn.close()
 
 
+def get_monthly_champion(year: int, month: int) -> dict:
+    """Conta dias ganhos por cada um no mês e retorna o campeão."""
+    import calendar as _cal
+    days_in_month = _cal.monthrange(year, month)[1]
+    wins = {"bernardo": 0, "amanda": 0, "empate": 0}
+    for day in range(1, days_in_month + 1):
+        date_str = f"{year:04d}-{month:02d}-{day:02d}"
+        raw = {uid: _raw_items(uid, date_str) for uid in USERS}
+        max_items = max((raw[uid]["total_tasks"] + raw[uid]["total_habits"] for uid in USERS), default=0)
+        scores = {uid: _calc_score(uid, date_str, max_items) for uid in USERS}
+        b = scores["bernardo"]["total"]
+        a = scores["amanda"]["total"]
+        if b > a:   wins["bernardo"] += 1
+        elif a > b: wins["amanda"]   += 1
+        else:       wins["empate"]   += 1
+    total_played = wins["bernardo"] + wins["amanda"] + wins["empate"]
+    if wins["bernardo"] > wins["amanda"]:
+        champion = "bernardo"
+    elif wins["amanda"] > wins["bernardo"]:
+        champion = "amanda"
+    else:
+        champion = "empate"
+    return {
+        "year": year, "month": month,
+        "wins": wins,
+        "total_played": total_played,
+        "champion": champion,
+    }
+
+
 def get_competition_data(date_str: str) -> dict:
     # Busca totais de ambos para definir o denominador compartilhado
     raw = {uid: _raw_items(uid, date_str) for uid in USERS}
@@ -915,6 +945,13 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json({"ok": False, "events": [], "error": str(e)})
             return
 
+        if path == "/api/monthly-champion":
+            from datetime import date as _d
+            today = _d.today()
+            data  = get_monthly_champion(today.year, today.month)
+            self._json({"ok": True, **data})
+            return
+
         if path == "/api/plans":
             plans = db_get("bernardo", "shared_plans") or []
             self._json({"ok": True, "plans": plans})
@@ -977,6 +1014,7 @@ class HubHandler(SimpleHTTPRequestHandler):
         b_data    = self._read_user_data("bernardo")
         a_data    = self._read_user_data("amanda")
         competition = get_competition_data(today_str)
+        monthly_champion = get_monthly_champion(_d.today().year, _d.today().month)
 
         b_health_hist = db_get_health_history("bernardo")
         a_health_hist = db_get_health_history("amanda")
@@ -1005,9 +1043,10 @@ class HubHandler(SimpleHTTPRequestHandler):
             f'  viewer:      {json.dumps(uid)},\n'
             f'  bernardo:    {safe_dumps(b_data)},\n'
             f'  amanda:      {safe_dumps(a_data)},\n'
-            f'  competition: {safe_dumps(competition)},\n'
-            f'  b_history:   {safe_dumps(b_health_hist)},\n'
-            f'  a_history:   {safe_dumps(a_health_hist)},\n'
+            f'  competition:       {safe_dumps(competition)},\n'
+            f'  monthly_champion:  {safe_dumps(monthly_champion)},\n'
+            f'  b_history:         {safe_dumps(b_health_hist)},\n'
+            f'  a_history:         {safe_dumps(a_health_hist)},\n'
             f'}};\n'
             f'</script>'
         )

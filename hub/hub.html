@@ -949,6 +949,19 @@ select option { background: var(--surface); }
 .ai-mic { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .42rem .6rem; font-size: .85rem; cursor: pointer; transition: all .15s; }
 .ai-mic.recording { background: #fce8e8; border-color: var(--red); }
 
+/* ─── Campeão do Mês ─────────────────────────────────────────────────── */
+.monthly-champ-wrap { display:flex; align-items:center; gap:.75rem; }
+.monthly-champ-crown { font-size:1.8rem; line-height:1; }
+.monthly-champ-info { flex:1; }
+.monthly-champ-title { font-size:.7rem; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.15rem; }
+.monthly-champ-name { font-size:1.1rem; font-weight:800; color:var(--text); }
+.monthly-champ-sub { font-size:.75rem; color:var(--text3); margin-top:.1rem; }
+.monthly-wins { display:flex; gap:1rem; }
+.monthly-win-item { text-align:center; }
+.monthly-win-num { font-size:1.2rem; font-weight:800; }
+.monthly-win-lbl { font-size:.65rem; color:var(--text3); }
+.crown-badge { font-size:.85rem; }
+
 /* ─── Planos ─────────────────────────────────────────────────────────── */
 .plan-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:.9rem 1rem; cursor:pointer; transition: border-color .15s; }
 .plan-card:hover { border-color: var(--rose); }
@@ -1409,7 +1422,7 @@ select option { background: var(--surface); }
     <div class="score-row">
       <div class="score-side">
         <div class="score-avatar">👨‍💻</div>
-        <div class="score-who">Bernardo</div>
+        <div class="score-who" id="hdr-name-b">Bernardo</div>
         <div class="prof-badge b">⚙️ Eng. de Computação</div>
         <div class="score-num b" id="pts-b">0</div>
         <div class="score-pts-lbl">pontos</div>
@@ -1420,7 +1433,7 @@ select option { background: var(--surface); }
       </div>
       <div class="score-side right">
         <div class="score-avatar">👩‍⚕️</div>
-        <div class="score-who">Amanda</div>
+        <div class="score-who" id="hdr-name-a">Amanda</div>
         <div class="prof-badge a">🥗 Nutricionista</div>
         <div class="score-num a" id="pts-a">0</div>
         <div class="score-pts-lbl">pontos</div>
@@ -1901,6 +1914,10 @@ select option { background: var(--surface); }
 
     <!-- COMPARAR -->
     <div class="section" id="sec-compare">
+      <!-- Campeão do mês -->
+      <div class="card" id="monthly-champ-card" style="margin-bottom:.6rem">
+        <div class="card-body" style="padding:.75rem 1rem" id="monthly-champ-body"></div>
+      </div>
       <div class="card">
         <div class="card-head"><span class="card-label"><span id="score-lbl-compare">Placar de hoje</span></span></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:.65rem">
@@ -2366,10 +2383,16 @@ function renderScore(comp) {
   const bPts = (sc.bernardo || {}).total || 0;
   const aPts = (sc.amanda   || {}).total || 0;
   const tot  = bPts + aPts || 1;
+  const champ = (D.monthly_champion || {}).champion;
   document.getElementById('pts-b').textContent  = bPts;
   document.getElementById('pts-a').textContent  = aPts;
   document.getElementById('ptab-b').textContent = bPts + ' pts';
   document.getElementById('ptab-a').textContent = aPts + ' pts';
+  // Coroa no header (BERNARDO / AMANDA)
+  const hdrB = document.getElementById('hdr-name-b');
+  const hdrA = document.getElementById('hdr-name-a');
+  if (hdrB) hdrB.innerHTML = champ === 'bernardo' ? 'BERNARDO <span class="crown-badge">👑</span>' : 'BERNARDO';
+  if (hdrA) hdrA.innerHTML = champ === 'amanda'   ? 'AMANDA <span class="crown-badge">👑</span>'   : 'AMANDA';
   document.getElementById('fill-b').style.width = (bPts / tot * 100) + '%';
   document.getElementById('fill-a').style.width = (aPts / tot * 100) + '%';
   const { leader, diff } = data;
@@ -2981,7 +3004,67 @@ async function clearChecked() {
   renderGrocery(); await api('/api/save/grocery', { grocery: ud.grocery });
 }
 
+function renderMonthlyChampion() {
+  const mc = D.monthly_champion || {};
+  const body = document.getElementById('monthly-champ-body');
+  if (!body) return;
+  const wins = mc.wins || {};
+  const bW = wins.bernardo || 0;
+  const aW = wins.amanda   || 0;
+  const ties = wins.empate || 0;
+  const champ = mc.champion;
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const monthName = mc.month ? monthNames[mc.month - 1] : '';
+
+  // Coroas nos cards vs e header
+  ['b','a'].forEach(x => {
+    const isChamp = champ === (x==='b'?'bernardo':'amanda');
+    const nameEl = document.querySelector('.vs-name.' + x) || document.querySelector(`.vs-card.${x} .vs-name`);
+    if (nameEl) {
+      const baseName = x === 'b' ? 'Bernardo' : 'Amanda';
+      nameEl.innerHTML = isChamp ? `${baseName} <span class="crown-badge">👑</span>` : baseName;
+    }
+  });
+
+  if (champ === 'empate') {
+    body.innerHTML = `<div class="monthly-champ-wrap">
+      <div class="monthly-champ-crown">🤝</div>
+      <div class="monthly-champ-info">
+        <div class="monthly-champ-title">🏆 Campeão de ${monthName}</div>
+        <div class="monthly-champ-name">Empatados!</div>
+        <div class="monthly-champ-sub">${bW}v ${aW}v ${ties} empate${ties!==1?'s':''}</div>
+      </div>
+      <div class="monthly-wins">
+        <div class="monthly-win-item"><div class="monthly-win-num" style="color:var(--b-color)">${bW}</div><div class="monthly-win-lbl">Bernardo</div></div>
+        <div class="monthly-win-item"><div class="monthly-win-num" style="color:var(--a-color)">${aW}</div><div class="monthly-win-lbl">Amanda</div></div>
+      </div>
+    </div>`;
+  } else if (champ) {
+    const isB = champ === 'bernardo';
+    const name = isB ? 'Bernardo' : 'Amanda';
+    const color = isB ? 'var(--b-color)' : 'var(--a-color)';
+    const champW = isB ? bW : aW;
+    const otherW = isB ? aW : bW;
+    body.innerHTML = `<div class="monthly-champ-wrap">
+      <div class="monthly-champ-crown">👑</div>
+      <div class="monthly-champ-info">
+        <div class="monthly-champ-title">🏆 Campeão de ${monthName}</div>
+        <div class="monthly-champ-name" style="color:${color}">${name}</div>
+        <div class="monthly-champ-sub">${champW} vitórias × ${otherW} do adversário</div>
+      </div>
+      <div class="monthly-wins">
+        <div class="monthly-win-item"><div class="monthly-win-num" style="color:var(--b-color)">${bW}</div><div class="monthly-win-lbl">Bernardo</div></div>
+        <div class="monthly-win-item"><div class="monthly-win-num" style="color:var(--a-color)">${aW}</div><div class="monthly-win-lbl">Amanda</div></div>
+        <div class="monthly-win-item"><div class="monthly-win-num" style="color:var(--text3)">${ties}</div><div class="monthly-win-lbl">Empates</div></div>
+      </div>
+    </div>`;
+  } else {
+    body.innerHTML = `<div style="color:var(--text3);font-size:.82rem;text-align:center;padding:.5rem 0">Sem dados para ${monthName} ainda.</div>`;
+  }
+}
+
 function renderCompare(comp) {
+  renderMonthlyChampion();
   const viewDate = _healthViewDate || TODAY;
   const isToday  = viewDate === TODAY;
   const data = comp || D.competition || {};
