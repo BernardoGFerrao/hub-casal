@@ -1429,27 +1429,6 @@ select option { background: var(--surface); }
         </div>
       </div>
 
-      <!-- Placar resumido -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label">🏆 <span id="score-lbl-home">Placar de hoje</span></span>
-          <span class="see-more" style="margin:0" onclick="go('compare')">Ver detalhes →</span>
-        </div>
-        <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem">
-          <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:.1rem">
-            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--b-color)">Bernardo</span>
-            <span style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--b-color);line-height:1" id="ov-pts-b">0</span>
-            <span style="font-size:.6rem;color:var(--text3)">pontos</span>
-          </div>
-          <div style="font-family:var(--font-serif);font-style:italic;font-size:1rem;color:var(--rose)">vs ♡</div>
-          <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:.1rem">
-            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--a-color)">Amanda</span>
-            <span style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--a-color);line-height:1" id="ov-pts-a">0</span>
-            <span style="font-size:.6rem;color:var(--text3)">pontos</span>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- SAÚDE -->
@@ -2095,7 +2074,6 @@ function renderScore(comp) {
   const isToday = (_healthViewDate || TODAY) === TODAY;
   const dayLabel = isToday ? 'hoje' : `em ${fmtD(_healthViewDate)}`;
   const scoreTitleTxt = isToday ? 'Placar de hoje' : `Placar de ${fmtD(_healthViewDate)}`;
-  const el1 = document.getElementById('score-lbl-home');    if (el1) el1.textContent = scoreTitleTxt;
   const el2 = document.getElementById('score-lbl-compare'); if (el2) el2.textContent = scoreTitleTxt;
   const cap = document.getElementById('score-caption');
   if (leader === 'empate') cap.innerHTML = `Estão empatados ${dayLabel} ♡`;
@@ -2877,8 +2855,6 @@ function renderHome() {
 
   // placar — usa _lastCompData para dias passados
   const sc = (_lastCompData || D.competition||{}).scores||{};
-  const bEl = document.getElementById('ov-pts-b'); if(bEl) bEl.textContent = (sc.bernardo||{}).total||0;
-  const aEl = document.getElementById('ov-pts-a'); if(aEl) aEl.textContent = (sc.amanda||{}).total||0;
 
   renderUpcomingInHome();
 }
