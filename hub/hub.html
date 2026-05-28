@@ -949,6 +949,28 @@ select option { background: var(--surface); }
 .ai-mic { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .42rem .6rem; font-size: .85rem; cursor: pointer; transition: all .15s; }
 .ai-mic.recording { background: #fce8e8; border-color: var(--red); }
 
+/* ─── Planos ─────────────────────────────────────────────────────────── */
+.plan-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:.9rem 1rem; cursor:pointer; transition: border-color .15s; }
+.plan-card:hover { border-color: var(--rose); }
+.plan-card-top { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+.plan-emoji { font-size:1.6rem; line-height:1; flex-shrink:0; }
+.plan-card-info { flex:1; min-width:0; }
+.plan-card-title { font-size:.95rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.plan-card-desc { font-size:.75rem; color:var(--text3); margin-top:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.plan-card-meta { font-size:.7rem; color:var(--text3); margin-top:.1rem; }
+.plan-pbar-wrap { margin:.4rem 0 .5rem; }
+.plan-pbar-bg { background:var(--border); border-radius:99px; height:6px; overflow:hidden; }
+.plan-pbar-fill { height:6px; border-radius:99px; background:var(--rose); transition:width .4s; }
+.plan-pct { font-size:.72rem; color:var(--text3); text-align:right; margin-top:.2rem; }
+.plan-steps { display:flex; flex-direction:column; gap:.25rem; margin-top:.5rem; }
+.plan-step { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:var(--text2); }
+.plan-step.done { color:var(--text3); text-decoration:line-through; }
+.plan-step-check { width:16px; height:16px; border-radius:4px; border:2px solid var(--border2); display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; font-size:.65rem; }
+.plan-step.done .plan-step-check { background:var(--rose); border-color:var(--rose); color:#fff; }
+.plan-modal-step-row { display:flex; align-items:center; gap:.4rem; }
+.plan-modal-step-row input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:.25rem .4rem; font-size:.8rem; color:var(--text); font-family:inherit; }
+.plan-modal-step-row button { background:none; border:none; color:var(--red); cursor:pointer; font-size:.9rem; }
+
 /* ─── Treino ─────────────────────────────────────────────────────────── */
 .workout-tab-btn {
   padding: .35rem .85rem; border-radius: 99px; border: 1px solid var(--border2);
@@ -1730,6 +1752,7 @@ select option { background: var(--surface); }
       <div class="subtabs">
         <button class="stab active" id="stab-lista"  onclick="switchTaskTab('lista')">Tarefas & Hábitos</button>
         <button class="stab"        id="stab-kanban" onclick="switchTaskTab('kanban')">Kanban</button>
+        <button class="stab"        id="stab-planos" onclick="switchTaskTab('planos')">🎯 Planos</button>
       </div>
 
       <!-- Lista de tarefas + Hábitos -->
@@ -1772,11 +1795,66 @@ select option { background: var(--surface); }
           <div class="kanban-board" id="kanban-board"></div>
         </div>
       </div>
+
+      <!-- Planos -->
+      <div id="task-subtab-planos" style="display:none;padding:.75rem 0 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <span class="card-label">🎯 Planos do Casal</span>
+          <button class="btn btn-rose btn-xs" onclick="openPlanModal()">+ Novo plano</button>
+        </div>
+        <div id="plans-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
+      </div>
     </div>
 
     <!-- NOTÍCIAS -->
     <div class="section" id="sec-noticias">
       <div id="news-topics-container"></div>
+    </div>
+
+    <!-- MODAL PLANO -->
+    <div class="modal-overlay" id="plan-modal" onclick="if(event.target===this)closePlanModal()">
+      <div class="modal-box" style="max-width:480px;width:95vw">
+        <div class="modal-hdr">
+          <span class="modal-title" id="plan-modal-title">🎯 Novo plano</span>
+          <button class="modal-close" onclick="closePlanModal()">×</button>
+        </div>
+        <input type="hidden" id="plan-edit-id">
+        <div class="modal-field">
+          <label>Título</label>
+          <input id="plan-title" placeholder="Ex: Conseguir 50 mil reais" maxlength="80">
+        </div>
+        <div class="modal-field">
+          <label>Descrição (opcional)</label>
+          <input id="plan-desc" placeholder="Detalhes do plano..." maxlength="200">
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <div class="modal-field" style="flex:1">
+            <label>Emoji</label>
+            <input id="plan-emoji" placeholder="🏠" maxlength="4" style="font-size:1.3rem;text-align:center">
+          </div>
+          <div class="modal-field" style="flex:2">
+            <label>Progresso (%)</label>
+            <input id="plan-progress" type="number" min="0" max="100" value="0">
+          </div>
+        </div>
+        <div class="modal-field">
+          <label>Prazo (opcional)</label>
+          <input id="plan-deadline" type="date">
+        </div>
+        <div style="padding:.5rem 1rem 0">
+          <label style="font-size:.8rem;color:var(--text3);display:block;margin-bottom:.4rem">Passos</label>
+          <div id="plan-steps-list" style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.4rem"></div>
+          <div class="add-row">
+            <input id="plan-step-input" placeholder="Adicionar passo..." onkeydown="if(event.key==='Enter'){event.preventDefault();addPlanStep()}">
+            <button class="btn btn-outline btn-xs" onclick="addPlanStep()">+ Add</button>
+          </div>
+        </div>
+        <div style="padding:.75rem 1rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem">
+          <button id="plan-delete-btn" class="btn btn-outline" style="color:var(--red);margin-right:auto;display:none" onclick="deletePlan()">Excluir</button>
+          <button class="btn btn-outline" onclick="closePlanModal()">Cancelar</button>
+          <button class="btn btn-rose" onclick="savePlan()">Salvar</button>
+        </div>
+      </div>
     </div>
 
     <!-- MODAL REFEIÇÃO -->
@@ -3343,11 +3421,12 @@ async function refreshCal() {
 
 // ─── Subtabs Tarefas ───────────────────────────────────────────────────────
 function switchTaskTab(name) {
-  ['lista','kanban'].forEach(n => {
+  ['lista','kanban','planos'].forEach(n => {
     document.getElementById('task-subtab-' + n).style.display = n === name ? '' : 'none';
     document.getElementById('stab-' + n).classList.toggle('active', n === name);
   });
   if (name === 'kanban') renderKanban();
+  if (name === 'planos') { if (!_plans.length) loadPlans(); else renderPlans(); }
 }
 
 // ─── Kanban ────────────────────────────────────────────────────────────────
@@ -4112,6 +4191,134 @@ function updateChatBadge(count) {
   if (!badge) return;
   if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'flex'; }
   else badge.style.display = 'none';
+}
+
+// ─── Planos ────────────────────────────────────────────────────────────────
+let _plans = [];
+
+async function loadPlans() {
+  try {
+    const r = await fetch('/api/plans');
+    if (r.ok) { const d = await r.json(); _plans = d.plans || []; }
+  } catch(e) {}
+  renderPlans();
+}
+
+async function savePlansRemote() {
+  await fetch('/api/save/plans', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ plans: _plans }) });
+}
+
+function renderPlans() {
+  const el = document.getElementById('plans-list');
+  if (!el) return;
+  if (!_plans.length) { el.innerHTML = '<div class="empty" style="padding:2rem 0">Nenhum plano ainda. Adicione o primeiro! 🎯</div>'; return; }
+  el.innerHTML = _plans.map((p, i) => {
+    const pct = Math.min(100, Math.max(0, p.progress || 0));
+    const steps = (p.steps || []);
+    const doneCount = steps.filter(s => s.done).length;
+    const deadline = p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) : '';
+    const stepsHtml = steps.length ? `<div class="plan-steps">${steps.map((s,si) =>
+      `<div class="plan-step${s.done?' done':''}">
+        <div class="plan-step-check" onclick="togglePlanStep(${i},${si})">${s.done?'✓':''}</div>
+        <span>${esc(s.text)}</span>
+      </div>`).join('')}</div>` : '';
+    return `<div class="plan-card" onclick="openPlanModal(${i})">
+      <div class="plan-card-top">
+        <div class="plan-emoji">${p.emoji||'🎯'}</div>
+        <div class="plan-card-info">
+          <div class="plan-card-title">${esc(p.title)}</div>
+          ${p.desc ? `<div class="plan-card-desc">${esc(p.desc)}</div>` : ''}
+          <div class="plan-card-meta">${steps.length ? `${doneCount}/${steps.length} passos` : ''}${deadline ? (steps.length?' · ':'')+'📅 '+deadline : ''}</div>
+        </div>
+        <div style="font-size:1.1rem;font-weight:700;color:${pct===100?'var(--rose)':'var(--text3)'}">${pct}%</div>
+      </div>
+      <div class="plan-pbar-wrap">
+        <div class="plan-pbar-bg"><div class="plan-pbar-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${stepsHtml}
+    </div>`;
+  }).join('');
+}
+
+let _planDraftSteps = [];
+
+function openPlanModal(idx) {
+  const isNew = idx === undefined;
+  const p = isNew ? { emoji:'🎯', title:'', desc:'', progress:0, deadline:'', steps:[] } : _plans[idx];
+  document.getElementById('plan-modal-title').textContent = isNew ? '🎯 Novo plano' : '✏️ Editar plano';
+  document.getElementById('plan-edit-id').value = isNew ? '' : idx;
+  document.getElementById('plan-title').value    = p.title || '';
+  document.getElementById('plan-desc').value     = p.desc  || '';
+  document.getElementById('plan-emoji').value    = p.emoji || '🎯';
+  document.getElementById('plan-progress').value = p.progress || 0;
+  document.getElementById('plan-deadline').value = p.deadline || '';
+  document.getElementById('plan-delete-btn').style.display = isNew ? 'none' : '';
+  _planDraftSteps = JSON.parse(JSON.stringify(p.steps || []));
+  renderPlanModalSteps();
+  document.getElementById('plan-modal').classList.add('open');
+  setTimeout(() => document.getElementById('plan-title').focus(), 80);
+}
+
+function closePlanModal() { document.getElementById('plan-modal').classList.remove('open'); }
+
+function renderPlanModalSteps() {
+  document.getElementById('plan-steps-list').innerHTML = _planDraftSteps.map((s, i) =>
+    `<div class="plan-modal-step-row">
+      <input value="${esc(s.text)}" oninput="_planDraftSteps[${i}].text=this.value" placeholder="Passo...">
+      <button onclick="_planDraftSteps.splice(${i},1);renderPlanModalSteps()">✕</button>
+    </div>`
+  ).join('');
+}
+
+function addPlanStep() {
+  const inp = document.getElementById('plan-step-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  _planDraftSteps.push({ text: txt, done: false });
+  inp.value = '';
+  renderPlanModalSteps();
+}
+
+async function savePlan() {
+  const title = document.getElementById('plan-title').value.trim();
+  if (!title) { toast('Título obrigatório', '⚠️'); return; }
+  // coleta steps do DOM antes de salvar
+  document.querySelectorAll('#plan-steps-list .plan-modal-step-row input').forEach((inp, i) => {
+    if (_planDraftSteps[i]) _planDraftSteps[i].text = inp.value;
+  });
+  const plan = {
+    title,
+    desc:     document.getElementById('plan-desc').value.trim(),
+    emoji:    document.getElementById('plan-emoji').value.trim() || '🎯',
+    progress: Math.min(100, Math.max(0, +document.getElementById('plan-progress').value || 0)),
+    deadline: document.getElementById('plan-deadline').value,
+    steps:    _planDraftSteps,
+  };
+  const idxStr = document.getElementById('plan-edit-id').value;
+  if (idxStr === '') _plans.push(plan);
+  else _plans[+idxStr] = plan;
+  await savePlansRemote();
+  closePlanModal();
+  renderPlans();
+  toast('Plano salvo! 🎯');
+}
+
+async function deletePlan() {
+  const idx = +document.getElementById('plan-edit-id').value;
+  _plans.splice(idx, 1);
+  await savePlansRemote();
+  closePlanModal();
+  renderPlans();
+}
+
+async function togglePlanStep(planIdx, stepIdx) {
+  event.stopPropagation();
+  _plans[planIdx].steps[stepIdx].done = !_plans[planIdx].steps[stepIdx].done;
+  // recalcula progresso automaticamente pelos passos
+  const steps = _plans[planIdx].steps;
+  if (steps.length) _plans[planIdx].progress = Math.round(steps.filter(s=>s.done).length / steps.length * 100);
+  await savePlansRemote();
+  renderPlans();
 }
 
 // ─── Treino ────────────────────────────────────────────────────────────────

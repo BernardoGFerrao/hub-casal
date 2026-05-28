@@ -233,6 +233,9 @@ def init_user_tables(user_id: str):
         CREATE TABLE IF NOT EXISTS shared_workout (
             data_json TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS shared_plans (
+            data_json TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS user_jobs_today (
             date      TEXT PRIMARY KEY,
             data_json TEXT NOT NULL
@@ -912,6 +915,11 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json({"ok": False, "events": [], "error": str(e)})
             return
 
+        if path == "/api/plans":
+            plans = db_get("bernardo", "shared_plans") or []
+            self._json({"ok": True, "plans": plans})
+            return
+
         if path == "/api/workout":
             workout = db_get("bernardo", "shared_workout") or _default_workout()
             self._json({"ok": True, "workout": workout})
@@ -1103,6 +1111,10 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         elif path == "/api/save/workout":
             db_set("bernardo", "shared_workout", body.get("workout"))
+            self._json({"ok": True})
+
+        elif path == "/api/save/plans":
+            db_set("bernardo", "shared_plans", body.get("plans", []))
             self._json({"ok": True})
 
         elif path == "/api/run-jobs":
