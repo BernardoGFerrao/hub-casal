@@ -227,6 +227,9 @@ def init_user_tables(user_id: str):
             region      TEXT,
             pub_date    TEXT
         );
+        CREATE TABLE IF NOT EXISTS user_hub_settings (
+            data_json TEXT NOT NULL
+        );
     """)
     conn.commit()
     conn.close()
