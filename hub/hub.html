@@ -1818,9 +1818,12 @@ select option { background: var(--surface); }
         </div>
       </div>
 
-      <!-- Temas de notícias -->
+      <!-- Temas de notícias (config do VIEWER, não do perfil visitado) -->
       <div class="card">
-        <div class="card-head"><span class="card-label">📰 Temas de notícias</span></div>
+        <div class="card-head">
+          <span class="card-label">📰 Temas de notícias</span>
+          <span style="font-size:.7rem;color:var(--text3)" id="cfg-owner-label"></span>
+        </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
 
           <div style="display:flex;flex-direction:column;gap:.4rem">
@@ -1846,7 +1849,7 @@ select option { background: var(--surface); }
         </div>
       </div>
 
-      <!-- Job Scout -->
+      <!-- Job Scout (config do VIEWER) -->
       <div class="card">
         <div class="card-head"><span class="card-label">💼 Job Scout — busca de vagas</span></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:.85rem">
@@ -1860,16 +1863,23 @@ select option { background: var(--surface); }
             </div>
           </div>
 
+          <!-- Localidades com modalidade por linha -->
           <div style="display:flex;flex-direction:column;gap:.4rem">
-            <label class="cfg-label">Localidades</label>
-            <div class="cfg-tags" id="cfg-job-loc-tags"></div>
-            <div style="display:flex;gap:.4rem">
-              <input type="text" id="cfg-job-loc-input" placeholder="Ex: Porto Alegre" style="flex:1" onkeydown="if(event.key==='Enter')cfgJobAddTag('loc')">
-              <button class="btn btn-rose" onclick="cfgJobAddTag('loc')">+</button>
+            <label class="cfg-label">Localidades + modalidade</label>
+            <div id="cfg-job-loc-list" style="display:flex;flex-direction:column;gap:.35rem"></div>
+            <div style="display:flex;gap:.4rem;align-items:center">
+              <input type="text" id="cfg-job-loc-input" placeholder="Ex: Porto Alegre" style="flex:2" onkeydown="if(event.key==='Enter')cfgJobAddLoc()">
+              <select id="cfg-job-loc-mode" style="flex:1;min-width:0">
+                <option value="">Qualquer</option>
+                <option value="remoto">Remoto</option>
+                <option value="híbrido">Híbrido</option>
+                <option value="presencial">Presencial</option>
+              </select>
+              <button class="btn btn-rose" onclick="cfgJobAddLoc()">+</button>
             </div>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
             <div style="display:flex;flex-direction:column;gap:.3rem">
               <label class="cfg-label">Senioridade</label>
               <select id="cfg-job-level" style="width:100%">
@@ -1878,15 +1888,6 @@ select option { background: var(--surface); }
                 <option value="júnior">Júnior</option>
                 <option value="pleno">Pleno</option>
                 <option value="sênior">Sênior</option>
-              </select>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:.3rem">
-              <label class="cfg-label">Modalidade</label>
-              <select id="cfg-job-mode" style="width:100%">
-                <option value="">Qualquer</option>
-                <option value="remoto">Remoto</option>
-                <option value="presencial">Presencial</option>
-                <option value="híbrido">Híbrido</option>
               </select>
             </div>
             <div style="display:flex;flex-direction:column;gap:.3rem">
@@ -1958,7 +1959,7 @@ async function boot() {
   initCal();
   initMiniCal();
   loadJobs();
-  loadCfg();
+  await loadCfg();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
 
@@ -2898,7 +2899,10 @@ function deleteJob(id) {
 }
 
 // ─── Configurações ─────────────────────────────────────────────────────────
-function loadCfg() {
+// hub_settings são SEMPRE do VIEWER (config pessoal), nunca do parceiro.
+let _viewerHubSettings = {};
+
+async function loadCfg() {
   const s = ud.settings || {};
   const stepEl = document.getElementById('cfg-steps'); if (stepEl) stepEl.value = s.steps_goal || '';
   const waterEl = document.getElementById('cfg-water'); if (waterEl) waterEl.value = s.water_goal || '';
@@ -2906,17 +2910,28 @@ function loadCfg() {
   const nm = document.getElementById('cfg-viewer-name');
   if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
 
-  // Temas de notícias
-  const hs = ud.hub_settings || {};
+  // Label que indica de quem são as configs de notícias/vagas
+  const ol = document.getElementById('cfg-owner-label');
+  if (ol) ol.textContent = '(suas configurações pessoais)';
+
+  // Carrega hub_settings sempre do VIEWER, independente do perfil visitado
+  if (PROFILE !== VIEWER) {
+    try {
+      const r = await fetch('/api/load?u=' + VIEWER);
+      const data = await r.json();
+      _viewerHubSettings = data.hub_settings || {};
+    } catch(e) { _viewerHubSettings = {}; }
+  } else {
+    _viewerHubSettings = ud.hub_settings || {};
+  }
+
+  const hs = _viewerHubSettings;
   _renderCfgTags('cfg-news-br-tags',    hs.news_topics_br    || ['Brasil','tecnologia','economia'], 'br');
   _renderCfgTags('cfg-news-world-tags', hs.news_topics_world || ['world news','technology'],        'world');
-
-  // Job Scout
-  _renderCfgTags('cfg-job-kw-tags',  hs.job_keywords  || [], 'kw');
-  _renderCfgTags('cfg-job-loc-tags', hs.job_locations || [], 'loc');
-  const lvl = document.getElementById('cfg-job-level');  if (lvl)  lvl.value  = hs.job_level  || '';
-  const mode = document.getElementById('cfg-job-mode');  if (mode) mode.value = hs.job_mode   || '';
-  const days = document.getElementById('cfg-job-days');  if (days) days.value = hs.job_days   || 7;
+  _renderCfgTags('cfg-job-kw-tags',     hs.job_keywords      || [],                                'kw');
+  _renderJobLocList(hs.job_locations || []);
+  const lvl  = document.getElementById('cfg-job-level'); if (lvl)  lvl.value  = hs.job_level || '';
+  const days = document.getElementById('cfg-job-days');  if (days) days.value = hs.job_days  || 7;
 }
 
 async function saveCfg(key, val) {
@@ -2926,11 +2941,10 @@ async function saveCfg(key, val) {
   toast('Configuração salva ♡');
 }
 
-// Helpers de tags de configuração
+// ─── Tags de texto simples (notícias / palavras-chave) ──────────────────────
 let _cfgNewsTagsBr    = [];
 let _cfgNewsTagsWorld = [];
 let _cfgJobKwTags     = [];
-let _cfgJobLocTags    = [];
 
 function _renderCfgTags(containerId, tags, type) {
   const el = document.getElementById(containerId);
@@ -2938,7 +2952,6 @@ function _renderCfgTags(containerId, tags, type) {
   if (type === 'br')    _cfgNewsTagsBr    = [...tags];
   if (type === 'world') _cfgNewsTagsWorld = [...tags];
   if (type === 'kw')    _cfgJobKwTags     = [...tags];
-  if (type === 'loc')   _cfgJobLocTags    = [...tags];
   el.innerHTML = tags.map((t, i) =>
     `<span class="cfg-tag">${esc(t)}<button onclick="_cfgRemoveTag('${type}',${i})">×</button></span>`
   ).join('');
@@ -2948,7 +2961,6 @@ function _cfgRemoveTag(type, idx) {
   if (type === 'br')    { _cfgNewsTagsBr.splice(idx,1);    _renderCfgTags('cfg-news-br-tags',    _cfgNewsTagsBr,    'br'); }
   if (type === 'world') { _cfgNewsTagsWorld.splice(idx,1); _renderCfgTags('cfg-news-world-tags', _cfgNewsTagsWorld, 'world'); }
   if (type === 'kw')    { _cfgJobKwTags.splice(idx,1);     _renderCfgTags('cfg-job-kw-tags',     _cfgJobKwTags,     'kw'); }
-  if (type === 'loc')   { _cfgJobLocTags.splice(idx,1);    _renderCfgTags('cfg-job-loc-tags',    _cfgJobLocTags,    'loc'); }
 }
 
 function cfgNewsAddTag(region) {
@@ -2963,30 +2975,62 @@ function cfgJobAddTag(type) {
   const inp = document.getElementById(`cfg-job-${type}-input`);
   const val = inp.value.trim(); if (!val) return;
   inp.value = '';
-  if (type === 'kw')  _renderCfgTags('cfg-job-kw-tags',  [..._cfgJobKwTags,  val], 'kw');
-  if (type === 'loc') _renderCfgTags('cfg-job-loc-tags', [..._cfgJobLocTags, val], 'loc');
+  if (type === 'kw') _renderCfgTags('cfg-job-kw-tags', [..._cfgJobKwTags, val], 'kw');
 }
 
+// ─── Localidades com modalidade ─────────────────────────────────────────────
+// Estrutura: [{loc: "Porto Alegre", mode: "híbrido"}, ...]
+let _cfgJobLocs = [];
+
+function _renderJobLocList(locs) {
+  _cfgJobLocs = locs.map(l => typeof l === 'string' ? { loc: l, mode: '' } : l);
+  const el = document.getElementById('cfg-job-loc-list');
+  if (!el) return;
+  const modeLabel = { '': 'Qualquer', 'remoto': 'Remoto', 'híbrido': 'Híbrido', 'presencial': 'Presencial' };
+  el.innerHTML = _cfgJobLocs.map((l, i) => `
+    <div style="display:flex;align-items:center;gap:.4rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-xs);padding:.3rem .55rem">
+      <span style="flex:1;font-size:.8rem;color:var(--text)">${esc(l.loc)}</span>
+      <span style="font-size:.68rem;padding:.1rem .45rem;border-radius:99px;background:var(--rose-dim);color:var(--rose);font-weight:600">${modeLabel[l.mode||'']||'Qualquer'}</span>
+      <button onclick="_cfgRemoveLoc(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9rem;line-height:1;padding:0 .1rem">×</button>
+    </div>`).join('');
+}
+
+function _cfgRemoveLoc(idx) {
+  _cfgJobLocs.splice(idx, 1);
+  _renderJobLocList(_cfgJobLocs);
+}
+
+function cfgJobAddLoc() {
+  const locInp  = document.getElementById('cfg-job-loc-input');
+  const modeInp = document.getElementById('cfg-job-loc-mode');
+  const loc  = locInp.value.trim();  if (!loc) return;
+  const mode = modeInp.value;
+  locInp.value = '';
+  _renderJobLocList([..._cfgJobLocs, { loc, mode }]);
+}
+
+// ─── Salvar configs (sempre no VIEWER) ──────────────────────────────────────
 async function saveNewsTopics() {
-  ud.hub_settings = {
-    ...(ud.hub_settings||{}),
+  _viewerHubSettings = {
+    ..._viewerHubSettings,
     news_topics_br:    _cfgNewsTagsBr,
     news_topics_world: _cfgNewsTagsWorld,
   };
-  await api('/api/save/hub_settings', { hub_settings: ud.hub_settings });
+  await api('/api/save/hub_settings', { hub_settings: _viewerHubSettings });
+  if (PROFILE === VIEWER) ud.hub_settings = _viewerHubSettings;
   toast('Temas salvos ♡ — atualiza os dados para aplicar');
 }
 
 async function saveJobScout() {
-  ud.hub_settings = {
-    ...(ud.hub_settings||{}),
+  _viewerHubSettings = {
+    ..._viewerHubSettings,
     job_keywords:  _cfgJobKwTags,
-    job_locations: _cfgJobLocTags,
+    job_locations: _cfgJobLocs,
     job_level:     document.getElementById('cfg-job-level').value,
-    job_mode:      document.getElementById('cfg-job-mode').value,
     job_days:      Number(document.getElementById('cfg-job-days').value) || 7,
   };
-  await api('/api/save/hub_settings', { hub_settings: ud.hub_settings });
+  await api('/api/save/hub_settings', { hub_settings: _viewerHubSettings });
+  if (PROFILE === VIEWER) ud.hub_settings = _viewerHubSettings;
   toast('Job Scout salvo ♡ — atualiza os dados para aplicar');
 }
 

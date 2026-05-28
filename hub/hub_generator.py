@@ -743,11 +743,18 @@ def generate_jobs_json(user_id: str):
     logger.info("[%s] Buscando vagas...", user_id)
     try:
         hs       = _get_hub_settings(user_id)
-        keywords = hs.get("job_keywords")  or []
-        locations= hs.get("job_locations") or []
-        level    = hs.get("job_level",  "")
-        mode     = hs.get("job_mode",   "")
-        days     = int(hs.get("job_days", 7))
+        keywords = hs.get("job_keywords") or []
+        # job_locations: lista de {loc, mode} ou strings legadas
+        raw_locs = hs.get("job_locations") or []
+        locations = []
+        for l in raw_locs:
+            if isinstance(l, dict):
+                locations.append({"loc": l.get("loc", ""), "mode": l.get("mode", "")})
+            else:
+                locations.append({"loc": str(l), "mode": ""})
+
+        level = hs.get("job_level", "")
+        days  = int(hs.get("job_days", 7))
 
         if not keywords:
             logger.info("[%s] Nenhuma palavra-chave de vaga configurada, pulando", user_id)
@@ -755,50 +762,65 @@ def generate_jobs_json(user_id: str):
             return
 
         from urllib.parse import quote_plus
-        import re, xml.etree.ElementTree as ET, html as html_module
+        import xml.etree.ElementTree as ET, html as html_module
         from datetime import timezone
+        from email.utils import parsedate_to_datetime
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff  = datetime.now(timezone.utc) - timedelta(days=days)
         headers = {"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,pt;q=0.9"}
         seen, results = set(), []
 
-        for kw in keywords:
-            loc_part = (" " + " OR ".join(locations)) if locations else ""
-            level_part = (" " + level) if level else ""
-            mode_part  = (" " + mode)  if mode  else ""
-            q = quote_plus(f"{kw}{loc_part}{level_part}{mode_part} vaga emprego")
+        # Gera uma query por combinação (keyword × localidade+modalidade)
+        # Se não há localidades, faz uma busca sem localidade
+        combos = []
+        if locations:
+            for kw in keywords:
+                for loc_entry in locations:
+                    combos.append((kw, loc_entry["loc"], loc_entry["mode"]))
+        else:
+            for kw in keywords:
+                combos.append((kw, "", ""))
+
+        for kw, loc, mode in combos:
+            parts = [kw]
+            if loc:   parts.append(loc)
+            if mode:  parts.append(mode)
+            if level: parts.append(level)
+            parts.append("vaga emprego")
+            q   = quote_plus(" ".join(parts))
             url = f"https://news.google.com/rss/search?q={q}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
             try:
                 r    = requests.get(url, headers=headers, timeout=15)
                 root = ET.fromstring(r.content)
-                for item in root.findall(".//item")[:8]:
-                    link  = item.findtext("link", "") or ""
+                for item in root.findall(".//item")[:6]:
+                    link = item.findtext("link", "") or ""
                     if link in seen: continue
                     seen.add(link)
                     title_raw = html_module.unescape(item.findtext("title", "") or "")
                     source = ""
                     if " - " in title_raw:
-                        parts = title_raw.rsplit(" - ", 1)
-                        title_raw, source = parts[0].strip(), parts[1].strip()
+                        parts_t = title_raw.rsplit(" - ", 1)
+                        title_raw, source = parts_t[0].strip(), parts_t[1].strip()
                     pub_raw = item.findtext("pubDate", "") or ""
                     try:
-                        from email.utils import parsedate_to_datetime
-                        pub_dt = parsedate_to_datetime(pub_raw)
+                        pub_dt  = parsedate_to_datetime(pub_raw)
                         if pub_dt < cutoff: continue
                         pub_str = pub_dt.strftime("%d/%m")
                     except Exception:
                         pub_str = ""
                     results.append({
-                        "title":   title_raw,
-                        "company": source,
-                        "via":     source,
-                        "url":     link,
-                        "keyword": kw,
-                        "pub":     pub_str,
-                        "is_new":  True,
+                        "title":    title_raw,
+                        "company":  source,
+                        "via":      source,
+                        "url":      link,
+                        "keyword":  kw,
+                        "location": loc,
+                        "mode":     mode,
+                        "pub":      pub_str,
+                        "is_new":   True,
                     })
             except Exception as e:
-                logger.warning("[%s] Vaga RSS falhou para '%s': %s", user_id, kw, e)
+                logger.warning("[%s] Vaga RSS falhou para '%s' / '%s': %s", user_id, kw, loc, e)
 
         (_data_dir(user_id) / "jobs_today.json").write_text(
             json.dumps(results[:30], ensure_ascii=False, indent=2), encoding="utf-8"
