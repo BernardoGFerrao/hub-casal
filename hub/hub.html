@@ -763,6 +763,13 @@ select option { background: var(--surface); }
 .kanban-col-del { background: none; border: none; color: var(--text3); cursor: pointer; padding: .15rem .35rem; border-radius: var(--r-xs); font-size: .9rem; line-height: 1; flex-shrink: 0; opacity: 0; transition: opacity .15s, color .12s; }
 .kanban-col:hover .kanban-col-del { opacity: 1; }
 .kanban-col-del:hover { color: var(--red) !important; background: rgba(196,120,120,.1); }
+.kanban-col-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); cursor: pointer; flex-shrink: 0; opacity: 0; transition: opacity .15s, transform .12s; padding: 0; }
+.kanban-col:hover .kanban-col-color { opacity: 1; }
+.kanban-col-color:hover { transform: scale(1.2); }
+.kanban-color-picker { position: absolute; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r-sm); padding: .45rem; display: flex; gap: .35rem; flex-wrap: wrap; width: 130px; box-shadow: 0 4px 16px rgba(0,0,0,.2); z-index: 100; }
+.kanban-color-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .12s, border-color .12s; }
+.kanban-color-swatch:hover { transform: scale(1.2); }
+.kanban-color-swatch.active { border-color: #fff; }
 .kanban-cards { flex: 1; overflow-y: auto; padding: 0 .7rem .4rem; display: flex; flex-direction: column; gap: .5rem; min-height: 40px; }
 .kanban-cards.cards-drag-over { background: var(--rose-dim); border-radius: var(--r-sm); }
 .kanban-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 0; gap: .35rem; color: var(--text3); font-size: .75rem; }
@@ -2835,13 +2842,14 @@ function switchTaskTab(name) {
 // ─── Kanban ────────────────────────────────────────────────────────────────
 let _kanban = { columns: [] };
 let _kDrag  = null;
-const _kPalette = ['var(--rose)','var(--b-color)','var(--green)','var(--yellow)','var(--c-sleep)','var(--sand)','var(--a-color)'];
+const _kPalette = ['#3b82f6','#ec4899','#22c55e','#f59e0b','#8b5cf6','#14b8a6','#f97316','#64748b'];
+const _kColorNames = ['Azul','Rosa','Verde','Âmbar','Roxo','Teal','Laranja','Cinza'];
 
 function _kanbanDefaults() {
   return { columns: [
-    { id: 'col_a', name: 'A Fazer',      cards: [] },
-    { id: 'col_b', name: 'Em Progresso', cards: [] },
-    { id: 'col_c', name: 'Concluído',    cards: [] },
+    { id: 'col_a', name: 'A Fazer',      color: '#3b82f6', cards: [] },
+    { id: 'col_b', name: 'Em Progresso', color: '#f59e0b', cards: [] },
+    { id: 'col_c', name: 'Concluído',    color: '#22c55e', cards: [] },
   ]};
 }
 
@@ -2853,13 +2861,36 @@ function saveKanban() {
   api('/api/save/kanban', { kanban: _kanban });
 }
 
+function _kanbanShowColorPicker(colEl, col) {
+  document.querySelectorAll('.kanban-color-picker').forEach(p => p.remove());
+  const picker = document.createElement('div');
+  picker.className = 'kanban-color-picker';
+  picker.style.position = 'absolute';
+  const hdrRect = colEl.getBoundingClientRect();
+  picker.style.top = '48px';
+  picker.style.left = '.7rem';
+  _kPalette.forEach((hex, i) => {
+    const sw = document.createElement('button');
+    sw.className = 'kanban-color-swatch' + (col.color === hex ? ' active' : '');
+    sw.style.background = hex;
+    sw.title = _kColorNames[i];
+    sw.onclick = e => { e.stopPropagation(); col.color = hex; saveKanban(); renderKanban(); };
+    picker.appendChild(sw);
+  });
+  colEl.style.position = 'relative';
+  colEl.appendChild(picker);
+  const close = e => { if (!picker.contains(e.target)) { picker.remove(); document.removeEventListener('click', close); } };
+  setTimeout(() => document.addEventListener('click', close), 0);
+}
+
 function renderKanban() {
   const board = document.getElementById('kanban-board');
   if (!board) return;
   const own = PROFILE === VIEWER;
   board.innerHTML = '';
   _kanban.columns.forEach((col, ci) => {
-    const color = _kPalette[ci % _kPalette.length];
+    if (!col.color) col.color = _kPalette[ci % _kPalette.length];
+    const color = col.color;
     const colEl = document.createElement('div');
     colEl.className = 'kanban-col';
     colEl.dataset.colId = col.id;
@@ -2882,10 +2913,16 @@ function renderKanban() {
     const cnt = document.createElement('span');
     cnt.className = 'kanban-col-count';
     cnt.textContent = col.cards.length;
-    cnt.style.background = color.startsWith('var') ? 'var(--rose-dim)' : color + '22';
+    cnt.style.background = color + '28';
     cnt.style.color = color;
     hdr.appendChild(cnt);
     if (own) {
+      const colorBtn = document.createElement('button');
+      colorBtn.className = 'kanban-col-color';
+      colorBtn.style.background = color;
+      colorBtn.title = 'Alterar cor';
+      colorBtn.onclick = e => { e.stopPropagation(); _kanbanShowColorPicker(colEl, col); };
+      hdr.appendChild(colorBtn);
       const delBtn = document.createElement('button');
       delBtn.className = 'kanban-col-del';
       delBtn.textContent = '×';
@@ -2893,7 +2930,7 @@ function renderKanban() {
       hdr.appendChild(delBtn);
     }
     if (own) {
-      hdr.addEventListener('dragstart', e => { _kDrag = {type:'col',id:col.id}; e.dataTransfer.setData('text/plain',col.id); setTimeout(()=>colEl.classList.add('col-dragging'),0); e.stopPropagation(); });
+      hdr.addEventListener('dragstart', e => { if (e.target.closest('.kanban-col-color,.kanban-col-del')) { e.preventDefault(); return; } _kDrag = {type:'col',id:col.id}; e.dataTransfer.setData('text/plain',col.id); setTimeout(()=>colEl.classList.add('col-dragging'),0); e.stopPropagation(); });
       hdr.addEventListener('dragend', () => { colEl.classList.remove('col-dragging'); document.querySelectorAll('.col-drag-over').forEach(el=>el.classList.remove('col-drag-over')); _kDrag=null; });
     }
     colEl.appendChild(hdr);
@@ -2954,7 +2991,7 @@ function _kanbanMoveCard(cardId, fromColId, toColId, clientY, forcedIdx) {
   toCol.cards.splice(idx,0,card); saveKanban(); renderKanban();
 }
 
-function kanbanAddColumn() { _kanban.columns.push({id:'col_'+Date.now(),name:'Nova Coluna',cards:[]}); saveKanban(); renderKanban(); setTimeout(()=>{const cols=document.querySelectorAll('.kanban-col-name');const last=cols[cols.length-1];if(last){last.focus();last.select();}},50); }
+function kanbanAddColumn() { const ci=_kanban.columns.length; _kanban.columns.push({id:'col_'+Date.now(),name:'Nova Coluna',color:_kPalette[ci%_kPalette.length],cards:[]}); saveKanban(); renderKanban(); setTimeout(()=>{const cols=document.querySelectorAll('.kanban-col-name');const last=cols[cols.length-1];if(last){last.focus();last.select();}},50); }
 function kanbanDeleteColumn(colId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col) return; if(col.cards.length>0&&!confirm(`Excluir "${col.name}" com ${col.cards.length} card(s)?`))return; _kanban.columns=_kanban.columns.filter(c=>c.id!==colId); saveKanban(); renderKanban(); }
 function kanbanAddCard(colId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col)return; const card={id:'card_'+Date.now(),text:'Novo card',desc:''}; col.cards.push(card); saveKanban(); renderKanban(); setTimeout(()=>{const el=document.getElementById('kcard-'+card.id); if(el){const txt=el.querySelector('.kanban-card-text'); if(txt){txt.focus();document.execCommand('selectAll',false,null);}}},50); }
 function kanbanDeleteCard(colId,cardId) { const col=_kanban.columns.find(c=>c.id===colId); if(!col)return; col.cards=col.cards.filter(c=>c.id!==cardId); saveKanban(); renderKanban(); }
