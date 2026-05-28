@@ -732,15 +732,25 @@ select option { background: var(--surface); }
 .stab:hover { color: var(--text2); }
 .stab.active { color: var(--rose); background: var(--surface); border-color: var(--border); border-bottom: 1px solid var(--surface); margin-bottom: -1px; }
 
-/* ─── Navegação de dias (Saúde) ──────────────────────────────────────── */
-.health-day-nav { display:flex; align-items:center; justify-content:center; gap:.5rem; margin-bottom:.6rem; }
-.health-day-btn { background:none; border:1px solid var(--border); border-radius:var(--r-xs); color:var(--text2); font-size:1rem; cursor:pointer; padding:.2rem .7rem; transition:background .15s,border-color .15s; line-height:1.4; }
-.health-day-btn:hover { background:var(--surface); border-color:var(--border2); }
+/* ─── Barra de navegação de dias (global) ───────────────────────────── */
+#day-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .35rem .75rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.health-day-btn { background:none; border:1px solid var(--border); border-radius:var(--r-xs); color:var(--text2); font-size:1rem; cursor:pointer; padding:.15rem .65rem; transition:background .15s,border-color .15s; line-height:1.4; }
+.health-day-btn:hover { background:var(--surface2); border-color:var(--border2); }
 .health-day-btn:disabled { opacity:.3; cursor:default; }
-.health-day-label { font-size:.82rem; font-weight:600; color:var(--text); min-width:120px; text-align:center; cursor:pointer; padding:.2rem .5rem; border-radius:var(--r-xs); transition:background .15s; }
-.health-day-label:hover { background:var(--surface); }
+.health-day-label { font-size:.8rem; font-weight:600; color:var(--text); min-width:120px; text-align:center; cursor:pointer; padding:.15rem .5rem; border-radius:var(--r-xs); transition:background .15s; }
+.health-day-label:hover { background:var(--bg2); }
 .health-today-link { font-size:.7rem; color:var(--rose); cursor:pointer; opacity:.8; }
 .health-today-link:hover { opacity:1; }
+/* legado — .health-day-nav não é mais usado */
+.health-day-nav { display:none; }
 
 /* ─── Kanban ──────────────────────────────────────────────────────────── */
 .kanban-wrap { overflow-x: auto; padding-bottom: 1rem; }
@@ -1304,6 +1314,14 @@ select option { background: var(--surface); }
     <button class="ntab"        data-s="config"   onclick="go('config')"><span class="ni">⚙️</span>Config</button>
   </nav>
 
+  <!-- Day navigation bar (global) -->
+  <div id="day-nav-bar">
+    <button class="health-day-btn" id="health-prev" onclick="healthNavDay(-1)">‹</button>
+    <span class="health-day-label" id="health-day-label" onclick="healthGoToday()">Hoje</span>
+    <button class="health-day-btn" id="health-next" onclick="healthNavDay(1)">›</button>
+    <span class="health-today-link" id="health-today-link" style="display:none" onclick="healthGoToday()">↩ Hoje</span>
+  </div>
+
   <!-- Content -->
   <main id="content">
 
@@ -1443,12 +1461,6 @@ select option { background: var(--surface); }
           <span style="font-size:.65rem;color:var(--text3)" id="health-sync"></span>
         </div>
         <div class="card-body">
-          <div class="health-day-nav">
-            <button class="health-day-btn" id="health-prev" onclick="healthNavDay(-1)">‹</button>
-            <span class="health-day-label" id="health-day-label" onclick="healthGoToday()">Hoje</span>
-            <button class="health-day-btn" id="health-next" onclick="healthNavDay(1)">›</button>
-            <span class="health-today-link" id="health-today-link" style="display:none" onclick="healthGoToday()">↩ Hoje</span>
-          </div>
           <div class="metrics">
             <div class="metric">
               <div class="metric-val" id="m-steps" style="color:var(--rose)">—</div>
@@ -2099,6 +2111,7 @@ async function switchProfile(p) {
   _updateViewerOnlyTabs();
   await loadUD(p);
   renderAll();
+  loadCalEvents();
 }
 
 function _updateViewerOnlyTabs() {
