@@ -2990,29 +2990,18 @@ function renderMiniCalEvents(dateStr) {
 
 // ─── Vagas ─────────────────────────────────────────────────────────────────
 let _jobs = [];
-let _scoutJobsDate = null; // data das vagas carregadas (YYYY-MM-DD)
-
-// _scoutJobs: vagas do dia (do DB ou de busca manual)
-let _scoutJobs = [];
-// _scoutDismissed: URLs ignoradas (persistido em localStorage)
-let _scoutDismissed = new Set(JSON.parse(localStorage.getItem('scout_dismissed')||'[]'));
+let _scoutJobs = [];   // todas as vagas carregadas do banco
+let _scoutJobsDate = null;
 
 async function loadJobsFromDB() {
   try {
     const r    = await fetch('/api/jobs');
     const data = await r.json();
-    if (data.ok && data.jobs && data.jobs.length) {
+    if (data.ok) {
       _scoutJobsDate = data.date;
-      _scoutJobs = data.jobs;
-      const byPlatform = {};
-      data.jobs.forEach(j => { byPlatform[j.platform||'web'] = (byPlatform[j.platform||'web']||0)+1; });
-      const summary = Object.entries(byPlatform).map(([p,n]) => `${n} ${(_platformBadge[p]||{label:p}).label}`).join(', ');
-      const status = document.getElementById('scout-status');
-      if (status) {
-        status.textContent = `${data.jobs.length} vaga(s) de ${_fmtDate(data.date)}: ${summary}`;
-        status.style.display = '';
-      }
+      _scoutJobs = data.jobs || [];
       renderScoutList();
+      _updateScoutStatus();
     }
   } catch(e) { /* silencioso */ }
 }
@@ -3023,26 +3012,39 @@ function _fmtDate(iso) {
   return `${d}/${m}`;
 }
 
-function _saveScoutDismissed() {
-  localStorage.setItem('scout_dismissed', JSON.stringify([..._scoutDismissed]));
+function _updateScoutStatus() {
+  const status = document.getElementById('scout-status');
+  if (!status) return;
+  const newJobs = _scoutJobs.filter(j => j.is_new);
+  const total   = _scoutJobs.length;
+  if (!total) {
+    status.textContent = 'Nenhuma vaga no banco. Clique em "Buscar vagas" para executar agora.';
+    status.style.display = '';
+    return;
+  }
+  const byPlatform = {};
+  _scoutJobs.forEach(j => { byPlatform[j.platform||'web'] = (byPlatform[j.platform||'web']||0)+1; });
+  const summary = Object.entries(byPlatform).map(([p,n]) => `${n} ${(_platformBadge[p]||{label:p}).label}`).join(', ');
+  status.textContent = `${total} vaga(s) no banco${newJobs.length ? ` — ${newJobs.length} nova(s) hoje` : ''}: ${summary}`;
+  status.style.display = '';
 }
 
-function scoutApply(idx) {
-  const j = _scoutJobs[idx];
+async function scoutApply(jobId) {
+  const j = _scoutJobs.find(j => j.id === jobId);
   if (!j) return;
   if (j.url) window.open(j.url, '_blank', 'noopener');
-  _scoutJobs[idx]._applied = true;
+  // Marca como vista no banco
+  await fetch('/api/jobs/seen', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id: jobId}) });
+  j.seen = 1; j.is_new = false;
   renderScoutList();
-  toast('Marcada como inscrita ♡');
+  toast('Vaga aberta ♡');
 }
 
-function scoutDismiss(idx) {
-  const j = _scoutJobs[idx];
-  if (!j) return;
-  _scoutDismissed.add(j.url);
-  _saveScoutDismissed();
-  _scoutJobs.splice(idx, 1);
+async function scoutDismiss(jobId) {
+  await fetch('/api/jobs/ignore', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id: jobId}) });
+  _scoutJobs = _scoutJobs.filter(j => j.id !== jobId);
   renderScoutList();
+  _updateScoutStatus();
 }
 
 const _platformBadge = {
@@ -3056,50 +3058,61 @@ function _jobBadge(platform) {
 }
 
 function renderScoutList() {
-  const list   = document.getElementById('scout-list');
-  const status = document.getElementById('scout-status');
+  const list  = document.getElementById('scout-list');
   if (!list) return;
-  const visible = _scoutJobs.filter(j => !_scoutDismissed.has(j.url));
-  if (!visible.length) {
+  if (!_scoutJobs.length) {
     list.innerHTML = '';
-    if (status) status.style.display = '';
     return;
   }
-  if (status) status.style.display = 'none';
-  list.innerHTML = visible.map((j) => `
-    <div style="padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid var(--border);display:flex;flex-direction:column;gap:.25rem">
-      <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none">
-        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.15rem">
+  list.innerHTML = _scoutJobs.map((j) => {
+    const newBadge = j.is_new
+      ? `<span style="font-size:.6rem;font-weight:700;color:#fff;background:var(--accent);padding:.1rem .35rem;border-radius:99px">NOVA</span>`
+      : '';
+    return `
+    <div style="padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid ${j.is_new ? 'var(--accent)' : 'var(--border)'};display:flex;flex-direction:column;gap:.25rem;opacity:${j.seen && !j.is_new ? '.65' : '1'}">
+      <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none" onclick="scoutMarkSeen('${esc(j.id||'')}')">
+        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.15rem;flex-wrap:wrap">
           ${_jobBadge(j.platform)}
+          ${newBadge}
           ${j.pub ? `<span style="font-size:.6rem;color:var(--text3)">${esc(j.pub)}</span>` : ''}
+          ${j.found_date && j.found_date !== TODAY ? `<span style="font-size:.6rem;color:var(--text3)">encontrada ${_fmtDate(j.found_date)}</span>` : ''}
         </div>
         <div style="font-weight:600;color:var(--text);font-size:.82rem;line-height:1.35">${esc(j.title||'')}</div>
         <div style="color:var(--text3);font-size:.7rem;margin-top:.1rem">${esc(j.company||'')}${j.location ? ' · ' + esc(j.location) : ''}${j.mode && j.mode!=='any' ? ' · ' + esc(j.mode) : ''}</div>
       </a>
       <div style="display:flex;gap:.4rem;margin-top:.15rem">
-        ${j._applied
-          ? '<span style="font-size:.68rem;color:var(--green);font-weight:600">✓ Inscrita</span>'
-          : `<button class="btn btn-rose btn-xs" onclick="scoutApply(${_scoutJobs.indexOf(j)})">Me inscrever</button>`}
-        <button class="btn btn-outline btn-xs" onclick="scoutDismiss(${_scoutJobs.indexOf(j)})" style="color:var(--text3)">Ignorar</button>
+        <button class="btn btn-rose btn-xs" onclick="scoutApply('${esc(j.id||'')}')">Me inscrever</button>
+        <button class="btn btn-outline btn-xs" onclick="scoutDismiss('${esc(j.id||'')}')">Ignorar</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  // Atualiza card no início (full-width, grid 3 cols)
-  const ovJ  = document.getElementById('ov-jobs');
+  // Atualiza card no início — mostra apenas novas ou as mais recentes
+  const ovJ   = document.getElementById('ov-jobs');
   const jCard = document.getElementById('ov-jobs-card');
   if (ovJ && jCard) {
-    const top6 = visible.slice(0, 6);
+    const top6 = (_scoutJobs.filter(j => j.is_new).length ? _scoutJobs.filter(j => j.is_new) : _scoutJobs).slice(0, 6);
     if (top6.length) {
       jCard.style.display = '';
       ovJ.innerHTML = top6.map(j => `
-        <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;flex-direction:column;gap:.15rem;padding:.45rem .55rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid var(--border)">
+        <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" onclick="scoutMarkSeen('${esc(j.id||'')}')" style="text-decoration:none;display:flex;flex-direction:column;gap:.15rem;padding:.45rem .55rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid ${j.is_new ? 'var(--accent)' : 'var(--border)'}">
           <div style="font-size:.78rem;font-weight:600;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(j.title||'')}</div>
-          <div style="font-size:.65rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(j.company||j.via||'')}${j.location ? ' · '+esc(j.location) : ''}${j.pub ? ' · '+esc(j.pub) : ''}</div>
+          <div style="font-size:.65rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(j.company||'')}${j.location ? ' · '+esc(j.location) : ''}${j.pub ? ' · '+esc(j.pub) : ''}</div>
         </a>`).join('');
     } else {
       jCard.style.display = 'none';
     }
   }
+}
+
+async function scoutMarkSeen(jobId) {
+  if (!jobId) return;
+  const j = _scoutJobs.find(j => j.id === jobId);
+  if (!j || j.seen) return;
+  await fetch('/api/jobs/seen', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id: jobId}) });
+  j.seen = 1; j.is_new = false;
+  renderScoutList();
+  _updateScoutStatus();
 }
 
 async function runJobScout() {
@@ -3115,21 +3128,8 @@ async function runJobScout() {
     if (!data.ok) { if (status) status.textContent = '✕ Erro: ' + (data.error || 'falha desconhecida'); return; }
     _scoutJobs = data.jobs || [];
     _scoutJobsDate = TODAY;
-    const total = _scoutJobs.length;
-    const visible = _scoutJobs.filter(j => !_scoutDismissed.has(j.url)).length;
-    if (status) {
-      status.style.display = '';
-      if (total) {
-        const byPlatform = {};
-        _scoutJobs.forEach(j => { byPlatform[j.platform||'web'] = (byPlatform[j.platform||'web']||0)+1; });
-        const summary = Object.entries(byPlatform).map(([p,n]) => `${n} ${(_platformBadge[p]||{label:p}).label}`).join(', ');
-        status.textContent = `✓ ${total} vaga(s) encontrada(s) — ${visible} nova(s): ${summary}`;
-      } else {
-        status.textContent = '✓ Nenhuma vaga encontrada com as configurações atuais.';
-      }
-    }
+    _updateScoutStatus();
     renderScoutList();
-    if (D[PROFILE]) D[PROFILE].job_listings = data.jobs || [];
   } catch(e) { if (status) status.textContent = '✕ Erro ao buscar vagas.'; }
   btn.disabled = false;
   btn.classList.remove('btn-loading');
@@ -3138,13 +3138,7 @@ async function runJobScout() {
 
 function renderJobs() {
   renderScoutList();
-  if (!_scoutJobs.length) {
-    const status = document.getElementById('scout-status');
-    if (status) {
-      status.textContent = 'Nenhuma vaga do dia encontrada. Clique em "Buscar vagas" para executar agora.';
-      status.style.display = '';
-    }
-  }
+  _updateScoutStatus();
 }
 
 // ─── Configurações ─────────────────────────────────────────────────────────

@@ -984,6 +984,12 @@ def generate_jobs_json(user_id: str):
         gn_jobs = _scrape_google_news_jobs(keywords, locations, days, level, seen)
         results.extend(gn_jobs)
 
+        # Adiciona id estável por URL (usado como PK no banco de vagas)
+        import hashlib as _hl
+        for j in results:
+            if not j.get("id"):
+                j["id"] = _hl.md5(j.get("url", j.get("title", "")).encode()).hexdigest()[:16]
+
         # Filtro de localização: vagas híbridas/presenciais só passam se forem
         # de cidades aceitas (configuradas em job_locations) ou remotas
         local_city_norms = set()

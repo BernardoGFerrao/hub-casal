@@ -234,6 +234,19 @@ def init_user_tables(user_id: str):
             date      TEXT PRIMARY KEY,
             data_json TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS user_jobs (
+            id          TEXT PRIMARY KEY,
+            title       TEXT NOT NULL,
+            company     TEXT,
+            location    TEXT,
+            mode        TEXT,
+            platform    TEXT,
+            url         TEXT,
+            pub         TEXT,
+            found_date  TEXT NOT NULL,
+            seen        INTEGER DEFAULT 0,
+            ignored     INTEGER DEFAULT 0
+        );
     """)
     conn.commit()
     conn.close()
@@ -330,6 +343,76 @@ def db_set_jobs_today(user_id: str, date_str: str, jobs: list):
     try:
         conn.execute("INSERT OR REPLACE INTO user_jobs_today (date, data_json) VALUES (?, ?)",
                      (date_str, json.dumps(jobs, ensure_ascii=False)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def db_jobs_upsert(user_id: str, jobs: list):
+    """Insere vagas novas no banco; não sobrescreve seen/ignored de vagas já existentes."""
+    from datetime import date as _d
+    today = str(_d.today())
+    conn  = get_conn(user_id)
+    try:
+        for j in jobs:
+            conn.execute("""
+                INSERT OR IGNORE INTO user_jobs
+                    (id, title, company, location, mode, platform, url, pub, found_date, seen, ignored)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)
+            """, (
+                j.get("id") or j.get("url", ""),
+                j.get("title", ""),
+                j.get("company", ""),
+                j.get("location", ""),
+                j.get("mode", ""),
+                j.get("platform", ""),
+                j.get("url", ""),
+                j.get("pub", ""),
+                today,
+            ))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def db_jobs_get(user_id: str, include_ignored: bool = False, limit: int = 100) -> list:
+    """Retorna vagas do banco, marcando is_new (found_date = hoje e not seen)."""
+    from datetime import date as _d
+    today = str(_d.today())
+    conn  = get_conn(user_id)
+    try:
+        where = "" if include_ignored else "WHERE ignored = 0"
+        rows  = conn.execute(f"""
+            SELECT id, title, company, location, mode, platform, url, pub,
+                   found_date, seen, ignored
+            FROM user_jobs
+            {where}
+            ORDER BY found_date DESC, seen ASC
+            LIMIT ?
+        """, (limit,)).fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["is_new"] = (d["found_date"] == today and not d["seen"])
+            result.append(d)
+        return result
+    finally:
+        conn.close()
+
+
+def db_jobs_mark_seen(user_id: str, job_id: str):
+    conn = get_conn(user_id)
+    try:
+        conn.execute("UPDATE user_jobs SET seen = 1 WHERE id = ?", (job_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def db_jobs_mark_ignored(user_id: str, job_id: str):
+    conn = get_conn(user_id)
+    try:
+        conn.execute("UPDATE user_jobs SET ignored = 1 WHERE id = ?", (job_id,))
         conn.commit()
     finally:
         conn.close()
@@ -463,10 +546,9 @@ def _run_jobs_and_save(user_id: str):
         mod.generate_jobs_json(user_id)
         data_dir  = USERS[user_id]["data_dir"]
         jobs_file = data_dir / "jobs_today.json"
-        jobs      = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
-        from datetime import date as _d
-        db_set_jobs_today(user_id, str(_d.today()), jobs)
-        print(f"  [scheduler] vagas {user_id}: {len(jobs)} vagas salvas")
+        new_jobs  = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
+        db_jobs_upsert(user_id, new_jobs)
+        print(f"  [scheduler] vagas {user_id}: {len(new_jobs)} vagas novas inseridas")
     except Exception as e:
         print(f"  [scheduler] erro vagas {user_id}: {e}")
 
@@ -623,10 +705,10 @@ class HubHandler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/jobs":
+            include_ignored = qs.get("ignored", ["0"])[0] == "1"
+            jobs = db_jobs_get(uid, include_ignored=include_ignored)
             from datetime import date as _d
-            today_str = str(_d.today())
-            jobs = db_get_jobs_today(uid, today_str)
-            self._json({"ok": True, "jobs": jobs, "date": today_str})
+            self._json({"ok": True, "jobs": jobs, "date": str(_d.today())})
             return
 
         if path == "/api/hub-data":
@@ -852,14 +934,26 @@ class HubHandler(SimpleHTTPRequestHandler):
                 mod  = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mod)
                 mod.generate_jobs_json(uid)
-                data_dir = USERS[uid]["data_dir"]
+                data_dir  = USERS[uid]["data_dir"]
                 jobs_file = data_dir / "jobs_today.json"
-                jobs = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
-                from datetime import date as _d
-                db_set_jobs_today(uid, str(_d.today()), jobs)
-                self._json({"ok": True, "jobs": jobs})
+                new_jobs  = json.loads(jobs_file.read_text(encoding="utf-8")) if jobs_file.exists() else []
+                db_jobs_upsert(uid, new_jobs)
+                jobs = db_jobs_get(uid)
+                self._json({"ok": True, "jobs": jobs, "new_count": len(new_jobs)})
             except Exception as e:
                 self._json({"ok": False, "error": str(e), "jobs": []})
+
+        elif path == "/api/jobs/seen":
+            job_id = body.get("id", "")
+            if job_id:
+                db_jobs_mark_seen(uid, job_id)
+            self._json({"ok": True})
+
+        elif path == "/api/jobs/ignore":
+            job_id = body.get("id", "")
+            if job_id:
+                db_jobs_mark_ignored(uid, job_id)
+            self._json({"ok": True})
 
         elif path == "/api/ai":
             self._handle_ai(uid, body)
