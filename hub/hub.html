@@ -1342,14 +1342,12 @@ select option { background: var(--surface); }
           </div>
 
           <!-- Vagas novas -->
-          <div class="card" id="ov-jobs-card">
+          <div class="card" id="ov-jobs-card" style="display:none">
             <div class="card-head">
-              <span class="card-label">💼 Vagas novas</span>
-              <span class="see-more" style="margin:0" onclick="go('vagas')">Ver todas →</span>
+              <span class="card-label">💼 Vagas recentes</span>
+              <span class="see-more" style="margin:0" onclick="go('vagas')">Ver tudo →</span>
             </div>
-            <div class="card-body" style="padding:.6rem .9rem" id="ov-jobs">
-              <div class="empty">Sem vagas recentes</div>
-            </div>
+            <div class="card-body" style="padding:.5rem .85rem;display:flex;flex-direction:column;gap:.35rem" id="ov-jobs"></div>
           </div>
 
           <!-- Próxima refeição -->
@@ -1538,14 +1536,7 @@ select option { background: var(--surface); }
 
     <!-- NOTÍCIAS -->
     <div class="section" id="sec-noticias">
-      <div class="card">
-        <div class="card-head"><span class="card-label">Brasil</span></div>
-        <div class="card-body"><div class="news-list" id="news-br"></div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Mundo</span></div>
-        <div class="card-body"><div class="news-list" id="news-world"></div></div>
-      </div>
+      <div id="news-topics-container"></div>
     </div>
 
     <!-- DIETA -->
@@ -1742,76 +1733,15 @@ select option { background: var(--surface); }
 
     <!-- VAGAS -->
     <div class="section" id="sec-vagas">
-      <!-- Job Scout -->
-      <div class="card" style="margin-bottom:.6rem">
+      <div class="card">
         <div class="card-head">
           <span class="card-label">🔍 Job Scout</span>
           <button class="btn btn-rose btn-xs" id="scout-btn" onclick="runJobScout()">Buscar vagas</button>
         </div>
-        <div class="card-body" id="scout-results" style="font-size:.8rem;color:var(--text2)">
-          <div id="scout-status">Clique em "Buscar vagas" para executar o Job Scout com suas configurações.</div>
-          <div id="scout-list" style="margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem"></div>
+        <div class="card-body" style="font-size:.8rem;color:var(--text2)">
+          <div id="scout-status" style="color:var(--text3);font-style:italic;margin-bottom:.4rem">Clique em "Buscar vagas" para executar com suas configurações.</div>
+          <div id="scout-list" style="display:flex;flex-direction:column;gap:.4rem"></div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label">💼 Minhas candidaturas</span>
-          <button class="btn btn-rose btn-xs" onclick="openJobForm()">+ Nova vaga</button>
-        </div>
-        <div class="card-body" style="padding-top:.5rem">
-          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
-            <button class="filter-chip active" id="job-filter-all"    onclick="filterJobs('all')">Todas</button>
-            <button class="filter-chip"        id="job-filter-applied" onclick="filterJobs('applied')">Aplicadas</button>
-            <button class="filter-chip"        id="job-filter-interview" onclick="filterJobs('interview')">Entrevista</button>
-            <button class="filter-chip"        id="job-filter-offer"   onclick="filterJobs('offer')">Oferta</button>
-            <button class="filter-chip"        id="job-filter-rejected" onclick="filterJobs('rejected')">Recusada</button>
-          </div>
-          <div id="jobs-list"><div class="empty">Nenhuma vaga cadastrada</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">📊 Resumo</span></div>
-        <div class="card-body" style="display:flex;gap:.5rem;flex-wrap:wrap" id="jobs-stats"></div>
-      </div>
-    </div>
-
-    <!-- MODAL VAGA -->
-    <div class="modal-overlay" id="job-modal" onclick="if(event.target===this)closeJobModal()">
-      <div class="modal-box">
-        <div class="modal-hdr">
-          <span class="modal-title" id="job-modal-title">💼 Nova vaga</span>
-          <button class="modal-close" onclick="closeJobModal()">×</button>
-        </div>
-        <input type="hidden" id="job-edit-id">
-        <div class="modal-field">
-          <label>Empresa</label>
-          <input id="job-company" placeholder="Ex: Google" maxlength="80">
-        </div>
-        <div class="modal-field">
-          <label>Cargo</label>
-          <input id="job-role" placeholder="Ex: Engenheira de Software" maxlength="80">
-        </div>
-        <div style="display:flex;gap:.5rem">
-          <div class="modal-field" style="flex:1">
-            <label>Status</label>
-            <select id="job-status">
-              <option value="applied">Aplicada</option>
-              <option value="interview">Entrevista</option>
-              <option value="offer">Oferta</option>
-              <option value="rejected">Recusada</option>
-            </select>
-          </div>
-          <div class="modal-field" style="flex:1">
-            <label>Data</label>
-            <input id="job-date" type="date">
-          </div>
-        </div>
-        <div class="modal-field">
-          <label>Link / Observações</label>
-          <input id="job-link" placeholder="URL da vaga ou anotações" maxlength="200">
-        </div>
-        <button class="modal-save" onclick="saveJob()">💾 Salvar vaga</button>
       </div>
     </div>
 
@@ -2006,7 +1936,6 @@ async function boot() {
   renderAll();
   initCal();
   initMiniCal();
-  loadJobs();
   await loadCfg();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
 }
@@ -2400,21 +2329,38 @@ async function removeHabit(id) {
 }
 
 function renderNews() {
-  const news  = (D[PROFILE] || {}).news || [];
-  const render = (elId, items) => {
-    const el = document.getElementById(elId);
-    if (!items.length) { el.innerHTML = '<div class="empty">Sem notícias</div>'; return; }
-    el.innerHTML = items.map(n => `
+  const news = (D[PROFILE] || {}).news || [];
+  const container = document.getElementById('news-topics-container');
+  if (!container) return;
+
+  const hs          = _viewerHubSettings;
+  const topicsBr    = hs.news_topics_br    || ['Brasil', 'tecnologia', 'economia'];
+  const topicsWorld = hs.news_topics_world || ['world news', 'technology'];
+
+  const sections = [
+    ...topicsBr.map(t    => ({ label: t,    region: 'br',    tag: 'ntag-br' })),
+    ...topicsWorld.map(t => ({ label: t,    region: 'world', tag: 'ntag-world' })),
+  ];
+
+  container.innerHTML = sections.map(sec => {
+    const items = news.filter(n =>
+      n.region === sec.region &&
+      (n.topic === sec.label || n.title?.toLowerCase().includes(sec.label.toLowerCase()))
+    );
+    const regionTag = sec.region === 'br' ? 'BR' : 'Mundo';
+    const rows = items.length ? items.map(n => `
       <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
         <div class="news-title">${esc(n.title)}</div>
         <div class="news-foot">
-          <span class="ntag ${n.region === 'br' ? 'ntag-br' : 'ntag-world'}">${n.region === 'br' ? 'BR' : 'Mundo'}</span>
+          <span class="ntag ${sec.tag}">${regionTag}</span>
           ${esc(n.source)}
         </div>
-      </a>`).join('');
-  };
-  render('news-br',    news.filter(n => n.region === 'br'));
-  render('news-world', news.filter(n => n.region !== 'br'));
+      </a>`).join('') : '<div class="empty">Sem notícias para este tópico</div>';
+    return `<div class="card" style="margin-bottom:.6rem">
+      <div class="card-head"><span class="card-label">${esc(sec.label)}</span></div>
+      <div class="card-body"><div class="news-list">${rows}</div></div>
+    </div>`;
+  }).join('');
 }
 
 function renderMood() {
@@ -2632,25 +2578,9 @@ function renderHome() {
        </a>`
     : '<div class="empty" style="padding:.5rem">Sem notícias</div>';
 
-  // vagas novas no início
-  const newJobs = (_jobs||[]).filter(j => j.status === 'new' || !j.status).slice(0,3);
-  const allJobsFromData = ((D[PROFILE]||{}).job_listings||[]).slice(0,3);
-  const jobsToShow = allJobsFromData.length ? allJobsFromData : newJobs;
-  const ovJ = document.getElementById('ov-jobs');
+  // vagas no início — gerenciado por renderScoutList() após busca
   const jCard = document.getElementById('ov-jobs-card');
-  if (ovJ) {
-    if (jobsToShow.length) {
-      ovJ.innerHTML = jobsToShow.map(j => `
-        <div style="padding:.35rem 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:.1rem">
-          <div style="font-size:.82rem;font-weight:500;color:var(--text)">${esc(j.title||j.cargo||'—')}</div>
-          <div style="font-size:.65rem;color:var(--text3)">${esc(j.company||j.empresa||'—')} · ${esc(j.source||j.via||'')}</div>
-          ${j.is_new ? '<span style="font-size:.6rem;background:var(--rose-dim);color:var(--rose);border-radius:99px;padding:.08rem .4rem;width:fit-content">Nova</span>' : ''}
-        </div>`).join('');
-      if (jCard) jCard.style.display = '';
-    } else {
-      if (jCard) jCard.style.display = 'none';
-    }
-  }
+  if (jCard && !_scoutJobs.length) jCard.style.display = 'none';
 
   // próxima refeição
   const next = getNextMeal();
@@ -3005,132 +2935,103 @@ function renderMiniCalEvents(dateStr) {
 
 // ─── Vagas ─────────────────────────────────────────────────────────────────
 let _jobs = [];
-let _jobFilter = 'all';
-const JOB_STATUS_LABELS = { applied: 'Aplicada', interview: 'Entrevista', offer: 'Oferta', rejected: 'Recusada' };
 
-function loadJobs() {
-  _jobs = ud.jobs || (JSON.parse(localStorage.getItem('hub_jobs_' + VIEWER) || '[]'));
+// _scoutJobs: vagas carregadas pelo Job Scout (session only)
+let _scoutJobs = [];
+// _scoutDismissed: URLs ignoradas (session only)
+let _scoutDismissed = new Set(JSON.parse(localStorage.getItem('scout_dismissed')||'[]'));
+
+function _saveScoutDismissed() {
+  localStorage.setItem('scout_dismissed', JSON.stringify([..._scoutDismissed]));
 }
 
-function saveJobs() {
-  ud.jobs = _jobs;
-  localStorage.setItem('hub_jobs_' + VIEWER, JSON.stringify(_jobs));
-  api('/api/save/jobs', { jobs: _jobs });
+function scoutApply(idx) {
+  const j = _scoutJobs[idx];
+  if (!j) return;
+  if (j.url) window.open(j.url, '_blank', 'noopener');
+  _scoutJobs[idx]._applied = true;
+  renderScoutList();
+  toast('Marcada como inscrita ♡');
 }
 
-function filterJobs(f) {
-  _jobFilter = f;
-  ['all','applied','interview','offer','rejected'].forEach(k => {
-    const b = document.getElementById('job-filter-' + k);
-    if (b) b.classList.toggle('active', k === f);
-  });
-  renderJobs();
+function scoutDismiss(idx) {
+  const j = _scoutJobs[idx];
+  if (!j) return;
+  _scoutDismissed.add(j.url);
+  _saveScoutDismissed();
+  _scoutJobs.splice(idx, 1);
+  renderScoutList();
+}
+
+function renderScoutList() {
+  const list   = document.getElementById('scout-list');
+  const status = document.getElementById('scout-status');
+  if (!list) return;
+  const visible = _scoutJobs.filter(j => !_scoutDismissed.has(j.url));
+  if (!visible.length) {
+    list.innerHTML = '';
+    if (status) status.style.display = '';
+    return;
+  }
+  if (status) status.style.display = 'none';
+  list.innerHTML = visible.map((j, i) => `
+    <div style="padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid var(--border);display:flex;flex-direction:column;gap:.25rem">
+      <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div style="font-weight:600;color:var(--text);font-size:.82rem;line-height:1.35">${esc(j.title||'')}</div>
+        <div style="color:var(--text3);font-size:.7rem;margin-top:.1rem">${esc(j.company||j.via||'')}${j.pub ? ' · ' + esc(j.pub) : ''}${j.location ? ' · ' + esc(j.location) : ''}${j.mode ? ' · ' + esc(j.mode) : ''}</div>
+      </a>
+      <div style="display:flex;gap:.4rem;margin-top:.15rem">
+        ${j._applied
+          ? '<span style="font-size:.68rem;color:var(--green);font-weight:600">✓ Inscrita</span>'
+          : `<button class="btn btn-rose btn-xs" onclick="scoutApply(${_scoutJobs.indexOf(j)})">Me inscrever</button>`}
+        <button class="btn btn-outline btn-xs" onclick="scoutDismiss(${_scoutJobs.indexOf(j)})" style="color:var(--text3)">Ignorar</button>
+      </div>
+    </div>`).join('');
+
+  // Atualiza card no início
+  const ovJ  = document.getElementById('ov-jobs');
+  const jCard = document.getElementById('ov-jobs-card');
+  if (ovJ && jCard) {
+    const top3 = visible.slice(0, 3);
+    if (top3.length) {
+      jCard.style.display = '';
+      ovJ.innerHTML = top3.map(j => `
+        <div style="display:flex;flex-direction:column;gap:.1rem;padding:.3rem 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:.8rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(j.title||'')}</div>
+          <div style="font-size:.65rem;color:var(--text3)">${esc(j.company||j.via||'')}${j.location ? ' · '+esc(j.location) : ''}</div>
+        </div>`).join('');
+    } else {
+      jCard.style.display = 'none';
+    }
+  }
 }
 
 async function runJobScout() {
-  const btn = document.getElementById('scout-btn');
+  const btn    = document.getElementById('scout-btn');
   const status = document.getElementById('scout-status');
-  const list   = document.getElementById('scout-list');
   btn.disabled = true; btn.textContent = 'Buscando...';
-  status.textContent = 'Executando Job Scout, aguarde...';
-  list.innerHTML = '';
+  if (status) { status.textContent = 'Executando Job Scout, aguarde...'; status.style.display = ''; }
   try {
-    const r = await fetch('/api/run-jobs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    const r    = await fetch('/api/run-jobs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
     const data = await r.json();
-    if (!data.ok) { status.textContent = 'Erro: ' + (data.error || 'falha desconhecida'); return; }
-    const jobs = data.jobs || [];
-    status.textContent = jobs.length ? `${jobs.length} vaga(s) encontrada(s):` : 'Nenhuma vaga encontrada com as configurações atuais.';
-    list.innerHTML = jobs.map(j => `
-      <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="display:block;padding:.4rem .5rem;background:var(--bg2);border-radius:var(--r-xs);border:1px solid var(--border);text-decoration:none">
-        <div style="font-weight:600;color:var(--text);font-size:.8rem">${esc(j.title||'')}</div>
-        <div style="color:var(--text3);font-size:.72rem">${esc(j.source||'')}${j.date ? ' · ' + esc(j.date) : ''}</div>
-      </a>`).join('');
-    // Atualiza D com as novas vagas
-    if (D[PROFILE]) D[PROFILE].job_listings = jobs;
-  } catch(e) { status.textContent = 'Erro ao buscar vagas.'; }
+    if (!data.ok) { if (status) status.textContent = 'Erro: ' + (data.error || 'falha desconhecida'); return; }
+    _scoutJobs = (data.jobs || []).filter(j => !_scoutDismissed.has(j.url));
+    const total = data.jobs?.length || 0;
+    if (status) status.textContent = total ? `${total} vaga(s) encontrada(s) — ${_scoutJobs.length} nova(s):` : 'Nenhuma vaga encontrada com as configurações atuais.';
+    renderScoutList();
+    if (D[PROFILE]) D[PROFILE].job_listings = data.jobs || [];
+  } catch(e) { if (status) status.textContent = 'Erro ao buscar vagas.'; }
   btn.disabled = false; btn.textContent = 'Buscar vagas';
 }
 
 function renderJobs() {
-  loadJobs();
-  const el = document.getElementById('jobs-list');
-  if (!el) return;
-  const list = _jobFilter === 'all' ? _jobs : _jobs.filter(j => j.status === _jobFilter);
-  if (!list.length) { el.innerHTML = '<div class="empty">Nenhuma vaga</div>'; renderJobStats(); return; }
-  el.innerHTML = list.map(j => `
-    <div class="job-card status-${j.status}">
-      <div class="job-company">${esc(j.company)}</div>
-      <div class="job-role">${esc(j.role)}</div>
-      <div class="job-foot">
-        <span class="job-status-badge ${j.status}">${JOB_STATUS_LABELS[j.status]||j.status}</span>
-        ${j.date ? `<span class="job-date">📅 ${j.date.split('-').reverse().join('/')}</span>` : ''}
-        ${j.link ? `<a class="job-link" href="${esc(j.link)}" target="_blank" rel="noopener">${esc(j.link.length>40?j.link.slice(0,37)+'...':j.link)}</a>` : ''}
-        <div class="job-actions">
-          <button class="meal-btn" onclick="openJobForm('${j.id}')">✏️</button>
-          <button class="meal-btn danger" onclick="deleteJob('${j.id}')">🗑️</button>
-        </div>
-      </div>
-    </div>`).join('');
-  renderJobStats();
-}
-
-function renderJobStats() {
-  const el = document.getElementById('jobs-stats');
-  if (!el) return;
-  const counts = { applied:0, interview:0, offer:0, rejected:0 };
-  _jobs.forEach(j => { if (counts[j.status] !== undefined) counts[j.status]++; });
-  const colors = { applied: 'var(--b-color)', interview: '#a07a10', offer: '#2e7d52', rejected: 'var(--red)' };
-  el.innerHTML = Object.entries(counts).map(([k,v]) => `
-    <div class="stat-chip">
-      <span class="stat-chip-val" style="color:${colors[k]}">${v}</span>
-      <span class="stat-chip-lbl">${JOB_STATUS_LABELS[k]}</span>
-    </div>`).join('');
-}
-
-function openJobForm(editId=null) {
-  document.getElementById('job-edit-id').value = editId||'';
-  document.getElementById('job-modal-title').textContent = editId ? '✏️ Editar vaga' : '💼 Nova vaga';
-  document.getElementById('job-company').value='';
-  document.getElementById('job-role').value='';
-  document.getElementById('job-status').value='applied';
-  document.getElementById('job-date').value=TODAY;
-  document.getElementById('job-link').value='';
-  if (editId) {
-    const j = _jobs.find(x => x.id === editId);
-    if (j) {
-      document.getElementById('job-company').value = j.company||'';
-      document.getElementById('job-role').value    = j.role||'';
-      document.getElementById('job-status').value  = j.status||'applied';
-      document.getElementById('job-date').value    = j.date||TODAY;
-      document.getElementById('job-link').value    = j.link||'';
-    }
+  // renderiza vagas do scout se já buscadas, senão mostra prompt
+  renderScoutList();
+  const list = document.getElementById('scout-list');
+  if (list && !_scoutJobs.length) {
+    const status = document.getElementById('scout-status');
+    if (status) { status.textContent = 'Clique em "Buscar vagas" para executar com suas configurações.'; status.style.display = ''; }
   }
-  document.getElementById('job-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('job-company').focus(),80);
-}
-
-function closeJobModal() { document.getElementById('job-modal').classList.remove('open'); }
-
-function saveJob() {
-  const company = document.getElementById('job-company').value.trim();
-  const role    = document.getElementById('job-role').value.trim();
-  if (!company) { toast('Digite o nome da empresa','⚠️'); return; }
-  const editId = document.getElementById('job-edit-id').value;
-  const job = {
-    id:      editId || String(Date.now()),
-    company, role,
-    status:  document.getElementById('job-status').value,
-    date:    document.getElementById('job-date').value,
-    link:    document.getElementById('job-link').value.trim(),
-  };
-  if (editId) { const idx=_jobs.findIndex(j=>j.id===editId); if(idx>=0)_jobs[idx]=job; else _jobs.push(job); }
-  else _jobs.push(job);
-  saveJobs(); closeJobModal(); renderJobs(); toast('Vaga salva ♡');
-}
-
-function deleteJob(id) {
-  _jobs = _jobs.filter(j => j.id !== id);
-  saveJobs(); renderJobs(); toast('Vaga removida');
 }
 
 // ─── Configurações ─────────────────────────────────────────────────────────
