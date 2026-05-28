@@ -1432,7 +1432,7 @@ select option { background: var(--surface); }
       <!-- Placar resumido -->
       <div class="card">
         <div class="card-head">
-          <span class="card-label">🏆 Placar de hoje</span>
+          <span class="card-label">🏆 <span id="score-lbl-home">Placar de hoje</span></span>
           <span class="see-more" style="margin:0" onclick="go('compare')">Ver detalhes →</span>
         </div>
         <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem">
@@ -1503,7 +1503,7 @@ select option { background: var(--surface); }
       <!-- HUMOR integrado -->
       <div class="ro-bar show" id="ro-humor" style="display:none"><span>👁</span> Visualizando humor de <strong id="ro-humor-n"></strong></div>
       <div class="card">
-        <div class="card-head"><span class="card-label">🌸 Humor de hoje</span></div>
+        <div class="card-head"><span class="card-label">🌸 <span id="mood-lbl">Humor de hoje</span></span></div>
         <div class="card-body">
           <div class="mood-row">
             <button class="mbtn" data-m="🥰" onclick="setMood('🥰')" title="Apaixonado · 5">🥰<span class="mbtn-score">5</span></button>
@@ -1715,7 +1715,7 @@ select option { background: var(--surface); }
     <!-- COMPARAR -->
     <div class="section" id="sec-compare">
       <div class="card">
-        <div class="card-head"><span class="card-label">Placar de hoje</span></div>
+        <div class="card-head"><span class="card-label"><span id="score-lbl-compare">Placar de hoje</span></span></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:.65rem">
           <div class="vs-grid">
             <div class="vs-card b">
@@ -1737,7 +1737,7 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-label">Saúde comparada</span></div>
+        <div class="card-head"><span class="card-label"><span id="health-compare-lbl">Saúde comparada</span></span></div>
         <div class="card-body">
           <div class="vs-grid">
             <div style="display:flex;flex-direction:column;gap:.35rem">
@@ -2047,6 +2047,7 @@ const VIEWER = D.viewer || 'bernardo';
 let   PROFILE = VIEWER;
 const TODAY   = new Date().toISOString().split('T')[0];
 let _healthViewDate = TODAY;
+let _lastCompData   = null;  // dados de competição do dia selecionado
 let ud = { tasks:{}, habits:[], habit_completions:{}, moods:{}, grocery:[] };
 
 async function boot() {
@@ -2093,6 +2094,9 @@ function renderScore(comp) {
   const { leader, diff } = data;
   const isToday = (_healthViewDate || TODAY) === TODAY;
   const dayLabel = isToday ? 'hoje' : `em ${fmtD(_healthViewDate)}`;
+  const scoreTitleTxt = isToday ? 'Placar de hoje' : `Placar de ${fmtD(_healthViewDate)}`;
+  const el1 = document.getElementById('score-lbl-home');    if (el1) el1.textContent = scoreTitleTxt;
+  const el2 = document.getElementById('score-lbl-compare'); if (el2) el2.textContent = scoreTitleTxt;
   const cap = document.getElementById('score-caption');
   if (leader === 'empate') cap.innerHTML = `Estão empatados ${dayLabel} ♡`;
   else {
@@ -2145,7 +2149,7 @@ function go(s) {
     if (el.id === 'sec-briefing') return; // briefing always hidden
     el.classList.toggle('active', el.id === 'sec-' + s);
   });
-  if (s === 'compare') renderCompare();
+  if (s === 'compare') renderCompare(_lastCompData);
   if (s === 'agenda')  { _updateCalOwnerUI(); buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
   if (s === 'inicio')  renderHome();
   if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
@@ -2244,17 +2248,21 @@ function renderHealth() {
 
 async function _renderForDate() {
   renderHealth();
+  renderMood();
   renderTasks();
   renderNews();
-  // Busca placar do dia selecionado
   const isToday = _healthViewDate === TODAY;
   if (isToday) {
+    _lastCompData = null;
     renderScore();
+    renderCompare();
   } else {
     try {
       const r = await fetch('/api/competition?date=' + _healthViewDate);
-      if (r.ok) renderScore(await r.json());
-    } catch(e) { renderScore(); }
+      _lastCompData = r.ok ? await r.json() : null;
+    } catch(e) { _lastCompData = null; }
+    renderScore(_lastCompData);
+    renderCompare(_lastCompData);
   }
 }
 
@@ -2606,10 +2614,19 @@ function renderNews() {
 }
 
 function renderMood() {
-  const moods = ud.moods || {}, today = moods[TODAY];
-  document.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('sel', today && b.dataset.m === today.mood));
-  document.getElementById('mood-note').textContent = today
-    ? `Registrado: ${today.mood} às ${today.time}` : 'Nenhum humor registrado hoje';
+  const moods = ud.moods || {};
+  const viewDate = _healthViewDate || TODAY;
+  const isToday  = viewDate === TODAY;
+  const entry    = moods[viewDate];
+  const moodLbl  = document.getElementById('mood-lbl');
+  if (moodLbl) moodLbl.textContent = isToday ? 'Humor de hoje' : `Humor de ${fmtD(viewDate)}`;
+  document.querySelectorAll('.mbtn').forEach(b => {
+    b.classList.toggle('sel', !!entry && b.dataset.m === entry.mood);
+    b.style.pointerEvents = isToday ? '' : 'none';
+    b.style.opacity = isToday ? '' : '.6';
+  });
+  document.getElementById('mood-note').textContent = entry
+    ? `Registrado: ${entry.mood} às ${entry.time}` : (isToday ? 'Nenhum humor registrado hoje' : 'Sem registro neste dia');
   const hist = document.getElementById('mood-hist');
   if (hist) {
     const entries = Object.entries(moods).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14);
@@ -2662,8 +2679,11 @@ async function clearChecked() {
   renderGrocery(); await api('/api/save/grocery', { grocery: ud.grocery });
 }
 
-function renderCompare() {
-  const sc = (D.competition || {}).scores || {};
+function renderCompare(comp) {
+  const viewDate = _healthViewDate || TODAY;
+  const isToday  = viewDate === TODAY;
+  const data = comp || D.competition || {};
+  const sc = data.scores || {};
   const bS = sc.bernardo || { total: 0, breakdown: {} };
   const aS = sc.amanda   || { total: 0, breakdown: {} };
   document.getElementById('vs-b').textContent = bS.total;
@@ -2671,14 +2691,21 @@ function renderCompare() {
   document.getElementById('vs-b-det').textContent = Object.entries(bS.breakdown || {}).map(([k,v]) => `${k} +${v}`).join(' · ') || '—';
   document.getElementById('vs-a-det').textContent = Object.entries(aS.breakdown || {}).map(([k,v]) => `${k} +${v}`).join(' · ') || '—';
   const wb = document.getElementById('winner-box');
-  const { leader, diff } = D.competition || {};
-  if (leader === 'empate') { wb.className = 'winner-box tie'; wb.textContent = 'Estão empatados hoje ♡'; }
-  else {
+  const { leader, diff } = data;
+  const dayStr = isToday ? 'hoje' : `em ${fmtD(viewDate)}`;
+  if (leader === 'empate') { wb.className = 'winner-box tie'; wb.textContent = `Estão empatados ${dayStr} ♡`; }
+  else if (leader) {
     const isB = leader === 'bernardo';
     wb.className = 'winner-box ' + (isB ? 'b' : 'a');
     wb.innerHTML = `${isB ? 'Bernardo' : 'Amanda'} está na frente por <strong>${diff}</strong> pt${diff !== 1 ? 's' : ''}!`;
+  } else {
+    wb.className = 'winner-box'; wb.textContent = '—';
   }
-  const bH = (D.bernardo || {}).health || {}, aH = (D.amanda || {}).health || {};
+  const hcLbl = document.getElementById('health-compare-lbl');
+  if (hcLbl) hcLbl.textContent = isToday ? 'Saúde comparada' : `Saúde de ${fmtD(viewDate)}`;
+  // Saúde comparada: usa histórico para dias passados
+  const bH = isToday ? ((D.bernardo || {}).health || {}) : ((D.b_history || {})[viewDate] || {});
+  const aH = isToday ? ((D.amanda   || {}).health || {}) : ((D.a_history || {})[viewDate] || {});
   document.getElementById('vs-b-steps').textContent = (bH.steps || 0).toLocaleString('pt-BR');
   document.getElementById('vs-a-steps').textContent = (aH.steps || 0).toLocaleString('pt-BR');
   document.getElementById('vs-b-sleep').textContent = fmtSleep(bH.sleep_minutes || 0);
