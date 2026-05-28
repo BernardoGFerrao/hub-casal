@@ -120,31 +120,31 @@
 
 /* ─── Modo escuro · Amanda ────────────────────────────────────────────── */
 .theme-amanda.dark {
-  --bg:        #0f1a12;
-  --bg2:       #152018;
-  --surface:   #1a2a1e;
-  --surface2:  #1e3224;
-  --border:    #2a4030;
-  --border2:   #3a5840;
+  --bg:        #111418;
+  --bg2:       #181d22;
+  --surface:   #1e2530;
+  --surface2:  #232c38;
+  --border:    #2e3a48;
+  --border2:   #3a4a5c;
 
-  --text:      #d0f0d8;
-  --text2:     #80b890;
-  --text3:     #507858;
+  --text:      #dce8f0;
+  --text2:     #8aaabf;
+  --text3:     #556a7f;
 
-  --rose:      #60c078;
-  --rose-dim:  #0f2818;
-  --rose-mid:  #2a5838;
+  --rose:      #5ab87a;
+  --rose-dim:  #102818;
+  --rose-mid:  #2a5040;
 
-  --sand:      #6ab87a;
+  --sand:      #5ab87a;
   --sand-dim:  #102018;
 
   --b-color:   #6a9ed4;
   --b-dim:     #1a2840;
-  --a-color:   #60c078;
-  --a-dim:     #0f2818;
+  --a-color:   #5ab87a;
+  --a-dim:     #102818;
 
   --c-sleep:   #6ab898;
-  --c-water:   #5ab878;
+  --c-water:   #5ab87a;
 }
 
 /* ─── Reset ───────────────────────────────────────────────────────────── */
@@ -2149,9 +2149,9 @@ async function switchProfile(p) {
   _calShowingPartner = false;
   _updateCalOwnerUI();
   document.querySelectorAll('.ptab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
-  applyProfileAccent();
   _updateViewerOnlyTabs();
   await loadUD(p);
+  applyProfileAccent();
   renderAll();
   loadCalEvents();
   loadJobsFromDB();
