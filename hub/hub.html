@@ -1280,6 +1280,7 @@ select option { background: var(--surface); }
 }
 .mini-gcal-event.b { border-color: var(--b-color); }
 .mini-gcal-event.a { border-color: var(--a-color); }
+.mini-gcal-event.holiday { border-color: #f59e0b; }
 .mini-gcal-event-time { font-size: .6rem; color: var(--text3); white-space: nowrap; font-weight: 600; }
 
 /* Profile accent rules removed — full theme swap is handled by JS in applyProfileAccent() */
@@ -1466,8 +1467,7 @@ select option { background: var(--surface); }
                 <button class="gcal-nav-btn" onclick="miniCalNav(1)">›</button>
               </div>
               <div class="gcal-grid mini-cal" id="mini-cal-grid"></div>
-              <div id="mini-cal-events" style="margin-top:.4rem"></div>
-              <div id="ov-events" style="margin-top:.5rem;display:flex;flex-direction:column;gap:.25rem"></div>
+              <div id="ov-events" style="margin-top:.5rem;display:flex;flex-direction:column;gap:.2rem"></div>
             </div>
           </div>
         </div>
@@ -3095,9 +3095,9 @@ function renderUpcomingInHome() {
     const isToday = dateStr === TODAY;
     const time = e.all_day ? `${dow} ${d}/${m}` : `${dow} ${d}/${m} ${e.start.slice(11,16)}`;
     const icon = isHoliday ? '🎉 ' : '';
-    return `<div class="gcal-event ${who}${isHoliday?' holiday':''}">
-      <span class="gcal-event-time">${icon}${time}${isToday?' · hoje':''}</span>
-      <span class="gcal-event-title">${esc(e.title)}</span>
+    return `<div class="mini-gcal-event ${who}${isHoliday?' holiday':''}">
+      <span class="mini-gcal-event-time">${icon}${time}${isToday?' · hoje':''}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.72rem">${esc(e.title)}</span>
     </div>`;
   }).join('');
 }
