@@ -4004,9 +4004,10 @@ function renderChatMsgs(msgs) {
     }
     const isMine = m.from === VIEWER;
     const time = m.ts.slice(11, 16);
-    html += `<div>
+    const align = isMine ? 'flex-end' : 'flex-start';
+    html += `<div style="display:flex;flex-direction:column;align-items:${align}">
       <div class="chat-msg ${isMine?'mine':'theirs'}">${esc(m.text)}</div>
-      <div class="chat-msg-meta" style="${isMine?'text-align:right':''}">
+      <div class="chat-msg-meta">
         ${isMine?'Você':_partnerName()} · ${time}
       </div>
     </div>`;
