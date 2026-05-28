@@ -736,15 +736,222 @@ e termine com uma motivação curta. Use **negrito** para os itens mais importan
 
 
 # ---------------------------------------------------------------------------
-# Vagas (Job Scout via Google News RSS)
+# Vagas — scrapers por plataforma
 # ---------------------------------------------------------------------------
+
+_JOB_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+}
+
+_LI_TIME_FILTER = {1: "r86400", 3: "r259200", 7: "r604800", 14: "r1209600", 30: "r2592000"}
+_LI_MODE_MAP    = {"remote": "2", "onsite": "1", "hybrid": "3"}
+_LI_SEARCH_URL  = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+_LI_DETAIL_URL  = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
+_GUPY_API_URL   = "https://employability-portal.gupy.io/api/v1/jobs"
+_GUPY_WORKPLACE = {"remote": "remote", "onsite": "on-site", "hybrid": "hybrid"}
+
+
+def _scrape_linkedin(keywords: list, locations: list, days: int, mode: str, seen: set) -> list:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        logger.warning("beautifulsoup4/lxml não instalado — LinkedIn ignorado")
+        return []
+
+    tf    = _LI_TIME_FILTER.get(days, "r604800")
+    f_WT  = _LI_MODE_MAP.get(mode, "")
+    kw_str = " ".join(keywords)
+    results = []
+
+    loc_list = [l["loc"] for l in locations if l.get("loc")] or ["Brasil"]
+    for loc in loc_list:
+        for start in range(0, 75, 25):
+            params = {"keywords": kw_str, "location": loc, "f_TPR": tf, "start": start}
+            if f_WT:
+                params["f_WT"] = f_WT
+            try:
+                r = requests.get(_LI_SEARCH_URL, params=params, headers=_JOB_HEADERS, timeout=15)
+                r.raise_for_status()
+                soup  = BeautifulSoup(r.text, "lxml")
+                cards = soup.select("li")
+                if not cards:
+                    break
+                found = 0
+                for card in cards:
+                    try:
+                        title_el   = card.select_one("h3.base-search-card__title, span.screen-reader-text")
+                        company_el = card.select_one("h4.base-search-card__subtitle a, h4.base-search-card__subtitle")
+                        loc_el     = card.select_one("span.job-search-card__location")
+                        link_el    = card.select_one("a.base-card__full-link, a[href*='/jobs/view/']")
+                        time_el    = card.select_one("time")
+                        if not (title_el and company_el and link_el):
+                            continue
+                        href = link_el.get("href", "").split("?")[0]
+                        if href in seen:
+                            continue
+                        seen.add(href)
+                        pub = time_el.get("datetime", "") if time_el else ""
+                        results.append({
+                            "title":    title_el.get_text(strip=True),
+                            "company":  company_el.get_text(strip=True),
+                            "via":      "LinkedIn",
+                            "url":      href,
+                            "location": loc_el.get_text(strip=True) if loc_el else loc,
+                            "mode":     mode,
+                            "pub":      pub[:10] if pub else "",
+                            "platform": "linkedin",
+                        })
+                        found += 1
+                    except Exception:
+                        pass
+                if found == 0:
+                    break
+                import time as _t; _t.sleep(1.2)
+            except Exception as e:
+                logger.warning("LinkedIn request falhou (%s): %s", loc, e)
+                break
+        if len(results) >= 50:
+            break
+
+    logger.info("LinkedIn: %d vagas", len(results))
+    return results
+
+
+def _scrape_gupy(keywords: list, days: int, mode: str, seen: set) -> list:
+    wp = _GUPY_WORKPLACE.get(mode)
+    results = []
+    cutoff  = datetime.now(timezone.utc) - timedelta(days=days)
+
+    for kw in keywords:
+        offset = 0
+        while True:
+            params: dict = {"jobName": kw, "limit": 20, "offset": offset}
+            if wp:
+                params["workplaceType"] = wp
+            try:
+                r = requests.get(_GUPY_API_URL, params=params, headers=_JOB_HEADERS, timeout=15)
+                r.raise_for_status()
+                data  = r.json()
+                items = data.get("data", [])
+                if not items:
+                    break
+                found = 0
+                for item in items:
+                    try:
+                        url = item.get("jobUrl") or f"https://portal.gupy.io/job/{item.get('id')}"
+                        if url in seen:
+                            continue
+                        pub = item.get("publishedDate", "")
+                        if pub and cutoff:
+                            from datetime import timezone as _tz
+                            pub_dt = datetime.fromisoformat(pub.replace("Z", "+00:00"))
+                            if pub_dt < cutoff:
+                                continue
+                        seen.add(url)
+                        city  = item.get("city") or ""
+                        state = item.get("state") or ""
+                        loc   = ", ".join(p for p in [city, state] if p) or "Brasil"
+                        results.append({
+                            "title":    (item.get("name") or "").strip(),
+                            "company":  (item.get("careerPageName") or "").strip(),
+                            "via":      "Gupy",
+                            "url":      url,
+                            "location": loc,
+                            "mode":     item.get("workplaceType", mode),
+                            "pub":      pub[:10] if pub else "",
+                            "platform": "gupy",
+                        })
+                        found += 1
+                    except Exception:
+                        pass
+                if found == 0 or len(items) < 20:
+                    break
+                offset += 20
+                import time as _t; _t.sleep(0.6)
+                if offset >= 100:
+                    break
+            except Exception as e:
+                logger.warning("Gupy falhou para '%s': %s", kw, e)
+                break
+
+    logger.info("Gupy: %d vagas", len(results))
+    return results
+
+
+def _scrape_google_news_jobs(keywords: list, locations: list, days: int, level: str, seen: set) -> list:
+    import xml.etree.ElementTree as ET
+    import html as html_module
+    from urllib.parse import quote_plus
+    from email.utils import parsedate_to_datetime
+
+    cutoff  = datetime.now(timezone.utc) - timedelta(days=days)
+    results = []
+
+    combos = []
+    if locations:
+        for kw in keywords:
+            for loc_entry in locations:
+                combos.append((kw, loc_entry.get("loc", ""), loc_entry.get("mode", "")))
+    else:
+        for kw in keywords:
+            combos.append((kw, "", ""))
+
+    for kw, loc, mode in combos:
+        parts = [kw]
+        if loc:   parts.append(loc)
+        if mode:  parts.append(mode)
+        if level: parts.append(level)
+        parts.append("vaga")
+        q   = quote_plus(" ".join(parts))
+        url = f"https://news.google.com/rss/search?q={q}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+        try:
+            r    = requests.get(url, headers=_JOB_HEADERS, timeout=15)
+            root = ET.fromstring(r.content)
+            for item in root.findall(".//item")[:8]:
+                link = item.findtext("link", "") or ""
+                if link in seen:
+                    continue
+                seen.add(link)
+                title_raw = html_module.unescape(item.findtext("title", "") or "")
+                source = ""
+                if " - " in title_raw:
+                    parts_t = title_raw.rsplit(" - ", 1)
+                    title_raw, source = parts_t[0].strip(), parts_t[1].strip()
+                pub_raw = item.findtext("pubDate", "") or ""
+                try:
+                    pub_dt  = parsedate_to_datetime(pub_raw)
+                    if pub_dt < cutoff:
+                        continue
+                    pub_str = pub_dt.strftime("%Y-%m-%d")
+                except Exception:
+                    pub_str = ""
+                results.append({
+                    "title":    title_raw,
+                    "company":  source,
+                    "via":      "Google News",
+                    "url":      link,
+                    "location": loc,
+                    "mode":     mode,
+                    "pub":      pub_str,
+                    "platform": "google_news",
+                })
+        except Exception as e:
+            logger.warning("Google News falhou para '%s': %s", kw, e)
+
+    logger.info("Google News: %d vagas", len(results))
+    return results
+
 
 def generate_jobs_json(user_id: str):
     logger.info("[%s] Buscando vagas...", user_id)
     try:
         hs       = _get_hub_settings(user_id)
         keywords = hs.get("job_keywords") or []
-        # job_locations: lista de {loc, mode} ou strings legadas
         raw_locs = hs.get("job_locations") or []
         locations = []
         for l in raw_locs:
@@ -755,77 +962,44 @@ def generate_jobs_json(user_id: str):
 
         level = hs.get("job_level", "")
         days  = int(hs.get("job_days", 7))
+        mode  = locations[0]["mode"] if locations and locations[0].get("mode") else "any"
 
         if not keywords:
-            logger.info("[%s] Nenhuma palavra-chave de vaga configurada, pulando", user_id)
+            logger.info("[%s] Nenhuma palavra-chave configurada, pulando", user_id)
             (_data_dir(user_id) / "jobs_today.json").write_text("[]", encoding="utf-8")
             return
 
-        from urllib.parse import quote_plus
-        import xml.etree.ElementTree as ET, html as html_module
-        from datetime import timezone
-        from email.utils import parsedate_to_datetime
+        seen    = set()
+        results = []
 
-        cutoff  = datetime.now(timezone.utc) - timedelta(days=days)
-        headers = {"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,pt;q=0.9"}
-        seen, results = set(), []
+        # LinkedIn público (sem autenticação, sem Playwright)
+        li_jobs = _scrape_linkedin(keywords, locations, days, mode, seen)
+        results.extend(li_jobs)
 
-        # Gera uma query por combinação (keyword × localidade+modalidade)
-        # Se não há localidades, faz uma busca sem localidade
-        combos = []
-        if locations:
-            for kw in keywords:
-                for loc_entry in locations:
-                    combos.append((kw, loc_entry["loc"], loc_entry["mode"]))
-        else:
-            for kw in keywords:
-                combos.append((kw, "", ""))
+        # Gupy API pública
+        gupy_jobs = _scrape_gupy(keywords, days, mode, seen)
+        results.extend(gupy_jobs)
 
-        for kw, loc, mode in combos:
-            parts = [kw]
-            if loc:   parts.append(loc)
-            if mode:  parts.append(mode)
-            if level: parts.append(level)
-            parts.append("vaga emprego")
-            q   = quote_plus(" ".join(parts))
-            url = f"https://news.google.com/rss/search?q={q}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-            try:
-                r    = requests.get(url, headers=headers, timeout=15)
-                root = ET.fromstring(r.content)
-                for item in root.findall(".//item")[:6]:
-                    link = item.findtext("link", "") or ""
-                    if link in seen: continue
-                    seen.add(link)
-                    title_raw = html_module.unescape(item.findtext("title", "") or "")
-                    source = ""
-                    if " - " in title_raw:
-                        parts_t = title_raw.rsplit(" - ", 1)
-                        title_raw, source = parts_t[0].strip(), parts_t[1].strip()
-                    pub_raw = item.findtext("pubDate", "") or ""
-                    try:
-                        pub_dt  = parsedate_to_datetime(pub_raw)
-                        if pub_dt < cutoff: continue
-                        pub_str = pub_dt.strftime("%d/%m")
-                    except Exception:
-                        pub_str = ""
-                    results.append({
-                        "title":    title_raw,
-                        "company":  source,
-                        "via":      source,
-                        "url":      link,
-                        "keyword":  kw,
-                        "location": loc,
-                        "mode":     mode,
-                        "pub":      pub_str,
-                        "is_new":   True,
-                    })
-            except Exception as e:
-                logger.warning("[%s] Vaga RSS falhou para '%s' / '%s': %s", user_id, kw, loc, e)
+        # Google News como complemento
+        gn_jobs = _scrape_google_news_jobs(keywords, locations, days, level, seen)
+        results.extend(gn_jobs)
+
+        # Formata pub como dd/mm para exibição
+        for j in results:
+            pub = j.get("pub", "")
+            if pub and len(pub) == 10 and "-" in pub:
+                try:
+                    parts = pub.split("-")
+                    j["pub"] = f"{parts[2]}/{parts[1]}"
+                except Exception:
+                    pass
+            j["is_new"] = True
 
         (_data_dir(user_id) / "jobs_today.json").write_text(
-            json.dumps(results[:30], ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(results[:50], ensure_ascii=False, indent=2), encoding="utf-8"
         )
-        logger.info("[%s] %d vagas encontradas", user_id, len(results))
+        logger.info("[%s] Total: %d vagas (%d LinkedIn, %d Gupy, %d Google News)",
+                    user_id, len(results), len(li_jobs), len(gupy_jobs), len(gn_jobs))
     except Exception as e:
         logger.error("[%s] Erro vagas: %s", user_id, e)
         (_data_dir(user_id) / "jobs_today.json").write_text("[]", encoding="utf-8")

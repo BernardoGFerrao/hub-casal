@@ -3004,9 +3004,12 @@ async function loadJobsFromDB() {
     if (data.ok && data.jobs && data.jobs.length) {
       _scoutJobsDate = data.date;
       _scoutJobs = data.jobs;
+      const byPlatform = {};
+      data.jobs.forEach(j => { byPlatform[j.platform||'web'] = (byPlatform[j.platform||'web']||0)+1; });
+      const summary = Object.entries(byPlatform).map(([p,n]) => `${n} ${(_platformBadge[p]||{label:p}).label}`).join(', ');
       const status = document.getElementById('scout-status');
       if (status) {
-        status.textContent = `${data.jobs.length} vaga(s) de hoje (${_fmtDate(data.date)}) — clique em "Buscar vagas" para atualizar.`;
+        status.textContent = `${data.jobs.length} vaga(s) de ${_fmtDate(data.date)}: ${summary}`;
         status.style.display = '';
       }
       renderScoutList();
@@ -3042,6 +3045,16 @@ function scoutDismiss(idx) {
   renderScoutList();
 }
 
+const _platformBadge = {
+  linkedin:     { label: 'LinkedIn',    color: '#0a66c2' },
+  gupy:         { label: 'Gupy',        color: '#7c3aed' },
+  google_news:  { label: 'Google News', color: '#ea4335' },
+};
+function _jobBadge(platform) {
+  const p = _platformBadge[platform] || { label: platform || 'Web', color: 'var(--text3)' };
+  return `<span style="font-size:.6rem;font-weight:700;color:#fff;background:${p.color};padding:.1rem .35rem;border-radius:99px">${p.label}</span>`;
+}
+
 function renderScoutList() {
   const list   = document.getElementById('scout-list');
   const status = document.getElementById('scout-status');
@@ -3053,11 +3066,15 @@ function renderScoutList() {
     return;
   }
   if (status) status.style.display = 'none';
-  list.innerHTML = visible.map((j, i) => `
+  list.innerHTML = visible.map((j) => `
     <div style="padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-sm);border:1px solid var(--border);display:flex;flex-direction:column;gap:.25rem">
       <a href="${esc(j.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.15rem">
+          ${_jobBadge(j.platform)}
+          ${j.pub ? `<span style="font-size:.6rem;color:var(--text3)">${esc(j.pub)}</span>` : ''}
+        </div>
         <div style="font-weight:600;color:var(--text);font-size:.82rem;line-height:1.35">${esc(j.title||'')}</div>
-        <div style="color:var(--text3);font-size:.7rem;margin-top:.1rem">${esc(j.company||j.via||'')}${j.pub ? ' · ' + esc(j.pub) : ''}${j.location ? ' · ' + esc(j.location) : ''}${j.mode ? ' · ' + esc(j.mode) : ''}</div>
+        <div style="color:var(--text3);font-size:.7rem;margin-top:.1rem">${esc(j.company||'')}${j.location ? ' · ' + esc(j.location) : ''}${j.mode && j.mode!=='any' ? ' · ' + esc(j.mode) : ''}</div>
       </a>
       <div style="display:flex;gap:.4rem;margin-top:.15rem">
         ${j._applied
@@ -3102,9 +3119,14 @@ async function runJobScout() {
     const visible = _scoutJobs.filter(j => !_scoutDismissed.has(j.url)).length;
     if (status) {
       status.style.display = '';
-      status.textContent = total
-        ? `✓ ${total} vaga(s) encontrada(s) — ${visible} nova(s):`
-        : '✓ Nenhuma vaga encontrada com as configurações atuais.';
+      if (total) {
+        const byPlatform = {};
+        _scoutJobs.forEach(j => { byPlatform[j.platform||'web'] = (byPlatform[j.platform||'web']||0)+1; });
+        const summary = Object.entries(byPlatform).map(([p,n]) => `${n} ${(_platformBadge[p]||{label:p}).label}`).join(', ');
+        status.textContent = `✓ ${total} vaga(s) encontrada(s) — ${visible} nova(s): ${summary}`;
+      } else {
+        status.textContent = '✓ Nenhuma vaga encontrada com as configurações atuais.';
+      }
     }
     renderScoutList();
     if (D[PROFILE]) D[PROFILE].job_listings = data.jobs || [];
