@@ -410,7 +410,8 @@ def get_competition_data(date_str: str) -> dict:
     # Busca totais de ambos para definir o denominador compartilhado
     raw = {uid: _raw_items(uid, date_str) for uid in USERS}
     max_items = max(
-        raw[uid]["total_tasks"] + raw[uid]["total_habits"] for uid in USERS
+        (raw[uid]["total_tasks"] + raw[uid]["total_habits"] for uid in USERS),
+        default=0
     )
 
     scores  = {uid: _calc_score(uid, date_str, max_items) for uid in USERS}
@@ -567,17 +568,22 @@ class HubHandler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/hub-data":
-            from datetime import date as _d
-            today_str = str(_d.today())
-            b_data = self._read_user_data("bernardo")
-            a_data = self._read_user_data("amanda")
-            competition = get_competition_data(today_str)
-            self._json({
-                "bernardo":   b_data,
-                "amanda":     a_data,
-                "competition": competition,
-                "viewer":     uid,
-            })
+            try:
+                from datetime import date as _d
+                today_str = str(_d.today())
+                b_data = self._read_user_data("bernardo")
+                a_data = self._read_user_data("amanda")
+                competition = get_competition_data(today_str)
+                self._json({
+                    "bernardo":   b_data,
+                    "amanda":     a_data,
+                    "competition": competition,
+                    "viewer":     uid,
+                })
+            except Exception as e:
+                import traceback
+                print(f"  [ERROR] /api/hub-data: {e}\n{traceback.format_exc()}")
+                self._json({"error": str(e)})
             return
 
         if path == "/api/competition":

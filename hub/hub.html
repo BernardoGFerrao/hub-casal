@@ -3457,10 +3457,12 @@ async function refreshData() {
     await fetch('/refresh');
     await new Promise(r => setTimeout(r, 6000));
     const r = await fetch('/api/hub-data');
-    Object.assign(D, await r.json());
+    if (!r.ok) throw new Error(`hub-data HTTP ${r.status}`);
+    const data = await r.json();
+    Object.assign(D, data);
     await loadUD(PROFILE); renderAll(); renderScore();
     toast('Tudo atualizado ♡');
-  } catch(e) { toast('Erro ao atualizar', '✕'); }
+  } catch(e) { console.error('refreshData error:', e); toast('Erro ao atualizar: ' + e.message, '✕'); }
   btn.classList.remove('spinning'); btn.disabled = false;
 }
 
