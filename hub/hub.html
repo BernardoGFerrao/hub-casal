@@ -2576,7 +2576,6 @@ function renderHealth() {
   const waterGoal = s.water_goal || 2500;
   const sleepMode = (isToday && s.sleep_mode === 'manual') ? 'manual' : 'auto';
   const sleepMins = sleepMode === 'manual' ? (s.sleep_manual_minutes || 0) : (h.sleep_minutes || 0);
-  console.log('[sleep]', {isToday, sleepMode, sleepMins, sleep_mode: s.sleep_mode, sleep_manual_minutes: s.sleep_manual_minutes, sleep_manual_date: s.sleep_manual_date, TODAY});
 
   // Atualiza label do dia
   const dayLbl = document.getElementById('health-day-label');
@@ -3245,10 +3244,12 @@ function renderHome() {
   if (sv) sv.textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
   const sb = document.getElementById('qs-steps-bar');
   if (sb) sb.style.width = Math.min(100,(h.steps||0)/stepsGoal*100)+'%';
+  const sleepMode = (isToday && s.sleep_mode === 'manual') ? 'manual' : 'auto';
+  const sleepMins = sleepMode === 'manual' ? (s.sleep_manual_minutes || 0) : (h.sleep_minutes || 0);
   const slv = document.getElementById('qs-sleep');
-  if (slv) slv.textContent = fmtSleep(h.sleep_minutes||0);
+  if (slv) slv.textContent = fmtSleep(sleepMins);
   const slb = document.getElementById('qs-sleep-bar');
-  if (slb) slb.style.width = Math.min(100,(h.sleep_minutes||0)/sleepGoal*100)+'%';
+  if (slb) slb.style.width = Math.min(100, sleepMins / sleepGoal * 100) + '%';
   const wv = document.getElementById('qs-water');
   if (wv) wv.textContent = h.water_ml ? h.water_ml+'ml' : '—';
   const wb = document.getElementById('qs-water-bar');
