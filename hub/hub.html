@@ -3819,10 +3819,10 @@ async function executeAIActions(actions) {
       else if(a.type==='toggleHabitDone'){const key=`${a.habitId}:${a.date||TODAY}`;const comps={...(ud.habit_completions||{})}; comps[key]=true; ud.habit_completions=comps; renderHabits(); await api('/api/save/habit_completions',{completions:comps}); localScore(); done.push('hábito marcado');}
       else if(a.type==='addGroceryItem'){ud.grocery=[...(ud.grocery||[]),{id:Date.now(),text:a.text,checked:false}];renderGrocery();await api('/api/save/grocery',{grocery:ud.grocery});done.push(`"${a.text}" no mercado`);}
       else if(a.type==='addHabit'){ud.habits=[...(ud.habits||[]),{id:'h'+Date.now(),name:a.name,recurrenceType:a.recurrenceType||'daily'}];renderHabits();await api('/api/save/habits',{habits:ud.habits});done.push(`hábito "${a.name}"`);}
-      else if(a.type==='createCalendarEvent'){const res=await api('/api/calendar/create-event',{title:a.title,date:a.date,time:a.time,duration:a.duration||60});if(res?.ok){done.push(`evento "${a.title}"`);loadCalEvents();}else{done.push(`⚠️ erro: ${res?.error||'calendário indisponível'}`);}}
+      else if(a.type==='createCalendarEvent'){const res=await api('/api/calendar/create-event',{title:a.title,date:a.date,time:a.time,duration:a.duration||60});if(res?.ok){done.push(`evento "${a.title}"`);loadCalEvents();}else{const errMsg=res?.error||'calendário indisponível';toast('⚠️ '+errMsg,'⚠️');_aiMsg('⚠️ Calendário: '+errMsg,'error');}}
       else if(a.type==='addMeal'){const meals=loadMeals();meals.push({id:String(Date.now()),name:a.name,time:a.time||'12:00',days:a.days||[1,2,3,4,5],ingredients:a.ingredients||[]});saveMealsUD(meals);renderDietMeals();done.push(`refeição "${a.name}"`);}
       else if(a.type==='reply'){}
-    }catch(e){}
+    }catch(e){console.error('AI action error:',e,a);}
   }
   if(done.length)toast('✓ '+done.join(', '),'✓');
 }
