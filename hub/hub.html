@@ -945,6 +945,46 @@ select option { background: var(--surface); }
 .ai-mic { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .42rem .6rem; font-size: .85rem; cursor: pointer; transition: all .15s; }
 .ai-mic.recording { background: #fce8e8; border-color: var(--red); }
 
+/* ─── Chat Casal ──────────────────────────────────────────────────────── */
+.chat-fab {
+  position: fixed; bottom: 1.5rem; right: 5.5rem;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--border2); color: var(--text);
+  font-size: 1.3rem; cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,.2);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s; position: fixed;
+}
+.chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,.28); }
+.chat-fab-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--red); color: #fff; border-radius: 99px;
+  font-size: .6rem; font-weight: 700; padding: .1rem .32rem;
+  min-width: 16px; text-align: center; display: none;
+}
+.chat-panel {
+  position: fixed; bottom: 5.5rem; right: 5.5rem;
+  width: 320px; background: var(--surface);
+  border: 1px solid var(--border2); border-radius: var(--r);
+  box-shadow: 0 8px 36px rgba(0,0,0,.18);
+  z-index: 100; display: none; flex-direction: column; overflow: hidden; max-height: 460px;
+}
+.chat-panel.open { display: flex; }
+.chat-panel-hdr { display: flex; align-items: center; justify-content: space-between; padding: .65rem 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg2); }
+.chat-panel-title { font-size: .85rem; font-weight: 700; color: var(--text); }
+.chat-msgs { flex: 1; overflow-y: auto; padding: .75rem 1rem; display: flex; flex-direction: column; gap: .3rem; scroll-behavior: smooth; }
+.chat-msg { padding: .45rem .7rem; border-radius: var(--r-sm); font-size: .8rem; line-height: 1.5; max-width: 85%; word-break: break-word; }
+.chat-msg.mine { background: var(--rose); color: #fff; align-self: flex-end; border-radius: var(--r-sm) var(--r-sm) .2rem var(--r-sm); }
+.chat-msg.theirs { background: var(--bg2); border: 1px solid var(--border); align-self: flex-start; color: var(--text); border-radius: .2rem var(--r-sm) var(--r-sm) var(--r-sm); }
+.chat-msg-meta { font-size: .6rem; opacity: .6; margin-top: .1rem; }
+.chat-msg.mine .chat-msg-meta { text-align: right; }
+.chat-date-sep { text-align: center; font-size: .65rem; color: var(--text3); margin: .5rem 0 .2rem; font-weight: 600; }
+.chat-input-row { display: flex; gap: .4rem; padding: .6rem .75rem; border-top: 1px solid var(--border); flex-shrink: 0; align-items: center; }
+.chat-input-row input { flex: 1; font-size: .8rem; padding: .42rem .7rem; border-radius: var(--r-sm); border: 1.5px solid var(--border); background: var(--bg2); color: var(--text); font-family: inherit; outline: none; }
+.chat-input-row input:focus { border-color: var(--rose); }
+.chat-send { background: var(--rose); color: #fff; border: none; border-radius: var(--r-sm); padding: .42rem .75rem; font-size: .85rem; cursor: pointer; transition: background .15s; }
+.chat-send:hover { background: #b5677c; }
+
 /* ─── Briefing ────────────────────────────────────────────────────────── */
 #brief-body { font-size: .85rem; line-height: 1.8; color: var(--text2); white-space: pre-wrap; }
 #brief-body strong { color: var(--text); font-weight: 600; }
@@ -2116,6 +2156,23 @@ select option { background: var(--surface); }
 </div>
 <button class="ai-fab" onclick="toggleAIPanel()" title="Assistente IA">✨</button>
 
+<!-- Chat Casal -->
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-panel-hdr">
+    <span class="chat-panel-title" id="chat-panel-title">💬 Chat</span>
+    <button class="modal-close" onclick="closeChatPanel()">×</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs"></div>
+  <div class="chat-input-row">
+    <input id="chat-panel-input" placeholder="Mensagem..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+    <button class="chat-send" onclick="sendChatMsg()">➤</button>
+  </div>
+</div>
+<button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat com parceiro(a)">
+  💬
+  <span class="chat-fab-badge" id="chat-badge"></span>
+</button>
+
 <div id="toast"><span class="ti" id="toast-icon">♡</span><span id="toast-msg"></span></div>
 
 <script>
@@ -2149,6 +2206,8 @@ async function boot() {
   await loadCfg();
   await loadJobsFromDB();
   setInterval(async () => { await loadUD(PROFILE); renderAll(); }, 60000);
+  checkChatBadge();
+  setInterval(checkChatBadge, 15000);
 }
 
 function renderViewer() {
@@ -3891,6 +3950,103 @@ function saveMeal() {
   saveMealsUD(meals); closeMealModal(); renderDietMeals(); renderNextMeal(); toast('Refeição salva ♡');
 }
 function deleteMeal(id) { saveMealsUD(loadMeals().filter(m=>m.id!==id)); renderDietMeals(); renderNextMeal(); }
+
+// ─── Chat Casal ────────────────────────────────────────────────────────────
+let _chatOpen = false;
+let _chatPollTimer = null;
+
+function _partnerOf(u) { return u === 'bernardo' ? 'amanda' : 'bernardo'; }
+function _partnerName() { return _partnerOf(VIEWER) === 'bernardo' ? 'Bernardo' : 'Amanda'; }
+
+function toggleChatPanel() { _chatOpen ? closeChatPanel() : openChatPanel(); }
+
+async function openChatPanel() {
+  _chatOpen = true;
+  document.getElementById('chat-panel').classList.add('open');
+  document.getElementById('chat-panel-title').textContent = `💬 ${_partnerName()}`;
+  await loadChatMsgs(true);
+  setTimeout(() => document.getElementById('chat-panel-input')?.focus(), 80);
+  _chatPollTimer = setInterval(() => loadChatMsgs(false), 5000);
+}
+
+function closeChatPanel() {
+  _chatOpen = false;
+  document.getElementById('chat-panel').classList.remove('open');
+  clearInterval(_chatPollTimer);
+}
+
+async function loadChatMsgs(scrollToBottom) {
+  try {
+    const r = await fetch('/api/chat/messages');
+    if (!r.ok) return;
+    const data = await r.json();
+    renderChatMsgs(data.messages || []);
+    updateChatBadge(0);
+    if (scrollToBottom) {
+      const box = document.getElementById('chat-msgs');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+  } catch(e) {}
+}
+
+function renderChatMsgs(msgs) {
+  const box = document.getElementById('chat-msgs');
+  if (!box) return;
+  const wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  let html = '', lastDate = '';
+  for (const m of msgs) {
+    const dateStr = m.ts.slice(0, 10);
+    if (dateStr !== lastDate) {
+      const [y,mo,d] = dateStr.split('-');
+      const label = dateStr === TODAY ? 'Hoje' : `${d}/${mo}/${y}`;
+      html += `<div class="chat-date-sep">${label}</div>`;
+      lastDate = dateStr;
+    }
+    const isMine = m.from === VIEWER;
+    const time = m.ts.slice(11, 16);
+    html += `<div>
+      <div class="chat-msg ${isMine?'mine':'theirs'}">${esc(m.text)}</div>
+      <div class="chat-msg-meta" style="${isMine?'text-align:right':''}">
+        ${isMine?'Você':_partnerName()} · ${time}
+      </div>
+    </div>`;
+  }
+  if (!html) html = `<div class="empty" style="font-size:.75rem">Nenhuma mensagem ainda ♡<br>Diga oi para ${_partnerName()}!</div>`;
+  box.innerHTML = html;
+  if (wasAtBottom) box.scrollTop = box.scrollHeight;
+}
+
+async function sendChatMsg() {
+  const inp = document.getElementById('chat-panel-input');
+  const text = inp?.value.trim();
+  if (!text) return;
+  inp.value = '';
+  try {
+    await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})
+    });
+    await loadChatMsgs(true);
+  } catch(e) { toast('Erro ao enviar mensagem', '⚠️'); }
+}
+
+async function checkChatBadge() {
+  if (_chatOpen) return;
+  try {
+    const r = await fetch('/api/chat/unread');
+    if (!r.ok) return;
+    const data = await r.json();
+    updateChatBadge(data.count || 0);
+  } catch(e) {}
+}
+
+function updateChatBadge(count) {
+  const badge = document.getElementById('chat-badge');
+  if (!badge) return;
+  if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = ''; }
+  else badge.style.display = 'none';
+}
 
 // ─── IA Flutuante ──────────────────────────────────────────────────────────
 let _aiVoiceRecog=null, _aiVoiceActive=false;

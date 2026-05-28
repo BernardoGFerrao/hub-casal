@@ -512,6 +512,83 @@ def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
     return {"total": score, "breakdown": breakdown}
 
 
+# ---------------------------------------------------------------------------
+# Chat Casal — DB compartilhado
+# ---------------------------------------------------------------------------
+
+CHAT_DB = HUB_DIR / "data" / "chat.db"
+
+def _chat_conn():
+    conn = sqlite3.connect(str(CHAT_DB))
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender    TEXT NOT NULL,
+            text      TEXT NOT NULL,
+            ts        TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS read_status (
+            user_id   TEXT PRIMARY KEY,
+            last_read INTEGER DEFAULT 0
+        )
+    """)
+    conn.commit()
+    return conn
+
+def db_chat_send(sender: str, text: str):
+    from datetime import datetime, timezone, timedelta
+    tz = timezone(timedelta(hours=-3))
+    ts = datetime.now(tz).strftime("%Y-%m-%dT%H:%M:%S")
+    conn = _chat_conn()
+    try:
+        conn.execute("INSERT INTO messages (sender, text, ts) VALUES (?, ?, ?)", (sender, text, ts))
+        conn.commit()
+    finally:
+        conn.close()
+
+def db_chat_get_messages(days: int = 7) -> list:
+    from datetime import date, timedelta
+    since = str(date.today() - timedelta(days=days))
+    conn = _chat_conn()
+    try:
+        rows = conn.execute(
+            "SELECT id, sender, text, ts FROM messages WHERE ts >= ? ORDER BY id ASC",
+            (since,)
+        ).fetchall()
+        return [{"id": r["id"], "from": r["sender"], "text": r["text"], "ts": r["ts"]} for r in rows]
+    finally:
+        conn.close()
+
+def db_chat_mark_read(user_id: str):
+    conn = _chat_conn()
+    try:
+        last_id = conn.execute("SELECT MAX(id) FROM messages").fetchone()[0] or 0
+        conn.execute(
+            "INSERT INTO read_status (user_id, last_read) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET last_read=excluded.last_read",
+            (user_id, last_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+def db_chat_unread_count(user_id: str) -> int:
+    conn = _chat_conn()
+    try:
+        partner = "amanda" if user_id == "bernardo" else "bernardo"
+        row = conn.execute("SELECT last_read FROM read_status WHERE user_id = ?", (user_id,)).fetchone()
+        last_read = row["last_read"] if row else 0
+        count = conn.execute(
+            "SELECT COUNT(*) FROM messages WHERE id > ? AND sender = ?",
+            (last_read, partner)
+        ).fetchone()[0]
+        return count
+    finally:
+        conn.close()
+
+
 def get_competition_data(date_str: str) -> dict:
     # Busca totais de ambos para definir o denominador compartilhado
     raw = {uid: _raw_items(uid, date_str) for uid in USERS}
@@ -793,6 +870,17 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json({"ok": False, "events": [], "error": str(e)})
             return
 
+        if path == "/api/chat/messages":
+            msgs = db_chat_get_messages()
+            db_chat_mark_read(uid)
+            self._json({"ok": True, "messages": msgs})
+            return
+
+        if path == "/api/chat/unread":
+            count = db_chat_unread_count(uid)
+            self._json({"ok": True, "count": count})
+            return
+
         if path == "/hub.html":
             self._serve_hub(uid)
             return
@@ -1055,6 +1143,12 @@ class HubHandler(SimpleHTTPRequestHandler):
                 self._json(result)
             except Exception as e:
                 self._json({"error": str(e)})
+
+        elif path == "/api/chat/send":
+            text = body.get("text", "").strip()
+            if text:
+                db_chat_send(uid, text)
+            self._json({"ok": True})
 
         elif path == "/api/regenerate-briefing":
             try:
