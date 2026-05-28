@@ -958,11 +958,12 @@ select option { background: var(--surface); }
 }
 .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,.28); }
 .chat-fab-badge {
-  position: fixed; bottom: calc(1.5rem + 36px); right: calc(5.5rem - 4px);
-  background: var(--red); color: #fff; border-radius: 99px;
-  font-size: .6rem; font-weight: 700; padding: .1rem .35rem;
-  min-width: 16px; text-align: center; display: none;
-  pointer-events: none; z-index: 200; line-height: 1.4;
+  position: fixed; bottom: calc(1.5rem + 34px); right: calc(5.5rem - 6px);
+  background: #e53935; color: #fff; border-radius: 99px;
+  font-size: .65rem; font-weight: 700; padding: .15rem .4rem;
+  min-width: 18px; text-align: center; display: none;
+  pointer-events: none; z-index: 9999; line-height: 1.4;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
 }
 .chat-panel {
   position: fixed; bottom: 5.5rem; right: 5.5rem;
@@ -4044,20 +4045,27 @@ async function checkChatBadge() {
   if (_chatOpen) return;
   try {
     const r = await fetch('/api/chat/unread');
-    console.log('[badge] status:', r.status, r.url);
-    if (!r.ok) { console.warn('[badge] não ok'); return; }
-    const text = await r.text();
-    console.log('[badge] body:', text);
-    const data = JSON.parse(text);
+    if (!r.ok) return;
+    const data = await r.json();
     updateChatBadge(data.count || 0);
-  } catch(e) { console.error('[badge] erro:', e); }
+  } catch(e) {}
 }
 
 function updateChatBadge(count) {
   const badge = document.getElementById('chat-badge');
-  if (!badge) return;
-  if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = ''; }
-  else badge.style.display = 'none';
+  const fab   = document.getElementById('chat-fab');
+  if (!badge || !fab) return;
+  if (count > 0) {
+    badge.textContent = count > 9 ? '9+' : count;
+    const r = fab.getBoundingClientRect();
+    badge.style.top    = (r.top - 6) + 'px';
+    badge.style.left   = (r.right - 10) + 'px';
+    badge.style.bottom = '';
+    badge.style.right  = '';
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // ─── IA Flutuante ──────────────────────────────────────────────────────────
