@@ -230,6 +230,9 @@ def init_user_tables(user_id: str):
         CREATE TABLE IF NOT EXISTS user_hub_settings (
             data_json TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS shared_workout (
+            data_json TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS user_jobs_today (
             date      TEXT PRIMARY KEY,
             data_json TEXT NOT NULL
