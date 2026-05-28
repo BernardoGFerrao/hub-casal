@@ -430,6 +430,15 @@ select option { background: var(--surface); }
 .btn-ghost:hover { color: var(--red); }
 .btn-xs { padding: .22rem .5rem; font-size: .7rem; border-radius: var(--r-xs); }
 
+/* ─── Mini-cal compacto (Início) ─────────────────────────────────────── */
+.mini-cal .gcal-day {
+  aspect-ratio: unset;
+  height: 1.6rem;
+  font-size: .68rem;
+}
+.mini-cal .gcal-hdr { padding: .1rem 0; font-size: .58rem; }
+.mini-cal { gap: 1px; margin-bottom: .3rem; }
+
 /* ─── Vagas grid no início ────────────────────────────────────────────── */
 .ov-jobs-grid {
   display: grid;
@@ -1358,7 +1367,7 @@ select option { background: var(--surface); }
                 <span class="gcal-month-lbl" id="mini-cal-lbl"></span>
                 <button class="gcal-nav-btn" onclick="miniCalNav(1)">›</button>
               </div>
-              <div class="gcal-grid" id="mini-cal-grid" style="gap:1px"></div>
+              <div class="gcal-grid mini-cal" id="mini-cal-grid"></div>
               <div id="mini-cal-events" style="margin-top:.4rem"></div>
             </div>
           </div>
