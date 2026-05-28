@@ -2422,10 +2422,13 @@ function renderMood() {
   document.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('sel', today && b.dataset.m === today.mood));
   document.getElementById('mood-note').textContent = today
     ? `Registrado: ${today.mood} às ${today.time}` : 'Nenhum humor registrado hoje';
-  const entries = Object.entries(moods).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14);
-  document.getElementById('mood-hist').innerHTML = entries.length
-    ? entries.map(([d, m]) => `<div class="mh-row"><span class="mh-d">${fmtD(d)}</span><span style="font-size:1.1rem">${m.mood}</span></div>`).join('')
-    : '<div class="empty">Sem histórico</div>';
+  const hist = document.getElementById('mood-hist');
+  if (hist) {
+    const entries = Object.entries(moods).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14);
+    hist.innerHTML = entries.length
+      ? entries.map(([d, m]) => `<div class="mh-row"><span class="mh-d">${fmtD(d)}</span><span style="font-size:1.1rem">${m.mood}</span></div>`).join('')
+      : '<div class="empty">Sem histórico</div>';
+  }
 }
 
 async function setMood(emoji) {
