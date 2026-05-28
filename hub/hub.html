@@ -1437,9 +1437,7 @@ select option { background: var(--surface); }
   <nav id="nav">
     <button class="ntab active" data-s="inicio"   onclick="go('inicio')"><span class="ni">🏠</span>Início</button>
     <button class="ntab"        data-s="saude"    onclick="go('saude')"><span class="ni">🏃</span>Saúde</button>
-    <button class="ntab"        data-s="progresso" onclick="go('progresso')"><span class="ni">📊</span>Progresso</button>
     <button class="ntab"        data-s="tarefas"  onclick="go('tarefas')"><span class="ni">✅</span>Tarefas</button>
-    <button class="ntab"        data-s="dieta"    onclick="go('dieta')"><span class="ni">🥗</span>Dieta</button>
     <button class="ntab"        data-s="compare"  onclick="go('compare')"><span class="ni">🏆</span>Placar</button>
     <button class="ntab"        data-s="agenda"   onclick="go('agenda')"><span class="ni">📅</span>Agenda</button>
     <button class="ntab"        data-s="noticias" onclick="go('noticias')"><span class="ni">📰</span>Notícias</button>
@@ -1568,9 +1566,11 @@ select option { background: var(--surface); }
     <div class="section" id="sec-saude">
       <div class="ro-bar" id="ro-saude"><span>👁</span> Visualizando saúde de <strong id="ro-saude-n"></strong></div>
       <!-- Sub-abas Saúde -->
-      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;overflow-x:auto">
-        <button class="workout-tab-btn active" id="stab-metricas" onclick="switchSaudeTab('metricas')">📊 Métricas</button>
-        <button class="workout-tab-btn" id="stab-treino" onclick="switchSaudeTab('treino')">🏋️ Treino</button>
+      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;overflow-x:auto;scrollbar-width:none">
+        <button class="workout-tab-btn active" id="stab-metricas"  onclick="switchSaudeTab('metricas')">📊 Métricas</button>
+        <button class="workout-tab-btn"        id="stab-progresso" onclick="switchSaudeTab('progresso')">📈 Progresso</button>
+        <button class="workout-tab-btn"        id="stab-dieta"     onclick="switchSaudeTab('dieta')">🥗 Dieta</button>
+        <button class="workout-tab-btn"        id="stab-treino"    onclick="switchSaudeTab('treino')">🏋️ Treino</button>
       </div>
       <!-- Conteúdo: Métricas -->
       <div id="saude-metricas">
@@ -1639,6 +1639,72 @@ select option { background: var(--surface); }
       </div>
       </div><!-- fim saude-metricas -->
 
+      <!-- Conteúdo: Progresso -->
+      <div id="saude-progresso" style="display:none">
+        <div class="ro-bar" id="ro-progresso"><span>👁</span> Visualizando progresso de <strong id="ro-progresso-n"></strong></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <span class="card-label">📊 Progresso</span>
+          <div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px">
+            <button class="stab active" id="prog-period-7"  onclick="setProgPeriod(7)">7d</button>
+            <button class="stab"        id="prog-period-30" onclick="setProgPeriod(30)">30d</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem">
+          <div class="card"><div class="card-head"><span class="card-label">👟 Passos</span></div><div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-steps" height="110"></canvas></div></div>
+          <div class="card"><div class="card-head"><span class="card-label">🌙 Sono</span></div><div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-sleep" height="110"></canvas></div></div>
+          <div class="card"><div class="card-head"><span class="card-label">💧 Água</span></div><div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-water" height="110"></canvas></div></div>
+          <div class="card"><div class="card-head"><span class="card-label">😊 Humor</span></div><div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-mood" height="110"></canvas></div></div>
+        </div>
+        <div class="card" style="margin-bottom:.6rem">
+          <div class="card-head"><span class="card-label">🔁 Hábitos — conclusões por dia</span></div>
+          <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-habits" height="70"></canvas></div>
+        </div>
+      </div><!-- fim saude-progresso -->
+
+      <!-- Conteúdo: Dieta -->
+      <div id="saude-dieta" style="display:none">
+        <div class="ro-bar" id="ro-dieta"><span>👁</span> Visualizando dieta de <strong id="ro-dieta-n"></strong></div>
+        <div class="card" id="next-meal-card" style="display:none">
+          <div class="card-head"><span class="card-label">🍽️ Próxima refeição</span></div>
+          <div class="card-body">
+            <div style="font-size:1.05rem;font-weight:700;color:var(--text)" id="next-meal-name">—</div>
+            <div style="font-size:.78rem;color:var(--text2);margin-top:.2rem" id="next-meal-time">—</div>
+            <div style="font-size:.75rem;color:var(--text3);margin-top:.4rem" id="next-meal-ingredients">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label" id="diet-day-title">Refeições</span>
+            <button class="btn btn-rose btn-xs" id="diet-add-btn" onclick="openMealForm()">+ Nova refeição</button>
+          </div>
+          <div class="card-body" style="padding-top:.5rem">
+            <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
+              <button class="filter-chip active" onclick="selectDietDay(1)" id="diet-dow-1">Seg</button>
+              <button class="filter-chip" onclick="selectDietDay(2)" id="diet-dow-2">Ter</button>
+              <button class="filter-chip" onclick="selectDietDay(3)" id="diet-dow-3">Qua</button>
+              <button class="filter-chip" onclick="selectDietDay(4)" id="diet-dow-4">Qui</button>
+              <button class="filter-chip" onclick="selectDietDay(5)" id="diet-dow-5">Sex</button>
+              <button class="filter-chip" onclick="selectDietDay(6)" id="diet-dow-6">Sáb</button>
+              <button class="filter-chip" onclick="selectDietDay(0)" id="diet-dow-0">Dom</button>
+            </div>
+            <div id="diet-meals-list"><div class="empty">Nenhuma refeição para este dia</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label">🛒 Lista de mercado</span>
+            <button class="btn btn-outline btn-xs" onclick="clearChecked()">Limpar comprados</button>
+          </div>
+          <div class="card-body">
+            <div class="add-row">
+              <input id="grocery-input" placeholder="Adicionar item..." onkeydown="if(event.key==='Enter')addGrocery()">
+              <button class="btn btn-rose" onclick="addGrocery()">+ Add</button>
+            </div>
+            <div id="grocery-list"></div>
+          </div>
+        </div>
+      </div><!-- fim saude-dieta -->
+
       <!-- Conteúdo: Treino -->
       <div id="saude-treino" style="display:none">
         <div class="card">
@@ -1656,46 +1722,6 @@ select option { background: var(--surface); }
           </div>
         </div>
       </div><!-- fim saude-treino -->
-    </div>
-
-    <!-- PROGRESSO -->
-    <div class="section" id="sec-progresso">
-      <div class="ro-bar" id="ro-progresso"><span>👁</span> Visualizando progresso de <strong id="ro-progresso-n"></strong></div>
-
-      <!-- Período toggle -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-        <span class="card-label">📊 Progresso</span>
-        <div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px">
-          <button class="stab active" id="prog-period-7"  onclick="setProgPeriod(7)">7d</button>
-          <button class="stab"        id="prog-period-30" onclick="setProgPeriod(30)">30d</button>
-        </div>
-      </div>
-
-      <!-- Gráficos saúde 2x2 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem">
-        <div class="card">
-          <div class="card-head"><span class="card-label">👟 Passos</span></div>
-          <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-steps" height="110"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-label">🌙 Sono</span></div>
-          <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-sleep" height="110"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-label">💧 Água</span></div>
-          <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-water" height="110"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-label">😊 Humor</span></div>
-          <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-mood" height="110"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Gráfico hábitos largura total -->
-      <div class="card" style="margin-bottom:.6rem">
-        <div class="card-head"><span class="card-label">🔁 Hábitos — conclusões por dia</span></div>
-        <div class="card-body" style="padding-top:.3rem"><canvas id="prog-chart-habits" height="70"></canvas></div>
-      </div>
     </div>
 
     <!-- TAREFAS & HÁBITOS -->
@@ -1751,56 +1777,6 @@ select option { background: var(--surface); }
     <!-- NOTÍCIAS -->
     <div class="section" id="sec-noticias">
       <div id="news-topics-container"></div>
-    </div>
-
-    <!-- DIETA -->
-    <div class="section" id="sec-dieta">
-      <div class="ro-bar" id="ro-dieta"><span>👁</span> Visualizando dieta de <strong id="ro-dieta-n"></strong></div>
-
-      <!-- Próxima refeição -->
-      <div class="card" id="next-meal-card" style="display:none">
-        <div class="card-head"><span class="card-label">🍽️ Próxima refeição</span></div>
-        <div class="card-body">
-          <div style="font-size:1.05rem;font-weight:700;color:var(--text)" id="next-meal-name">—</div>
-          <div style="font-size:.78rem;color:var(--text2);margin-top:.2rem" id="next-meal-time">—</div>
-          <div style="font-size:.75rem;color:var(--text3);margin-top:.4rem" id="next-meal-ingredients">—</div>
-        </div>
-      </div>
-
-      <!-- Refeições por dia -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label" id="diet-day-title">Refeições</span>
-          <button class="btn btn-rose btn-xs" id="diet-add-btn" onclick="openMealForm()">+ Nova refeição</button>
-        </div>
-        <div class="card-body" style="padding-top:.5rem">
-          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
-            <button class="filter-chip active" onclick="selectDietDay(1)" id="diet-dow-1">Seg</button>
-            <button class="filter-chip" onclick="selectDietDay(2)" id="diet-dow-2">Ter</button>
-            <button class="filter-chip" onclick="selectDietDay(3)" id="diet-dow-3">Qua</button>
-            <button class="filter-chip" onclick="selectDietDay(4)" id="diet-dow-4">Qui</button>
-            <button class="filter-chip" onclick="selectDietDay(5)" id="diet-dow-5">Sex</button>
-            <button class="filter-chip" onclick="selectDietDay(6)" id="diet-dow-6">Sáb</button>
-            <button class="filter-chip" onclick="selectDietDay(0)" id="diet-dow-0">Dom</button>
-          </div>
-          <div id="diet-meals-list"><div class="empty">Nenhuma refeição para este dia</div></div>
-        </div>
-      </div>
-
-      <!-- Lista de mercado -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-label">🛒 Lista de mercado</span>
-          <button class="btn btn-outline btn-xs" onclick="clearChecked()">Limpar comprados</button>
-        </div>
-        <div class="card-body">
-          <div class="add-row">
-            <input id="grocery-input" placeholder="Adicionar item..." onkeydown="if(event.key==='Enter')addGrocery()">
-            <button class="btn btn-rose" onclick="addGrocery()">+ Add</button>
-          </div>
-          <div id="grocery-list"></div>
-        </div>
-      </div>
     </div>
 
     <!-- MODAL REFEIÇÃO -->
@@ -2402,11 +2378,9 @@ function go(s) {
   if (s === 'compare') renderCompare(_lastCompData);
   if (s === 'agenda')  { _updateCalOwnerUI(); buildCalGrid(); renderCalEvents(_calSelDate); renderUpcoming(); }
   if (s === 'inicio')  renderHome();
-  if (s === 'dieta')   { renderDietMeals(); renderNextMeal(); }
-  if (s === 'tarefas')   renderKanban();
-  if (s === 'vagas')     renderJobs();
-  if (s === 'config')    loadCfg();
-  if (s === 'progresso') requestAnimationFrame(() => requestAnimationFrame(renderProgresso));
+  if (s === 'tarefas') renderKanban();
+  if (s === 'vagas')   renderJobs();
+  if (s === 'config')  loadCfg();
 }
 
 async function loadUD(p) {
@@ -4142,12 +4116,13 @@ function updateChatBadge(count) {
 
 // ─── Treino ────────────────────────────────────────────────────────────────
 function switchSaudeTab(tab) {
-  document.getElementById('saude-metricas').style.display = tab === 'metricas' ? '' : 'none';
-  document.getElementById('saude-treino').style.display   = tab === 'treino'   ? '' : 'none';
-  document.getElementById('stab-metricas').classList.toggle('active', tab === 'metricas');
-  document.getElementById('stab-treino').classList.toggle('active', tab === 'treino');
-  if (tab === 'treino' && !_workout) loadWorkout();
-  else if (tab === 'treino') renderWorkout();
+  ['metricas','progresso','dieta','treino'].forEach(t => {
+    document.getElementById('saude-' + t).style.display = t === tab ? '' : 'none';
+    document.getElementById('stab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'treino') { if (!_workout) loadWorkout(); else renderWorkout(); }
+  if (tab === 'progresso') requestAnimationFrame(() => requestAnimationFrame(renderProgresso));
+  if (tab === 'dieta') { renderDietMeals(); renderNextMeal(); }
 }
 
 let _workout = null;
