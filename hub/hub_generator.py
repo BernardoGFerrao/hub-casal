@@ -763,59 +763,79 @@ def _scrape_linkedin(keywords: list, locations: list, days: int, mode: str, seen
         logger.warning("beautifulsoup4/lxml não instalado — LinkedIn ignorado")
         return []
 
-    tf    = _LI_TIME_FILTER.get(days, "r604800")
-    f_WT  = _LI_MODE_MAP.get(mode, "")
-    kw_str = " ".join(keywords)
+    import re as _re2
+    tf   = _LI_TIME_FILTER.get(days, "r604800")
+    f_WT = _LI_MODE_MAP.get(mode, "")
     results = []
 
+    # Detecta work_mode pelo texto de localização retornado pelo LinkedIn
+    def _detect_mode(loc_text: str) -> str:
+        lt = loc_text.lower()
+        if any(t in lt for t in ["remote", "remoto", "home office"]):
+            return "remote"
+        if any(t in lt for t in ["hybrid", "híbrido", "hibrido"]):
+            return "hybrid"
+        if any(t in lt for t in ["on-site", "onsite", "presencial"]):
+            return "on-site"
+        return ""
+
     loc_list = [l["loc"] for l in locations if l.get("loc")] or ["Brasil"]
-    for loc in loc_list:
-        for start in range(0, 75, 25):
-            params = {"keywords": kw_str, "location": loc, "f_TPR": tf, "start": start}
-            if f_WT:
-                params["f_WT"] = f_WT
-            try:
-                r = requests.get(_LI_SEARCH_URL, params=params, headers=_JOB_HEADERS, timeout=15)
-                r.raise_for_status()
-                soup  = BeautifulSoup(r.text, "lxml")
-                cards = soup.select("li")
-                if not cards:
+
+    # Busca cada keyword separadamente para garantir relevância
+    for kw in keywords:
+        for loc in loc_list:
+            for start in range(0, 50, 25):
+                params = {"keywords": kw, "location": loc, "f_TPR": tf, "start": start}
+                if f_WT:
+                    params["f_WT"] = f_WT
+                try:
+                    r = requests.get(_LI_SEARCH_URL, params=params, headers=_JOB_HEADERS, timeout=15)
+                    r.raise_for_status()
+                    soup  = BeautifulSoup(r.text, "lxml")
+                    cards = soup.select("li")
+                    if not cards:
+                        break
+                    found = 0
+                    for card in cards:
+                        try:
+                            title_el   = card.select_one("h3.base-search-card__title, span.screen-reader-text")
+                            company_el = card.select_one("h4.base-search-card__subtitle a, h4.base-search-card__subtitle")
+                            loc_el     = card.select_one("span.job-search-card__location")
+                            link_el    = card.select_one("a.base-card__full-link, a[href*='/jobs/view/']")
+                            time_el    = card.select_one("time")
+                            if not (title_el and company_el and link_el):
+                                continue
+                            href = link_el.get("href", "").split("?")[0]
+                            if href in seen:
+                                continue
+                            # Filtra pelo título: deve conter alguma keyword relevante
+                            title_str = title_el.get_text(strip=True)
+                            title_low = title_str.lower()
+                            if not any(k.lower() in title_low for k in keywords):
+                                continue
+                            seen.add(href)
+                            pub      = time_el.get("datetime", "") if time_el else ""
+                            loc_text = loc_el.get_text(strip=True) if loc_el else loc
+                            results.append({
+                                "title":    title_str,
+                                "company":  company_el.get_text(strip=True),
+                                "via":      "LinkedIn",
+                                "url":      href,
+                                "location": loc_text,
+                                "mode":     _detect_mode(loc_text) or mode,
+                                "pub":      pub[:10] if pub else "",
+                                "platform": "linkedin",
+                            })
+                            found += 1
+                        except Exception:
+                            pass
+                    if found == 0:
+                        break
+                    import time as _t; _t.sleep(1.2)
+                except Exception as e:
+                    logger.warning("LinkedIn request falhou (%s/%s): %s", kw, loc, e)
                     break
-                found = 0
-                for card in cards:
-                    try:
-                        title_el   = card.select_one("h3.base-search-card__title, span.screen-reader-text")
-                        company_el = card.select_one("h4.base-search-card__subtitle a, h4.base-search-card__subtitle")
-                        loc_el     = card.select_one("span.job-search-card__location")
-                        link_el    = card.select_one("a.base-card__full-link, a[href*='/jobs/view/']")
-                        time_el    = card.select_one("time")
-                        if not (title_el and company_el and link_el):
-                            continue
-                        href = link_el.get("href", "").split("?")[0]
-                        if href in seen:
-                            continue
-                        seen.add(href)
-                        pub = time_el.get("datetime", "") if time_el else ""
-                        results.append({
-                            "title":    title_el.get_text(strip=True),
-                            "company":  company_el.get_text(strip=True),
-                            "via":      "LinkedIn",
-                            "url":      href,
-                            "location": loc_el.get_text(strip=True) if loc_el else loc,
-                            "mode":     mode,
-                            "pub":      pub[:10] if pub else "",
-                            "platform": "linkedin",
-                        })
-                        found += 1
-                    except Exception:
-                        pass
-                if found == 0:
-                    break
-                import time as _t; _t.sleep(1.2)
-            except Exception as e:
-                logger.warning("LinkedIn request falhou (%s): %s", loc, e)
-                break
-        if len(results) >= 50:
+        if len(results) >= 80:
             break
 
     logger.info("LinkedIn: %d vagas", len(results))
@@ -1009,7 +1029,8 @@ def generate_jobs_json(user_id: str):
         _ONSITE_SET = {"on-site", "onsite", "presencial"}
         # Localizações genéricas/nacionais — não filtrar por cidade
         _GENERIC_RE = _re.compile(
-            r"^(brasil|brazil|rio grande do sul|rs|br|todo o brasil|nacional|"
+            r"^(brasil|brazil|brazil \(remote\)|brasil \(remoto\)|"
+            r"rio grande do sul|rs|br|todo o brasil|nacional|"
             r"qualquer lugar|anywhere|remote|remoto)$"
         )
 
