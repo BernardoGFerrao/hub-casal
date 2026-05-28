@@ -157,6 +157,7 @@ def _get_access_token(user_id: str, kind: str) -> Optional[str]:
 
 
 def run_auth(user_id: str, scopes: list, kind: str):
+    from http.server import HTTPServer, BaseHTTPRequestHandler
     from urllib.parse import urlencode, urlparse, parse_qs
     import secrets
 
@@ -169,7 +170,7 @@ def run_auth(user_id: str, scopes: list, kind: str):
         return
 
     creds        = _load_credentials(user_id)
-    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+    redirect_uri = "http://localhost:8765/callback"
     state        = secrets.token_urlsafe(16)
 
     auth_url = (
@@ -186,13 +187,21 @@ def run_auth(user_id: str, scopes: list, kind: str):
     )
 
     print(f"\n🔑 Autorizando {USERS[user_id]['name']} — {kind}...")
-    print("\n1. Abra esta URL no seu navegador:\n")
-    print(auth_url)
-    print("\n2. Autorize e cole o código de autorização abaixo:")
-    auth_code = input("Código: ").strip()
+    print("\nAcesse a URL abaixo no navegador do seu computador local:")
+    print("\n" + auth_url + "\n")
+    print("Após autorizar, o Google vai redirecionar para http://localhost:8765/callback?code=...")
+    print("Cole a URL completa de redirecionamento (ou apenas o valor do parâmetro 'code'):")
+    raw = input("URL ou código: ").strip()
+
+    # aceita URL completa ou só o código
+    if raw.startswith("http"):
+        qs = parse_qs(urlparse(raw).query)
+        auth_code = qs.get("code", [None])[0]
+    else:
+        auth_code = raw
 
     if not auth_code:
-        print("❌ Nenhum código informado.")
+        print("❌ Nenhum código extraído.")
         return
 
     r = requests.post(
