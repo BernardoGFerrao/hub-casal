@@ -730,7 +730,9 @@ class HubHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/jobs":
             include_ignored = qs.get("ignored", ["0"])[0] == "1"
-            jobs = db_jobs_get(uid, include_ignored=include_ignored)
+            target = qs.get("user", [uid])[0]
+            target_uid = target if target in USERS else uid
+            jobs = db_jobs_get(target_uid, include_ignored=include_ignored)
             from datetime import date as _d
             self._json({"ok": True, "jobs": jobs, "date": str(_d.today())})
             return
