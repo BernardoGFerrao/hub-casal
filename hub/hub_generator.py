@@ -607,7 +607,7 @@ def _fetch_weather() -> str:
 def _get_hub_settings(user_id: str) -> dict:
     try:
         conn = sqlite3.connect(_db_path(user_id))
-        row  = conn.execute("SELECT value FROM kv_store WHERE key = 'user_hub_settings'").fetchone()
+        row  = conn.execute("SELECT data_json FROM user_hub_settings LIMIT 1").fetchone()
         conn.close()
         return json.loads(row[0]) if row else {}
     except Exception:
