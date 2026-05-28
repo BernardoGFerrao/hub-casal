@@ -506,7 +506,12 @@ def _calc_score(user_id: str, date_str: str, max_items: int) -> dict:
             score += 2
             breakdown["água"] = 2
 
-        if (row["sleep_min"] or 0) >= 420:
+        # Sono: usa manual se configurado para o mesmo dia
+        sleep_min = row["sleep_min"] or 0
+        settings = db_get(user_id, "user_settings") or {}
+        if settings.get("sleep_mode") == "manual" and settings.get("sleep_manual_date") == date_str:
+            sleep_min = settings.get("sleep_manual_minutes") or 0
+        if sleep_min >= 420:
             score += 3
             breakdown["sono"] = 3
 

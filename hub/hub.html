@@ -1654,6 +1654,26 @@ select option { background: var(--surface); }
         </div>
       </div>
 
+      <!-- Sono manual -->
+      <div id="sleep-manual-card" style="display:none">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-label">🌙 Sono manual</span>
+            <span id="sleep-manual-total" style="font-size:.75rem;color:var(--c-sleep)">—</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+              <input type="number" id="sleep-manual-h" placeholder="7" min="0" max="16" step="1" style="width:60px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.3rem .5rem;color:var(--text);font-size:.85rem;text-align:center">
+              <span style="font-size:.8rem;color:var(--text3)">h</span>
+              <input type="number" id="sleep-manual-m" placeholder="30" min="0" max="59" step="5" style="width:60px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.3rem .5rem;color:var(--text);font-size:.85rem;text-align:center">
+              <span style="font-size:.8rem;color:var(--text3)">min</span>
+              <button class="btn btn-rose" onclick="saveSleepManualInline()">Salvar</button>
+              <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="saveSleepManualReset()">Zerar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- HUMOR integrado -->
       <div class="ro-bar show" id="ro-humor" style="display:none"><span>👁</span> Visualizando humor de <strong id="ro-humor-n"></strong></div>
       <div class="card">
@@ -2104,6 +2124,25 @@ select option { background: var(--surface); }
             </div>
           </div>
 
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <label class="cfg-label">Fonte de sono</label>
+            <div style="display:flex;gap:.5rem">
+              <button id="cfg-sleep-auto"   class="btn btn-rose"    onclick="saveSleepMode('auto')"   style="flex:1">Automático (Google Fit)</button>
+              <button id="cfg-sleep-manual" class="btn btn-outline" onclick="saveSleepMode('manual')" style="flex:1">Manual</button>
+            </div>
+          </div>
+
+          <div id="sleep-manual-cfg" style="display:none;flex-direction:column;gap:.3rem">
+            <label class="cfg-label">Sono de hoje (horas e minutos)</label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="number" id="cfg-sleep-h" placeholder="7" min="0" max="16" step="1" style="flex:1">
+              <span style="font-size:.8rem;color:var(--text3)">h</span>
+              <input type="number" id="cfg-sleep-m" placeholder="30" min="0" max="59" step="5" style="flex:1">
+              <span style="font-size:.8rem;color:var(--text3)">min</span>
+              <button class="btn btn-rose" onclick="saveSleepManual()">Salvar</button>
+            </div>
+          </div>
+
           <div class="divider"></div>
           <div style="display:flex;flex-direction:column;gap:.3rem">
             <label class="cfg-label">✨ Briefing diário (IA)</label>
@@ -2535,6 +2574,8 @@ function renderHealth() {
   const waterMode = (isToday && s.water_mode === 'manual') ? 'manual' : 'auto';
   const waterMl   = waterMode === 'manual' ? (s.water_manual_ml || 0) : (h.water_ml || 0);
   const waterGoal = s.water_goal || 2500;
+  const sleepMode = (isToday && s.sleep_mode === 'manual') ? 'manual' : 'auto';
+  const sleepMins = sleepMode === 'manual' ? (s.sleep_manual_minutes || 0) : (h.sleep_minutes || 0);
 
   // Atualiza label do dia
   const dayLbl = document.getElementById('health-day-label');
@@ -2546,7 +2587,7 @@ function renderHealth() {
   document.getElementById('health-sync').textContent = h.synced_at ? 'sync ' + h.synced_at : '';
 
   document.getElementById('m-steps').textContent = h.steps ? h.steps.toLocaleString('pt-BR') : '—';
-  document.getElementById('m-sleep').textContent = fmtSleep(h.sleep_minutes || 0);
+  document.getElementById('m-sleep').textContent = fmtSleep(sleepMins);
   document.getElementById('m-water').textContent = waterMl ? waterMl + 'ml' : '—';
   const moodEl = document.getElementById('m-mood-health');
   if (moodEl) {
@@ -2554,7 +2595,7 @@ function renderHealth() {
     moodEl.textContent = moodData.mood || '—';
   }
   document.getElementById('p-steps').style.width = Math.min(100, (h.steps || 0) / (s.steps_goal || 10000) * 100) + '%';
-  document.getElementById('p-sleep').style.width = Math.min(100, (h.sleep_minutes || 0) / ((s.sleep_goal_h || 8) * 60) * 100) + '%';
+  document.getElementById('p-sleep').style.width = Math.min(100, sleepMins / ((s.sleep_goal_h || 8) * 60) * 100) + '%';
   document.getElementById('p-water').style.width = Math.min(100, waterMl / waterGoal * 100) + '%';
   const badge = document.getElementById('water-mode-badge');
   if (badge) badge.style.display = waterMode === 'manual' ? '' : 'none';
@@ -2563,6 +2604,19 @@ function renderHealth() {
     manCard.style.display = (PROFILE === VIEWER && isToday && waterMode === 'manual') ? '' : 'none';
     const tot = document.getElementById('water-manual-total');
     if (tot) tot.textContent = waterMl + ' ml / ' + waterGoal + ' ml';
+  }
+  const sleepCard = document.getElementById('sleep-manual-card');
+  if (sleepCard) {
+    sleepCard.style.display = (PROFILE === VIEWER && isToday && sleepMode === 'manual') ? '' : 'none';
+    const sleepTot = document.getElementById('sleep-manual-total');
+    if (sleepTot) sleepTot.textContent = sleepMins ? fmtSleep(sleepMins) : '—';
+    // preenche inputs com valor atual
+    if (sleepMode === 'manual') {
+      const hInp = document.getElementById('sleep-manual-h');
+      const mInp = document.getElementById('sleep-manual-m');
+      if (hInp && !hInp.value) hInp.value = Math.floor(sleepMins / 60) || '';
+      if (mInp && !mInp.value) mInp.value = sleepMins % 60 || '';
+    }
   }
 }
 
@@ -3894,6 +3948,12 @@ async function loadCfg() {
   const waterEl = document.getElementById('cfg-water'); if (waterEl) waterEl.value = s.water_goal || '';
   const sleepEl = document.getElementById('cfg-sleep'); if (sleepEl) sleepEl.value = s.sleep_goal_h || '';
   _applyWaterModeUI(s.water_mode || 'auto');
+  _applySleepModeUI(s.sleep_mode || 'auto');
+  // preenche inputs de sono manual nas configs
+  if (s.sleep_mode === 'manual' && s.sleep_manual_minutes) {
+    const ch = document.getElementById('cfg-sleep-h'); if (ch) ch.value = Math.floor(s.sleep_manual_minutes / 60);
+    const cm = document.getElementById('cfg-sleep-m'); if (cm) cm.value = s.sleep_manual_minutes % 60;
+  }
   _updateDarkBtn();
   const nm = document.getElementById('cfg-viewer-name');
   if (nm) nm.textContent = VIEWER === 'bernardo' ? 'Bernardo 👨‍💻' : 'Amanda 👩‍⚕️';
@@ -3949,6 +4009,53 @@ async function saveWaterMode(mode) {
   await api('/api/save/settings', { settings: ud.settings });
   renderHealth();
   toast(mode === 'manual' ? 'Modo manual ativado' : 'Modo automático ativado');
+}
+
+function _applySleepModeUI(mode) {
+  const btnAuto   = document.getElementById('cfg-sleep-auto');
+  const btnManual = document.getElementById('cfg-sleep-manual');
+  const cfgCard   = document.getElementById('sleep-manual-cfg');
+  const inlineCard = document.getElementById('sleep-manual-card');
+  if (btnAuto) btnAuto.className   = mode === 'manual' ? 'btn btn-outline' : 'btn btn-rose';
+  if (btnManual) btnManual.className = mode === 'manual' ? 'btn btn-rose' : 'btn btn-outline';
+  if (cfgCard) cfgCard.style.display = mode === 'manual' ? 'flex' : 'none';
+  if (inlineCard) inlineCard.style.display = mode === 'manual' ? '' : 'none';
+}
+
+async function saveSleepMode(mode) {
+  ud.settings = { ...(ud.settings||{}), sleep_mode: mode };
+  _applySleepModeUI(mode);
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
+  toast(mode === 'manual' ? 'Sono manual ativado' : 'Sono automático ativado');
+}
+
+function _sleepMinutesFromInputs(hId, mId) {
+  const h = Math.max(0, Math.min(16, +document.getElementById(hId).value || 0));
+  const m = Math.max(0, Math.min(59, +document.getElementById(mId).value || 0));
+  return h * 60 + m;
+}
+
+async function saveSleepManual() {
+  const mins = _sleepMinutesFromInputs('cfg-sleep-h', 'cfg-sleep-m');
+  ud.settings = { ...(ud.settings||{}), sleep_manual_minutes: mins, sleep_manual_date: TODAY };
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
+  toast('Sono salvo!');
+}
+
+async function saveSleepManualInline() {
+  const mins = _sleepMinutesFromInputs('sleep-manual-h', 'sleep-manual-m');
+  ud.settings = { ...(ud.settings||{}), sleep_manual_minutes: mins, sleep_manual_date: TODAY };
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
+  toast('Sono salvo!');
+}
+
+async function saveSleepManualReset() {
+  ud.settings = { ...(ud.settings||{}), sleep_manual_minutes: 0, sleep_manual_date: TODAY };
+  await api('/api/save/settings', { settings: ud.settings });
+  renderHealth();
 }
 
 async function addWater(ml) {
