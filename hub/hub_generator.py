@@ -157,8 +157,7 @@ def _get_access_token(user_id: str, kind: str) -> Optional[str]:
 
 
 def run_auth(user_id: str, scopes: list, kind: str):
-    from http.server import HTTPServer, BaseHTTPRequestHandler
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urlparse, parse_qs
     import secrets
 
     creds_file = _credentials_file(user_id)
@@ -170,7 +169,7 @@ def run_auth(user_id: str, scopes: list, kind: str):
         return
 
     creds        = _load_credentials(user_id)
-    redirect_uri = "http://localhost:8765/callback"
+    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
     state        = secrets.token_urlsafe(16)
 
     auth_url = (
@@ -187,32 +186,19 @@ def run_auth(user_id: str, scopes: list, kind: str):
     )
 
     print(f"\n🔑 Autorizando {USERS[user_id]['name']} — {kind}...")
-    webbrowser.open(auth_url)
+    print("\n1. Abra esta URL no seu navegador:\n")
+    print(auth_url)
+    print("\n2. Autorize e cole o código de autorização abaixo:")
+    auth_code = input("Código: ").strip()
 
-    auth_code = [None]
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            from urllib.parse import urlparse, parse_qs
-            qs = parse_qs(urlparse(self.path).query)
-            auth_code[0] = qs.get("code", [None])[0]
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"<h2>Autorizado! Pode fechar esta aba.</h2>")
-        def log_message(self, *args):
-            pass
-
-    server = HTTPServer(("localhost", 8765), Handler)
-    server.handle_request()
-
-    if not auth_code[0]:
-        print("❌ Nenhum código recebido.")
+    if not auth_code:
+        print("❌ Nenhum código informado.")
         return
 
     r = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
-            "code":          auth_code[0],
+            "code":          auth_code,
             "client_id":     creds["client_id"],
             "client_secret": creds["client_secret"],
             "redirect_uri":  redirect_uri,
