@@ -1145,8 +1145,7 @@ Retorne APENAS JSON válido, no formato:
             )
             resp.raise_for_status()
             resp_json = resp.json()
-            _log = logging.getLogger(__name__)
-            _log.info("[AI] resposta Gemini: %s", json.dumps(resp_json, ensure_ascii=False)[:500])
+            print("[AI] resposta Gemini:", json.dumps(resp_json, ensure_ascii=False)[:500], flush=True)
             parts   = resp_json["candidates"][0]["content"]["parts"]
             content = "\n".join(p["text"] for p in parts if not p.get("thought")).strip()
             if content.startswith("```"):
@@ -1155,10 +1154,11 @@ Retorne APENAS JSON válido, no formato:
             result = json.loads(content)
             self._json(result)
         except json.JSONDecodeError as e:
-            logging.getLogger(__name__).error("[AI] JSONDecodeError: %s | content: %s", e, locals().get('content','?'))
+            content_dbg = locals().get('content', '?')
+            print(f"[AI] JSONDecodeError: {e} | content: {content_dbg}", flush=True)
             self._json({"actions": [{"type": "reply", "message": "Não consegui interpretar a resposta da IA."}], "message": "Erro"})
         except Exception as e:
-            logging.getLogger(__name__).error("[AI] Exception: %s", e)
+            print(f"[AI] Exception: {e}", flush=True)
             self._json({"error": str(e), "actions": [{"type": "reply", "message": f"Erro ao chamar a IA: {e}"}], "message": "Erro"})
 
     def _json(self, data):
