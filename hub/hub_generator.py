@@ -459,22 +459,7 @@ def create_calendar_event(user_id: str, title: str, date_str: str, time_str: str
     if not token:
         return {"error": "Token de calendário não encontrado. Execute --auth-calendar."}
     try:
-        tz_offset = "-03:00"
-        if time_str:
-            start_dt = datetime.fromisoformat(f"{date_str}T{time_str}:00")
-            end_dt   = start_dt + timedelta(minutes=duration_min)
-            body = {
-                "summary": title,
-                "start": {"dateTime": f"{start_dt.isoformat()}{tz_offset}"},
-                "end":   {"dateTime": f"{end_dt.isoformat()}{tz_offset}"},
-            }
-        else:
-            next_day = (datetime.fromisoformat(date_str) + timedelta(days=1)).date().isoformat()
-            body = {
-                "summary": title,
-                "start": {"date": date_str},
-                "end":   {"date": next_day},
-            }
+        body = _build_event_body(title, date_str, time_str, duration_min)
         r = requests.post(
             f"{CALENDAR_API}/calendars/primary/events",
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
@@ -483,6 +468,61 @@ def create_calendar_event(user_id: str, title: str, date_str: str, time_str: str
         if r.ok:
             ev = r.json()
             return {"ok": True, "id": ev.get("id"), "title": ev.get("summary")}
+        return {"error": f"Calendar API {r.status_code}: {r.text[:200]}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _build_event_body(title: str, date_str: str, time_str: str = None, duration_min: int = 60) -> dict:
+    tz_offset = "-03:00"
+    if time_str:
+        start_dt = datetime.fromisoformat(f"{date_str}T{time_str}:00")
+        end_dt   = start_dt + timedelta(minutes=duration_min)
+        return {
+            "summary": title,
+            "start": {"dateTime": f"{start_dt.isoformat()}{tz_offset}"},
+            "end":   {"dateTime": f"{end_dt.isoformat()}{tz_offset}"},
+        }
+    else:
+        next_day = (datetime.fromisoformat(date_str) + timedelta(days=1)).date().isoformat()
+        return {
+            "summary": title,
+            "start": {"date": date_str},
+            "end":   {"date": next_day},
+        }
+
+
+def update_calendar_event(user_id: str, event_id: str, title: str, date_str: str, time_str: str = None, duration_min: int = 60) -> dict:
+    token = _get_access_token(user_id, "calendar")
+    if not token:
+        return {"error": "Token de calendário não encontrado. Execute --auth-calendar."}
+    try:
+        body = _build_event_body(title, date_str, time_str, duration_min)
+        r = requests.put(
+            f"{CALENDAR_API}/calendars/primary/events/{event_id}",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json=body, timeout=15
+        )
+        if r.ok:
+            ev = r.json()
+            return {"ok": True, "id": ev.get("id"), "title": ev.get("summary")}
+        return {"error": f"Calendar API {r.status_code}: {r.text[:200]}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def delete_calendar_event(user_id: str, event_id: str) -> dict:
+    token = _get_access_token(user_id, "calendar")
+    if not token:
+        return {"error": "Token de calendário não encontrado. Execute --auth-calendar."}
+    try:
+        r = requests.delete(
+            f"{CALENDAR_API}/calendars/primary/events/{event_id}",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15
+        )
+        if r.ok or r.status_code == 204:
+            return {"ok": True}
         return {"error": f"Calendar API {r.status_code}: {r.text[:200]}"}
     except Exception as e:
         return {"error": str(e)}

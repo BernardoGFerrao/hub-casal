@@ -1826,7 +1826,10 @@ select option { background: var(--surface); }
       <div class="card">
         <div class="card-head">
           <span class="card-label">Eventos — <span id="gcal-day-lbl">hoje</span></span>
-          <button class="btn btn-outline btn-xs" onclick="refreshCal()">↺ Atualizar</button>
+          <div style="display:flex;gap:.4rem">
+            <button class="btn btn-rose btn-xs" onclick="openCalEventModal(_calSelDate)">+ Evento</button>
+            <button class="btn btn-outline btn-xs" onclick="refreshCal()">↺ Atualizar</button>
+          </div>
         </div>
         <div class="card-body" id="gcal-events">
           <div class="empty">Carregando agenda...</div>
@@ -2059,6 +2062,38 @@ select option { background: var(--surface); }
     </div>
 
   </main>
+</div>
+
+<!-- Modal Evento Calendário -->
+<div class="modal-overlay" id="cal-event-modal" onclick="if(event.target===this)closeCalEventModal()">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-title" id="cal-event-modal-title">📅 Novo evento</span>
+      <button class="modal-close" onclick="closeCalEventModal()">×</button>
+    </div>
+    <div class="modal-field">
+      <label>Título</label>
+      <input class="inp" id="cal-event-title" placeholder="Ex: Consulta médica">
+    </div>
+    <div style="display:flex;gap:.6rem">
+      <div class="modal-field" style="flex:1">
+        <label>Data</label>
+        <input class="inp" type="date" id="cal-event-date">
+      </div>
+      <div class="modal-field" style="flex:1">
+        <label>Horário (opcional)</label>
+        <input class="inp" type="time" id="cal-event-time">
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Duração (minutos)</label>
+      <input class="inp" type="number" id="cal-event-duration" value="60" min="5" max="480">
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="modal-save" onclick="saveCalEvent()">Salvar</button>
+      <button id="cal-event-delete-btn" class="btn btn-outline" style="color:var(--red);border-color:var(--red);display:none" onclick="deleteCalEvent()">Excluir</button>
+    </div>
+  </div>
 </div>
 
 <!-- AI Painel Flutuante -->
@@ -3041,15 +3076,73 @@ function renderCalEvents(dateStr) {
   const el = document.getElementById('gcal-events');
   if (!el) return;
   const evs = _calEvents.filter(e => e.start.slice(0,10) === dateStr);
-  if (!evs.length) { el.innerHTML = '<div class="empty">Nenhum evento neste dia</div>'; return; }
+  if (!evs.length) { el.innerHTML = '<div class="empty">Nenhum evento neste dia — clique em "+ Evento" para adicionar</div>'; return; }
   el.innerHTML = evs.map(e => {
     const who = e.user === 'bernardo' ? 'b' : e.user === 'amanda' ? 'a' : '';
-    const time = e.allDay ? 'dia todo' : e.start.slice(11,16);
-    return `<div class="gcal-event ${who}">
+    const time = e.all_day ? 'dia todo' : e.start.slice(11,16);
+    const canEdit = e.kind !== 'holiday';
+    return `<div class="gcal-event ${who}" style="${canEdit?'cursor:pointer':''}" ${canEdit?`onclick="openCalEventModal('${dateStr}','${e.id}')"`:''}>
       <span class="gcal-event-time">${time}</span>
       <span class="gcal-event-title">${esc(e.title)}</span>
+      ${canEdit ? `<span style="font-size:.65rem;color:var(--text3);margin-left:auto">✏️</span>` : ''}
     </div>`;
   }).join('');
+}
+
+// ─── Modal Evento Calendário ────────────────────────────────────────────────
+let _calEventEditId = null;
+
+function openCalEventModal(dateStr, eventId) {
+  _calEventEditId = eventId || null;
+  const isEdit = !!eventId;
+  document.getElementById('cal-event-modal-title').textContent = isEdit ? '✏️ Editar evento' : '📅 Novo evento';
+  document.getElementById('cal-event-date').value = dateStr || TODAY;
+  document.getElementById('cal-event-delete-btn').style.display = isEdit ? '' : 'none';
+  if (isEdit) {
+    const ev = _calEvents.find(e => e.id === eventId);
+    if (ev) {
+      document.getElementById('cal-event-title').value = ev.title;
+      document.getElementById('cal-event-time').value = ev.all_day ? '' : ev.start.slice(11,16);
+      document.getElementById('cal-event-duration').value = 60;
+    }
+  } else {
+    document.getElementById('cal-event-title').value = '';
+    document.getElementById('cal-event-time').value = '';
+    document.getElementById('cal-event-duration').value = 60;
+  }
+  document.getElementById('cal-event-modal').classList.add('open');
+  setTimeout(() => document.getElementById('cal-event-title').focus(), 80);
+}
+
+function closeCalEventModal() {
+  document.getElementById('cal-event-modal').classList.remove('open');
+  _calEventEditId = null;
+}
+
+async function saveCalEvent() {
+  const title    = document.getElementById('cal-event-title').value.trim();
+  const date     = document.getElementById('cal-event-date').value;
+  const time     = document.getElementById('cal-event-time').value;
+  const duration = parseInt(document.getElementById('cal-event-duration').value) || 60;
+  if (!title) { toast('Digite o título do evento', '⚠️'); return; }
+  if (!date)  { toast('Selecione a data', '⚠️'); return; }
+  if (_calEventEditId) {
+    const res = await api('/api/calendar/update-event', { id: _calEventEditId, title, date, time, duration });
+    if (res?.ok) { toast('Evento atualizado ♡'); closeCalEventModal(); loadCalEvents(); }
+    else toast(res?.error || 'Erro ao atualizar', '⚠️');
+  } else {
+    const res = await api('/api/calendar/create-event', { title, date, time, duration });
+    if (res?.ok) { toast('Evento criado ♡'); closeCalEventModal(); loadCalEvents(); }
+    else toast(res?.error || 'Erro ao criar evento', '⚠️');
+  }
+}
+
+async function deleteCalEvent() {
+  if (!_calEventEditId) return;
+  if (!confirm('Excluir este evento?')) return;
+  const res = await api('/api/calendar/delete-event', { id: _calEventEditId });
+  if (res?.ok) { toast('Evento excluído'); closeCalEventModal(); loadCalEvents(); }
+  else toast(res?.error || 'Erro ao excluir', '⚠️');
 }
 
 function renderUpcoming() {

@@ -1026,9 +1026,32 @@ class HubHandler(SimpleHTTPRequestHandler):
                     user_id      = uid,
                     title        = body.get("title", "Evento"),
                     date_str     = body.get("date", ""),
-                    time_str     = body.get("time"),
+                    time_str     = body.get("time") or None,
                     duration_min = int(body.get("duration", 60))
                 )
+                self._json(result)
+            except Exception as e:
+                self._json({"error": str(e)})
+
+        elif path == "/api/calendar/update-event":
+            try:
+                from hub_generator import update_calendar_event
+                result = update_calendar_event(
+                    user_id      = uid,
+                    event_id     = body.get("id", ""),
+                    title        = body.get("title", "Evento"),
+                    date_str     = body.get("date", ""),
+                    time_str     = body.get("time") or None,
+                    duration_min = int(body.get("duration", 60))
+                )
+                self._json(result)
+            except Exception as e:
+                self._json({"error": str(e)})
+
+        elif path == "/api/calendar/delete-event":
+            try:
+                from hub_generator import delete_calendar_event
+                result = delete_calendar_event(user_id=uid, event_id=body.get("id", ""))
                 self._json(result)
             except Exception as e:
                 self._json({"error": str(e)})
