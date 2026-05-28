@@ -2084,6 +2084,7 @@ async function loadUD(p) {
     const r = await fetch('/api/load?u=' + p);
     ud = await r.json();
     _jobs = ud.jobs || [];
+    loadKanban(ud.kanban);
     // hub_settings do perfil visualizado (usado para notícias)
     _profileHubSettings = ud.hub_settings || {};
     // se o perfil for o próprio viewer, sincroniza também o _viewerHubSettings
