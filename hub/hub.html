@@ -1593,7 +1593,7 @@ select option { background: var(--surface); }
       <div id="task-subtab-habitos" style="display:none">
         <div class="ro-bar" id="ro-habitos"><span>👁</span> Visualizando hábitos de <strong id="ro-habitos-n"></strong></div>
         <div class="card">
-          <div class="card-head"><span class="card-label">Hábitos de hoje</span></div>
+          <div class="card-head"><span class="card-label"><span id="habit-day-lbl">Hábitos de hoje</span></span></div>
           <div class="card-body">
             <div id="habit-list" style="display:flex;flex-direction:column;gap:.3rem"></div>
             <div id="habit-add-row" style="margin-top:.75rem">
@@ -2250,6 +2250,7 @@ async function _renderForDate() {
   renderHealth();
   renderMood();
   renderTasks();
+  renderHabits();
   renderNews();
   const isToday = _healthViewDate === TODAY;
   if (isToday) {
@@ -2523,17 +2524,23 @@ async function removeTask(i) {
 }
 
 function renderHabits() {
+  const viewDate = _healthViewDate || TODAY;
+  const isToday  = viewDate === TODAY;
   const habits = ud.habits || [], comps = ud.habit_completions || {};
+  const lbl = document.getElementById('habit-day-lbl');
+  if (lbl) lbl.textContent = isToday ? 'Hábitos de hoje' : `Hábitos de ${fmtD(viewDate)}`;
+  const addRow = document.getElementById('habit-add-row');
+  if (addRow) addRow.style.display = isToday ? '' : 'none';
   const el = document.getElementById('habit-list');
   if (!habits.length) { el.innerHTML = '<div class="empty">Nenhum hábito cadastrado</div>'; return; }
   el.innerHTML = habits.map(h => {
-    const done = `${h.id}:${TODAY}` in comps;
+    const done = `${h.id}:${viewDate}` in comps;
     const streak = calcStreak(h.id, comps);
     return `<div class="habit-item">
-      <div class="hchk ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">${done ? '✓' : ''}</div>
+      <div class="hchk ${done ? 'done' : ''}" ${isToday ? `onclick="toggleHabit('${h.id}')"` : ''}>${done ? '✓' : ''}</div>
       <span class="habit-name">${esc(h.name)}</span>
       ${streak > 0 ? `<span class="streak">${streak} 🔥</span>` : ''}
-      <button class="btn btn-ghost btn-xs" onclick="removeHabit('${h.id}')">✕</button>
+      ${isToday ? `<button class="btn btn-ghost btn-xs" onclick="removeHabit('${h.id}')">✕</button>` : ''}
     </div>`;
   }).join('');
 }
