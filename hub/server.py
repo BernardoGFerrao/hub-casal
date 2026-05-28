@@ -1144,16 +1144,20 @@ Retorne APENAS JSON válido, no formato:
                 timeout=15
             )
             resp.raise_for_status()
-            parts   = resp.json()["candidates"][0]["content"]["parts"]
+            resp_json = resp.json()
+            logger.info("[AI] resposta Gemini: %s", json.dumps(resp_json, ensure_ascii=False)[:500])
+            parts   = resp_json["candidates"][0]["content"]["parts"]
             content = "\n".join(p["text"] for p in parts if not p.get("thought")).strip()
             if content.startswith("```"):
                 content = content.split("\n", 1)[1] if "\n" in content else content
                 content = content.rsplit("```", 1)[0].strip()
             result = json.loads(content)
             self._json(result)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error("[AI] JSONDecodeError: %s | content: %s", e, content if 'content' in dir() else '?')
             self._json({"actions": [{"type": "reply", "message": "Não consegui interpretar a resposta da IA."}], "message": "Erro"})
         except Exception as e:
+            logger.error("[AI] Exception: %s", e)
             self._json({"error": str(e), "actions": [{"type": "reply", "message": f"Erro ao chamar a IA: {e}"}], "message": "Erro"})
 
     def _json(self, data):

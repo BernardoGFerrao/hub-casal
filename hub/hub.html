@@ -3812,7 +3812,7 @@ async function submitAI() {
     if(data.message){_aiMsg(data.message,'assistant');_aiHistory.push({role:'assistant',text:data.message});}
     if(data.actions?.length) await executeAIActions(data.actions);
     else _aiMsg('(nenhuma ação executada — actions: '+JSON.stringify(data.actions)+')','error');
-  } catch(e) { document.getElementById('ai-thinking')?.remove(); _aiMsg('Erro de rede.','error'); }
+  } catch(e) { document.getElementById('ai-thinking')?.remove(); console.error('[AI erro]', e); _aiMsg('Erro: '+e.message,'error'); }
 }
 
 async function executeAIActions(actions) {
