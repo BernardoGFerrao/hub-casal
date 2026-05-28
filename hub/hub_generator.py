@@ -942,6 +942,10 @@ def _scrape_google_news_jobs(keywords: list, locations: list, days: int, level: 
                 if " - " in title_raw:
                     parts_t = title_raw.rsplit(" - ", 1)
                     title_raw, source = parts_t[0].strip(), parts_t[1].strip()
+                # Só aceita se o título contiver uma das keywords
+                title_low = title_raw.lower()
+                if not any(k.lower() in title_low for k in keywords):
+                    continue
                 pub_raw = item.findtext("pubDate", "") or ""
                 try:
                     pub_dt  = parsedate_to_datetime(pub_raw)
