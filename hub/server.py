@@ -1122,7 +1122,10 @@ Regras de data:
 {next_days_str}
 
 Retorne APENAS JSON válido, no formato:
-{{"actions": [...], "message": "resumo em português, máximo 1 linha"}}"""
+{{"actions": [...], "message": "resumo em português, máximo 1 linha"}}
+
+Cada ação DEVE ter o campo "type" (não "action") com o nome da ação. Exemplo:
+{{"actions": [{{"type": "addTask", "text": "Compras", "date": "2026-05-29"}}], "message": "Tarefa adicionada"}}"""
 
         history = body.get("history", [])
         # monta contents com histórico (exclui a última mensagem do user que já está em user_text)
@@ -1152,6 +1155,10 @@ Retorne APENAS JSON válido, no formato:
                 content = content.split("\n", 1)[1] if "\n" in content else content
                 content = content.rsplit("```", 1)[0].strip()
             result = json.loads(content)
+            # normaliza "action" → "type" caso o modelo use o campo errado
+            for a in result.get("actions", []):
+                if "type" not in a and "action" in a:
+                    a["type"] = a.pop("action")
             self._json(result)
         except json.JSONDecodeError as e:
             content_dbg = locals().get('content', '?')
