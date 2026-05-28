@@ -4138,6 +4138,7 @@ function updateChatBadge(count) {
 
 // ─── Treino ────────────────────────────────────────────────────────────────
 let _workout = null;
+let _workoutDraft = null;
 let _workoutActiveDay = 0;
 
 async function loadWorkout() {
@@ -4193,61 +4194,81 @@ function openWorkoutEditor() {
   if (!_workout) return;
   document.getElementById('wm-title').value = _workout.title || '';
   document.getElementById('wm-subtitle').value = _workout.subtitle || '';
+  // cópia profunda para edição — só aplica ao salvar
+  _workoutDraft = JSON.parse(JSON.stringify(_workout));
   renderWorkoutEditorDays();
-  document.getElementById('workout-modal').style.display = 'flex';
+  document.getElementById('workout-modal').classList.add('open');
 }
 
 function closeWorkoutEditor() {
-  document.getElementById('workout-modal').style.display = '';
+  document.getElementById('workout-modal').classList.remove('open');
+}
+
+function _collectDraftFromDOM() {
+  // lê título/subtítulo
+  _workoutDraft.title    = document.getElementById('wm-title').value;
+  _workoutDraft.subtitle = document.getElementById('wm-subtitle').value;
+  // lê cada linha de exercício pelo data-attr
+  document.querySelectorAll('[data-wm-day]').forEach(dayEl => {
+    const di = +dayEl.dataset.wmDay;
+    _workoutDraft.days[di].name = dayEl.querySelector('[data-wm-dayname]').value;
+    dayEl.querySelectorAll('[data-wm-ex]').forEach(row => {
+      const ei = +row.dataset.wmEx;
+      _workoutDraft.days[di].exercises[ei].name   = row.querySelector('[data-f="name"]').value;
+      _workoutDraft.days[di].exercises[ei].sets_b = +row.querySelector('[data-f="sets_b"]').value || 0;
+      _workoutDraft.days[di].exercises[ei].sets_a = +row.querySelector('[data-f="sets_a"]').value || 0;
+      _workoutDraft.days[di].exercises[ei].reps   = row.querySelector('[data-f="reps"]').value;
+    });
+  });
 }
 
 function renderWorkoutEditorDays() {
   const container = document.getElementById('wm-days');
-  container.innerHTML = (_workout.days || []).map((d, di) => `
-    <div class="wm-day-block" id="wm-day-${di}">
+  container.innerHTML = (_workoutDraft.days || []).map((d, di) => `
+    <div class="wm-day-block" data-wm-day="${di}">
       <div class="wm-day-title">
-        <input class="cfg-input" style="flex:1;font-weight:700" value="${esc(d.name)}" oninput="_workout.days[${di}].name=this.value">
-        <button class="btn btn-outline btn-xs" style="color:var(--red)" onclick="removeWorkoutDay(${di})">✕</button>
+        <input class="cfg-input" style="flex:1;font-weight:700" value="${esc(d.name)}" data-wm-dayname>
+        <button class="btn btn-outline btn-xs" style="color:var(--red)" onclick="_wmCollectThen(()=>removeWorkoutDay(${di}))">✕</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 60px 60px 80px 28px;gap:.35rem;margin-bottom:.25rem;font-size:.72rem;color:var(--text3);font-weight:600">
         <span>Exercício</span><span style="text-align:center">Ele</span><span style="text-align:center">Ela</span><span style="text-align:center">Reps</span><span></span>
       </div>
       ${(d.exercises || []).map((e, ei) => `
-        <div class="wm-exercise-row">
-          <input value="${esc(e.name)}" oninput="_workout.days[${di}].exercises[${ei}].name=this.value" placeholder="Exercício">
-          <input value="${e.sets_b}" oninput="_workout.days[${di}].exercises[${ei}].sets_b=+this.value||0" type="number" min="1" placeholder="Ele">
-          <input value="${e.sets_a}" oninput="_workout.days[${di}].exercises[${ei}].sets_a=+this.value||0" type="number" min="1" placeholder="Ela">
-          <input value="${esc(e.reps)}" oninput="_workout.days[${di}].exercises[${ei}].reps=this.value" placeholder="Reps">
-          <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem" onclick="removeExercise(${di},${ei})">✕</button>
+        <div class="wm-exercise-row" data-wm-ex="${ei}">
+          <input value="${esc(e.name)}" data-f="name" placeholder="Exercício">
+          <input value="${e.sets_b}" data-f="sets_b" type="number" min="1" placeholder="Ele">
+          <input value="${e.sets_a}" data-f="sets_a" type="number" min="1" placeholder="Ela">
+          <input value="${esc(e.reps)}" data-f="reps" placeholder="Reps">
+          <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem" onclick="_wmCollectThen(()=>removeExercise(${di},${ei}))">✕</button>
         </div>`).join('')}
-      <button class="btn btn-outline btn-xs" style="margin-top:.4rem" onclick="addExercise(${di})">+ Exercício</button>
+      <button class="btn btn-outline btn-xs" style="margin-top:.4rem" onclick="_wmCollectThen(()=>addExercise(${di}))">+ Exercício</button>
     </div>`).join('');
 }
 
+function _wmCollectThen(fn) { _collectDraftFromDOM(); fn(); renderWorkoutEditorDays(); }
+
 function addWorkoutDay() {
-  _workout.days.push({ id: 'day'+Date.now(), name: 'Novo Treino', exercises: [] });
+  _collectDraftFromDOM();
+  _workoutDraft.days.push({ id: 'day'+Date.now(), name: 'Novo Treino', exercises: [] });
   renderWorkoutEditorDays();
 }
 
 function removeWorkoutDay(di) {
-  _workout.days.splice(di, 1);
-  if (_workoutActiveDay >= _workout.days.length) _workoutActiveDay = 0;
-  renderWorkoutEditorDays();
+  _workoutDraft.days.splice(di, 1);
+  if (_workoutActiveDay >= _workoutDraft.days.length) _workoutActiveDay = 0;
 }
 
 function addExercise(di) {
-  _workout.days[di].exercises.push({ name: '', sets_b: 3, sets_a: 3, reps: '10-12' });
-  renderWorkoutEditorDays();
+  _workoutDraft.days[di].exercises.push({ name: '', sets_b: 3, sets_a: 3, reps: '10-12' });
 }
 
 function removeExercise(di, ei) {
-  _workout.days[di].exercises.splice(ei, 1);
-  renderWorkoutEditorDays();
+  _workoutDraft.days[di].exercises.splice(ei, 1);
 }
 
 async function saveWorkout() {
-  _workout.title    = document.getElementById('wm-title').value;
-  _workout.subtitle = document.getElementById('wm-subtitle').value;
+  _collectDraftFromDOM();
+  _workout = _workoutDraft;
   const r = await fetch('/api/save/workout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ workout: _workout }) });
   if (r.ok) { closeWorkoutEditor(); renderWorkout(); toast('Treino salvo!', '🏋️'); }
   else toast('Erro ao salvar treino', '⚠️');
