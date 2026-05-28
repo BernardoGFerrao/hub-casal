@@ -3806,10 +3806,12 @@ async function submitAI() {
   try {
     const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,history:_aiHistory.slice(-10),context:{today:TODAY,habits:ud.habits||[],grocery:ud.grocery||[]}})});
     const data=await r.json();
+    console.log('[AI response]', JSON.stringify(data));
     document.getElementById('ai-thinking')?.remove();
     if(data.error){_aiMsg('Erro: '+data.error,'error');return;}
     if(data.message){_aiMsg(data.message,'assistant');_aiHistory.push({role:'assistant',text:data.message});}
     if(data.actions?.length) await executeAIActions(data.actions);
+    else _aiMsg('(nenhuma ação executada — actions: '+JSON.stringify(data.actions)+')','error');
   } catch(e) { document.getElementById('ai-thinking')?.remove(); _aiMsg('Erro de rede.','error'); }
 }
 
