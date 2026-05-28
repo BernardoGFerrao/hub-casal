@@ -553,19 +553,43 @@ def _run_jobs_and_save(user_id: str):
         print(f"  [scheduler] erro vagas {user_id}: {e}")
 
 
-def _daily_jobs_scheduler():
-    """Thread que executa Job Scout todo dia às 7h."""
+def _auto_refresh_scheduler():
+    """Thread que atualiza os dados a cada 5 minutos.
+    Vagas são buscadas apenas uma vez por dia (às 7h) por serem pesadas.
+    """
     import datetime as _dt
+    INTERVAL = 5 * 60  # 5 minutos
+
+    # Aguarda o _bg_init terminar antes de começar o loop
+    time.sleep(30)
+
+    last_jobs_date = None
+
     while True:
-        now  = _dt.datetime.now()
-        next_run = now.replace(hour=7, minute=0, second=0, microsecond=0)
-        if now >= next_run:
-            next_run += _dt.timedelta(days=1)
-        wait = (next_run - now).total_seconds()
-        time.sleep(wait)
-        print("  [scheduler] Executando Job Scout diário às 7h...")
+        now = _dt.datetime.now()
+        print(f"  [scheduler] Atualizando dados ({now.strftime('%H:%M')})...")
+
         for uid in USERS:
-            _run_jobs_and_save(uid)
+            try:
+                spec = importlib.util.spec_from_file_location("hub_generator", HUB_DIR / "hub_generator.py")
+                mod  = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                mod.generate_health_json(uid)
+                mod.generate_news_json(uid)
+                mod.generate_calendar_json(uid)
+                mod.generate_daily_briefing(uid)
+            except Exception as e:
+                print(f"  [scheduler] erro refresh {uid}: {e}")
+
+        # Vagas: só uma vez por dia às 7h
+        today = now.date()
+        if now.hour >= 7 and last_jobs_date != today:
+            print("  [scheduler] Executando Job Scout diário...")
+            for uid in USERS:
+                _run_jobs_and_save(uid)
+            last_jobs_date = today
+
+        time.sleep(INTERVAL)
 
 
 def run_generator(user_id: str):
@@ -1175,7 +1199,7 @@ def main():
         print("  Dados atualizados!\n")
 
     threading.Thread(target=_bg_init, daemon=True).start()
-    threading.Thread(target=_daily_jobs_scheduler, daemon=True).start()
+    threading.Thread(target=_auto_refresh_scheduler, daemon=True).start()
     threading.Thread(target=open_browser, daemon=True).start()
 
     server = HTTPServer(("0.0.0.0", PORT), HubHandler)
