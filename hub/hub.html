@@ -1427,7 +1427,7 @@ select option { background: var(--surface); }
       <div class="score-side">
         <div class="score-avatar">👨‍💻</div>
         <div class="score-who" id="hdr-name-b">Bernardo</div>
-        <div class="prof-badge b">⚙️ Eng. de Computação</div>
+        <div class="prof-badge b">⚙️ Computação</div>
         <div class="score-num b" id="pts-b">0</div>
         <div class="score-pts-lbl">pontos</div>
       </div>
@@ -1456,7 +1456,7 @@ select option { background: var(--surface); }
       <span class="ptab-emoji">👨‍💻</span>
       <div style="display:flex;flex-direction:column;gap:.05rem;align-items:flex-start">
         <span class="ptab-name" id="ptab-name-b">Bernardo</span>
-        <span style="font-size:.58rem;color:var(--b-color);font-weight:600;opacity:.8">Eng. Computação</span>
+        <span style="font-size:.58rem;color:var(--b-color);font-weight:600;opacity:.8">Computação</span>
       </div>
       <span class="ptab-pts" id="ptab-b">0 pts</span>
       <span class="ptab-you" id="ptab-you-b" style="display:none">você</span>
@@ -2292,7 +2292,7 @@ select option { background: var(--surface); }
           <div><strong style="color:var(--text2)">Our Little Hub</strong> · versão casal</div>
           <div>Acompanhe saúde, hábitos, tarefas e conquistas juntos.</div>
           <div style="margin-top:.5rem">
-            <span style="color:var(--b-color)">👨‍💻 Bernardo</span> — Eng. de Computação &nbsp;·&nbsp;
+            <span style="color:var(--b-color)">👨‍💻 Bernardo</span> — Computação &nbsp;·&nbsp;
             <span style="color:var(--a-color)">👩‍⚕️ Amanda</span> — Nutricionista
           </div>
         </div>
@@ -3331,7 +3331,7 @@ function renderGreeting() {
   const isB    = PROFILE === 'bernardo';
   const pName  = isB ? 'Bernardo' : 'Amanda';
   const icon   = isB ? '👨‍💻' : '👩‍⚕️';
-  const prof   = isB ? 'Eng. de Computação' : 'Nutricionista';
+  const prof   = isB ? 'Computação' : 'Nutricionista';
   document.getElementById('greeting-text').innerHTML = `${gr}, <span>${pName}</span> ${icon}`;
   document.getElementById('greeting-date').textContent =
     `${prof}  ·  ${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
