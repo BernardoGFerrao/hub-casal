@@ -617,6 +617,10 @@ select option { background: var(--surface); }
 }
 .task-item:hover { border-color: var(--border); }
 .task-item.done { opacity: .5; }
+.task-item.drag-over, .habit-item.drag-over { border-color: var(--accent) !important; background: var(--bg3); }
+.task-item.dragging, .habit-item.dragging { opacity: .35; }
+.drag-handle { cursor: grab; color: var(--text3); font-size: .85rem; flex-shrink: 0; padding: 0 2px; touch-action: none; }
+.drag-handle:active { cursor: grabbing; }
 .chk {
   width: 18px; height: 18px;
   border-radius: 5px;
@@ -2843,14 +2847,17 @@ function renderTasks() {
   const addRow = document.getElementById('task-add-row');
   if (addRow) addRow.style.display = (isPast || PROFILE !== VIEWER) ? 'none' : '';
   if (!tasks.length) { el.innerHTML = `<div class="empty">Nenhuma tarefa para ${dayLabel}</div>`; return; }
+  const canEdit = !isPast && PROFILE === VIEWER;
   el.innerHTML = tasks.map((t, i) => `
-    <div class="task-item ${t.done ? 'done' : ''}">
+    <div class="task-item ${t.done ? 'done' : ''}" draggable="${canEdit}" data-idx="${i}">
+      ${canEdit ? '<span class="drag-handle">⠿</span>' : ''}
       <div class="chk ${t.done ? 'done' : ''}" onclick="${isPast ? '' : `toggleTask(${i}, '${date}')`}">${t.done ? '✓' : ''}</div>
       <span class="task-txt">${esc(t.text)}</span>
       ${t.priority === 'high' ? '<span class="pbadge ph">Alta</span>' : ''}
       ${t.priority === 'low'  ? '<span class="pbadge pl">Baixa</span>' : ''}
-      ${!isPast && PROFILE === VIEWER ? `<button class="btn btn-ghost btn-xs" onclick="removeTask(${i}, '${date}')">✕</button>` : ''}
+      ${canEdit ? `<button class="btn btn-ghost btn-xs" onclick="removeTask(${i}, '${date}')">✕</button>` : ''}
     </div>`).join('');
+  if (canEdit) _initDrag(el, 'task', date);
 }
 
 async function addTask(text, date, priority) {
@@ -2900,16 +2907,19 @@ function renderHabits() {
   if (addRow) addRow.style.display = isToday ? '' : 'none';
   const el = document.getElementById('habit-list');
   if (!habits.length) { el.innerHTML = '<div class="empty">Nenhum hábito cadastrado</div>'; return; }
-  el.innerHTML = habits.map(h => {
+  const canEditH = isToday && PROFILE === VIEWER;
+  el.innerHTML = habits.map((h, hi) => {
     const done = `${h.id}:${viewDate}` in comps;
     const streak = calcStreak(h.id, comps);
-    return `<div class="habit-item">
+    return `<div class="habit-item" draggable="${canEditH}" data-idx="${hi}" data-hid="${h.id}">
+      ${canEditH ? '<span class="drag-handle">⠿</span>' : ''}
       <div class="hchk ${done ? 'done' : ''}" ${isToday ? `onclick="toggleHabit('${h.id}')"` : ''}>${done ? '✓' : ''}</div>
       <span class="habit-name">${esc(h.name)}</span>
       ${streak > 0 ? `<span class="streak">${streak} 🔥</span>` : ''}
-      ${isToday ? `<button class="btn btn-ghost btn-xs" onclick="removeHabit('${h.id}')">✕</button>` : ''}
+      ${canEditH ? `<button class="btn btn-ghost btn-xs" onclick="removeHabit('${h.id}')">✕</button>` : ''}
     </div>`;
   }).join('');
+  if (canEditH) _initDrag(el, 'habit');
 }
 
 function calcStreak(id, comps) {
@@ -2926,6 +2936,109 @@ async function toggleHabit(id) {
   renderHabits();
   await api('/api/save/habit_completions', { completions: comps });
   localScore();
+}
+
+function _initDrag(container, type, date) {
+  let dragIdx = null;
+  const items = () => [...container.querySelectorAll(type === 'task' ? '.task-item' : '.habit-item')];
+
+  // Desktop drag events
+  container.addEventListener('dragstart', e => {
+    const el = e.target.closest(type === 'task' ? '.task-item' : '.habit-item');
+    if (!el) return;
+    dragIdx = parseInt(el.dataset.idx ?? items().indexOf(el));
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }, { capture: true });
+
+  container.addEventListener('dragend', e => {
+    const el = e.target.closest(type === 'task' ? '.task-item' : '.habit-item');
+    if (el) el.classList.remove('dragging');
+    items().forEach(i => i.classList.remove('drag-over'));
+    dragIdx = null;
+  }, { capture: true });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const el = e.target.closest(type === 'task' ? '.task-item' : '.habit-item');
+    if (!el) return;
+    items().forEach(i => i.classList.remove('drag-over'));
+    el.classList.add('drag-over');
+  });
+
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const el = e.target.closest(type === 'task' ? '.task-item' : '.habit-item');
+    if (!el || dragIdx === null) return;
+    const toIdx = parseInt(el.dataset.idx ?? items().indexOf(el));
+    if (dragIdx === toIdx) return;
+    _applyReorder(type, dragIdx, toIdx, date);
+  });
+
+  // Touch drag (mobile)
+  let touchDragEl = null, touchClone = null, touchFrom = null;
+  container.addEventListener('touchstart', e => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    const el = handle.closest(type === 'task' ? '.task-item' : '.habit-item');
+    if (!el) return;
+    touchDragEl = el;
+    touchFrom = parseInt(el.dataset.idx ?? items().indexOf(el));
+    el.classList.add('dragging');
+    // clone visual
+    touchClone = el.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;pointer-events:none;z-index:9999;opacity:.8;width:${el.offsetWidth}px;transition:none;`;
+    const r = el.getBoundingClientRect();
+    touchClone.style.left = r.left + 'px';
+    touchClone.style.top  = r.top  + 'px';
+    document.body.appendChild(touchClone);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', e => {
+    if (!touchClone) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top  = (t.clientY - 24) + 'px';
+    touchClone.style.display = 'none';
+    const below = document.elementFromPoint(t.clientX, t.clientY);
+    touchClone.style.display = '';
+    const overEl = below?.closest(type === 'task' ? '.task-item' : '.habit-item');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (overEl && overEl !== touchDragEl) overEl.classList.add('drag-over');
+  }, { passive: false });
+
+  container.addEventListener('touchend', e => {
+    if (!touchClone) return;
+    touchClone.remove(); touchClone = null;
+    if (touchDragEl) touchDragEl.classList.remove('dragging');
+    const overEl = container.querySelector(type === 'task' ? '.task-item.drag-over' : '.habit-item.drag-over');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (overEl && touchFrom !== null) {
+      const toIdx = parseInt(overEl.dataset.idx ?? items().indexOf(overEl));
+      if (touchFrom !== toIdx) _applyReorder(type, touchFrom, toIdx, date);
+    }
+    touchDragEl = null; touchFrom = null;
+  });
+}
+
+async function _applyReorder(type, from, to, date) {
+  if (type === 'task') {
+    const d = date || TODAY;
+    const tasks = [...((ud.tasks || {})[d] || [])];
+    const [moved] = tasks.splice(from, 1);
+    tasks.splice(to, 0, moved);
+    ud.tasks = { ...(ud.tasks || {}), [d]: tasks };
+    renderTasks();
+    await api('/api/save/tasks', { date: d, tasks });
+  } else {
+    const habits = [...(ud.habits || [])];
+    const [moved] = habits.splice(from, 1);
+    habits.splice(to, 0, moved);
+    ud.habits = habits;
+    renderHabits();
+    await api('/api/save/habits', { habits });
+  }
 }
 
 async function addHabit() {
